@@ -18,3 +18,16 @@ To solve semidefinite programs, at least one of the following solvers must be av
 	- `dsdp <http://www.mcs.anl.gov/hs/software/DSDP/>`_,
 	- `sdpa <http://sdpa.sourceforge.net/>`_,
 	- `csdp <https://projects.coin-or.org/Csdp/>`_.
+
+Installation
+=============================
+
+To obtain *Irene* visit `https://github.com/mghasemi/Irene <https://github.com/mghasemi/Irene>`_.
+
+For system-wide installation run::
+
+	sudo python setup.py install
+
+License
+=============================
+`Irene` is distributed under `MIT license <https://en.wikipedia.org/wiki/MIT_License>`_.

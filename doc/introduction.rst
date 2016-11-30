@@ -42,6 +42,15 @@ Documentation
 --------------------------
 The documentation of `Irene` is prepared via `sphinx <http://www.sphinx-doc.org/>`_.
 
+To compile html version of the documentation run::
+
+	$Irene/doc/make html
+
+To make a pdf file,subject to existence of ``latexpdf`` run::
+
+	$Irene/doc/make latexpdf
+
+
 License
 =======================
 `Irene` is distributed under `MIT license <https://en.wikipedia.org/wiki/MIT_License>`_:
