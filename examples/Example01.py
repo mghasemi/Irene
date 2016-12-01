@@ -29,7 +29,7 @@ Rlx.AddConstraint(10 - (f - 1)**2 >= 0)
 Rlx.AddConstraint(10 - (f - k)**2 >= 0)
 Rlx.AddConstraint(10 - (k - 3)**2 >= 0)
 # set the sdp solver
-Rlx.SetSDPSolver('sdpa')
+Rlx.SetSDPSolver('cvxopt')
 # initiate the SDP
 Rlx.InitSDP()
 # solve the SDP

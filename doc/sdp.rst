@@ -148,6 +148,7 @@ Consider the following SDP:
 The following code solves the above program::
 
 	from numpy import matrix
+	from Irene import sdp
 	b = [1, -1, 1]
 	C = [matrix([[-33, 9], [9, -26]]),
 	     matrix([[-14, -9, -40], [-9, -91, -10], [-40, -10, -15]])]

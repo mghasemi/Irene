@@ -128,6 +128,7 @@ variable as a python dictionary.
 The following program uses relaxation of degree 3 and `sdpa` to solve the above problem::
 
 	from sympy import *
+	from Irene import *
 	# introduce variables
 	x = Symbol('x')
 	y = Symbol('y')
@@ -239,6 +240,7 @@ employ ``scipy.optimize.minimize`` with two solvers ``COBYLA`` and ``COBYLA`` an
 `pyswarm <https://github.com/asciimoo/pyswarm>`_::
 
 	from sympy import *
+	from Irene import *
 	# introduce variables
 	x = Symbol('x')
 	y = Symbol('y')
@@ -352,6 +354,7 @@ Then the quotient algebra :math:`\frac{\mathbb{R}[f,g,h,k]}{I}` where :math:`I=\
 the optimization problem. We also compare the outcome of ``SDPRelaxations`` with ``scipy`` and ``pyswarm``::
 
 	from sympy import *
+	from Irene import *
 	# introduce variables
 	x = Symbol('x')
 	f = Function('f')(x)
