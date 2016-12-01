@@ -16,6 +16,8 @@ Contents:
    optim
    approx
    code
+   todo
+   rev
 
 Indices and tables
 ==================
