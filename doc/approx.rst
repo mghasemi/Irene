@@ -221,7 +221,6 @@ Again, we use Legendre approximations for :math:`\sinh y` and :math:`e^{y\sin x}
 	y = Symbol('y')
 	sh = Function('sh')(y)
 	ch = Function('ch')(y)
-	recch = Function('recch')(y)
 	# transcendental term of objective
 	f = exp(y * sin(x))
 	g = sinh(y)

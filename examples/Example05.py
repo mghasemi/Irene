@@ -13,7 +13,6 @@ x = Symbol('x')
 y = Symbol('y')
 sh = Function('sh')(y)
 ch = Function('ch')(y)
-recch = Function('recch')(y)
 # transcendental term of objective
 f = exp(y * sin(x))
 g = sinh(y)
@@ -35,8 +34,10 @@ Orth_g.FormBasis()
 Coeffs_f = Orth_f.Series(f)
 Coeffs_g = Orth_g.Series(g)
 # form the approximations
-f_app = sum([Orth_f.OrthBase[i] * Coeffs_f[i] for i in range(len(Orth_f.OrthBase))])
-g_app = sum([Orth_g.OrthBase[i] * Coeffs_g[i] for i in range(len(Orth_g.OrthBase))])
+f_app = sum([Orth_f.OrthBase[i] * Coeffs_f[i]
+             for i in range(len(Orth_f.OrthBase))])
+g_app = sum([Orth_g.OrthBase[i] * Coeffs_g[i]
+             for i in range(len(Orth_g.OrthBase))])
 # initiate the Relaxation object
 Rlx = SDPRelaxations([x, y])
 # set the objective

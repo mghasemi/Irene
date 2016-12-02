@@ -15,9 +15,8 @@ Contents:
    sdp
    optim
    approx
+   benchmarks
    code
-   todo
-   rev
 
 Indices and tables
 ==================
