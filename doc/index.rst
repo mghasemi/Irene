@@ -17,6 +17,8 @@ Contents:
    approx
    benchmarks
    code
+   rev
+   todo
 
 Indices and tables
 ==================
