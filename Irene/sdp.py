@@ -80,7 +80,40 @@ class sdp(base):
     def Option(self, param, val):
         r"""
         Sets the `param` option of the solver to `val` if the solver accepts
-        such an option.
+        such an option. The following options are supported by solvers:
+            + ``CVXOPT``:
+
+                + ``show_progress``: ``True`` or ``False``, turns the output to the screen on or off (default: ``True``);
+
+                + ``maxiters``: maximum number of iterations (default: 100);
+
+                + ``abstol``: absolute accuracy (default: 1e-7);
+
+                + ``reltol``: relative accuracy (default: 1e-6);
+
+                + ``feastol``: tolerance for feasibility conditions (default: 1e-7);
+
+                + ``refinement``: number of iterative refinement steps when solving KKT equations (default: 0 if the problem has no second-order cone or matrix inequality constraints; 1 otherwise).
+
+            + ``SDPA``:
+
+                + ``maxIteration``: Maximum number of iterations. The SDPA stops when the iteration exceeds ``maxIteration``;
+
+                + ``epsilonStar``, ``epsilonDash``: The accuracy of an approximate optimal solution of the SDP;
+
+                + ``lambdaStar``: This parameter determines an initial point;
+
+                + ``omegaStar``: This parameter determines the region in which the SDPA searches an optimal solution;
+
+                + ``lowerBound``: Lower bound of the minimum objective value of the primal problem;
+
+                + ``upperBound``: Upper bound of the maximum objective value of the dual problem;
+
+                + ``betaStar``: Parameter controlling the search direction when current state is feasible;
+
+                + ``betaBar``: Parameter controlling the search direction when current state is infeasible;
+
+                + ``gammaStar``: Reduction factor for the primal and dual step lengths; 0.0 < ``gammaStar`` < 1.0.
         """
         self.SolverOptions[param] = val
 
@@ -226,6 +259,63 @@ class sdp(base):
         self.Info['Status'] = status_string
         self.Info['CPU'] = total_time
 
+    def sdpa_param(self):
+        r"""
+        Produces sdpa.param file from ``SolverOptions``.
+        """
+        f = open("param.sdpa", 'w')
+        if 'maxIteration' in self.SolverOptions:
+            f.write("%d unsigned int maxIteration;\n" %
+                    self.SolverOptions['maxIteration'])
+        else:
+            f.write("40  unsigned int maxIteration;\n")
+        if 'epsilonStar' in self.SolverOptions:
+            f.write("%f  double 0.0 < epsilonStar;\n" %
+                    self.SolverOptions['epsilonStar'])
+        else:
+            f.write("1.0E-7  double 0.0 < epsilonStar;\n")
+        if 'lambdaStar' in self.SolverOptions:
+            f.write("%f  double 0.0 < lambdaStar;\n" %
+                    self.SolverOptions['lambdaStar'])
+        else:
+            f.write("1.0E2  double 0.0 < lambdaStar;\n")
+        if 'omegaStar' in self.SolverOptions:
+            f.write("%f  double 1.0 < omegaStar;\n" %
+                    self.SolverOptions['omegaStar'])
+        else:
+            f.write("2.0  double 1.0 < omegaStar;\n")
+        if 'lowerBound' in self.SolverOptions:
+            f.write("%f double lowerBound;\n" %
+                    self.SolverOptions['lowerBound'])
+        else:
+            f.write("-1.0E5  double lowerBound;\n")
+        if 'upperBound' in self.SolverOptions:
+            f.write("%f  double upperBound;\n" %
+                    self.SolverOptions['upperBound'])
+        else:
+            f.write("1.0E5  double upperBound;\n")
+        if 'betaStar' in self.SolverOptions:
+            f.write("%f  double 0.0 <= betaStar < 1.0;\n" %
+                    self.SolverOptions['betaStar'])
+        else:
+            f.write("0.1  double 0.0 <= betaStar < 1.0;\n")
+        if 'betaBar' in self.SolverOptions:
+            f.write("%f  double 0.0 <= betaBar < 1.0, betaStar <= betaBar;\n" %
+                    self.SolverOptions['betaBar'])
+        else:
+            f.write("0.2  double 0.0 <= betaBar < 1.0, betaStar <= betaBar;\n")
+        if 'gammaStar' in self.SolverOptions:
+            f.write("%f  double 0.0 < gammaStar < 1.0;\n" %
+                    self.SolverOptions['gammaStar'])
+        else:
+            f.write("0.9  double 0.0 < gammaStar < 1.0;\n")
+        if 'epsilonDash' in self.SolverOptions:
+            f.write("%f  double 0.0 < epsilonDash;\n" %
+                    self.SolverOptions['epsilonDash'])
+        else:
+            f.write("1.0E-7  double 0.0 < epsilonDash;\n")
+        f.close()
+
     def read_csdp_out(self, filename, txt):
         r"""
         Takes a file name and a string that are the outputs of `CSDP` as
@@ -320,22 +410,9 @@ class sdp(base):
         m1 = len(aTranspose)
         acvxopt = Mtx(array(aTranspose).reshape(
             m1 * n1, order='F').astype(float64), size=(m1, n1), tc='d')
-
-        if 'detail' in self.SolverOptions:
-            solvers.options['show_progress'] = self.SolverOptions['detail']
-        else:
-            solvers.options['show_progress'] = False
-
-        if 'iterations' in self.SolverOptions:
-            solvers.options['maxiters'] = max(
-                1, self.SolverOptions['iterations'])
-        else:
-            solvers.options['maxiters'] = 100
-        if 'refinement' in self.SolverOptions:
-            solvers.options['refinement'] = max(
-                1, self.SolverOptions['refinement'])
-        else:
-            solvers.options['refinement'] = 1
+        # CvxOpt options
+        for param in self.SolverOptions:
+            solvers.options[param] = self.SolverOptions[param]
         start1 = time()
         start2 = clock()
 
@@ -372,10 +449,12 @@ class sdp(base):
         from subprocess import call
         prg_file = "prg.dat"
         out_file = "out.res"
+        self.sdpa_param()
+        par_file = "param.sdpa"
         if self.BlockStruct == []:
             self.BlockStruct = [len(B) for B in self.C]
         self.write_sdpa_dat(prg_file)
-        call(["sdpa", prg_file, out_file])
+        call(["sdpa", "-dd", prg_file, "-o", out_file, "-p", par_file])
         self.read_sdpa_out(out_file)
 
     def csdp(self):
