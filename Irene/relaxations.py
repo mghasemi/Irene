@@ -2,6 +2,24 @@ from base import base
 from sdp import sdp
 
 
+def Calpha_(expn, Mmnt):
+    r"""
+    Given an exponent `expn`, this function finds the corresponding
+    :math:`C_{expn}` matrix which can be used for parallel processing.
+    """
+    from numpy import array, float64
+    from sympy import zeros, Poly
+    r = Mmnt.shape[0]
+    C = zeros(r, r)
+    for i in range(r):
+        for j in range(i, r):
+            entity = Mmnt[i, j]
+            if expn in entity:
+                C[i, j] = entity[expn]
+                C[j, i] = C[i, j]
+    return array(C.tolist()).astype(float64)
+
+
 class SDPRelaxations(base):
     r"""
     This class defines a function space by taking a family of sympy
@@ -30,6 +48,13 @@ class SDPRelaxations(base):
         assert type(gens) is list, self.RelsError
         from sympy import Function, Symbol, QQ, RR, groebner
         from sympy.core.relational import Equality, GreaterThan, LessThan, StrictGreaterThan, StrictLessThan
+        import multiprocessing
+        try:
+            from joblib import Parallel
+            self.Parallel = True
+        except Exception as e:
+            self.Parallel = False
+        self.NumCores = multiprocessing.cpu_count()
         self.EQ = Equality
         self.GEQ = GreaterThan
         self.LEQ = LessThan
@@ -87,6 +112,15 @@ class SDPRelaxations(base):
         if self.FreeRelations != []:
             self.Groebner = groebner(
                 self.FreeRelations, domain=self.Field, order=self.MonomialOrder)
+
+    def SetNumCores(self, num):
+        r"""
+        Sets the maximum number of workers which cannot be bigger than 
+        number of available cores.
+        """
+        assert (num > 0) and type(
+            num) is int, "Number of cores must be a positive integer."
+        self.NumCores = min(self.NumCores, num)
 
     def SetSDPSolver(self, solver):
         r"""
@@ -295,6 +329,29 @@ class SDPRelaxations(base):
                 LrMmnt[j, i] = LrMmnt[i, j]
         return LrMmnt
 
+    def LocalizedMoment_(self, p):
+        r"""
+        Computes the reduced symbolic moment generating matrix localized
+        at `p`.
+        """
+        from sympy import Poly, Matrix, expand, zeros
+        from math import ceil
+        try:
+            tot_deg = Poly(p).total_degree()
+        except:
+            tot_deg = 0
+        half_deg = int(ceil(tot_deg / 2.))
+        mmntord = self.MmntOrd - half_deg
+        m = Matrix(self.ReducedMonomialBase(mmntord))
+        LMmnt = expand(p * m * m.T)
+        LrMmnt = zeros(*LMmnt.shape)
+        for i in range(LMmnt.shape[0]):
+            for j in range(i, LMmnt.shape[1]):
+                LrMmnt[i, j] = Poly(self.ReduceExp(
+                    LMmnt[i, j]), *self.AuxSyms).as_dict()
+                LrMmnt[j, i] = LrMmnt[i, j]
+        return LrMmnt
+
     def MomentMat(self):
         r"""
         Returns the numerical moment matrix resulted from solving the SDP.
@@ -334,10 +391,10 @@ class SDPRelaxations(base):
                     C[j, i] = C[i, j]
         return array(C.tolist()).astype(float64)
 
-    def InitSDP(self):
+    def sInitSDP(self):
         r"""
-        Initializes the semidefinite program (SDP) whose solution is a lower 
-        bound for the minimum of the program.
+        Initializes the semidefinite program (SDP), in serial mode, whose 
+        solution is a lower bound for the minimum of the program.
         """
         from numpy import array, float64
         from sympy import zeros, Matrix
@@ -395,6 +452,84 @@ class SDPRelaxations(base):
         self.SDP.A = Blck
         elapsed = (time() - start)
         self.InitTime = elapsed
+
+    def pInitSDP(self):
+        r"""
+        Initializes the semidefinite program (SDP), in parallel, whose 
+        solution is a lower bound for the minimum of the program.
+        """
+        from numpy import array, float64
+        from sympy import zeros, Matrix
+        from time import time
+        from joblib import Parallel, delayed
+        start = time()
+        self.SDP = sdp(self.SDPSolver)
+        self.RelaxationDeg()
+        N = len(self.ReducedMonomialBase(2 * self.MmntOrd))
+        self.MatSize = [len(self.ReducedMonomialBase(self.MmntOrd)), N]
+        Blck = [[] for _ in range(N)]
+        C = []
+        # Number of constraints
+        NumCns = len(self.CnsDegs)
+        # Number of moment constraints
+        NumMomCns = len(self.MomConst)
+        # Reduced vector of monomials of the given order
+        ExpVec = self.ExponentsVec(2 * self.MmntOrd)
+        ## The localized moment matrices should be psd ##
+        for idx in range(NumCns):
+            d = len(self.ReducedMonomialBase(
+                self.MmntOrd - self.CnsHalfDegs[idx]))
+            # Corresponding C block is 0
+            h = zeros(d, d)
+            C.append(array(h.tolist()).astype(float64))
+            Mmnt = self.LocalizedMoment_(self.Constraints[idx])
+            results = Parallel(n_jobs=self.NumCores)(
+                delayed(Calpha_)(ExpVec[i], Mmnt) for i in range(N))
+            for i in range(N):
+                Blck[i].append(results[i])
+        ## Moment matrix should be psd ##
+        d = len(self.ReducedMonomialBase(self.MmntOrd))
+        # Corresponding C block is 0
+        h = zeros(d, d)
+        C.append(array(h.tolist()).astype(float64))
+        Mmnt = self.LocalizedMoment_(1.)
+        results = Parallel(n_jobs=self.NumCores)(
+            delayed(Calpha_)(ExpVec[i], Mmnt) for i in range(N))
+        for i in range(N):
+            Blck[i].append(results[i])
+        ## L(1) = 1 ##
+        for i in range(N):
+            Blck[i].append(array(
+                zeros(1, 1).tolist()).astype(float64))
+            Blck[i].append(array(
+                zeros(1, 1).tolist()).astype(float64))
+        Blck[0][NumCns + 1][0] = 1
+        Blck[0][NumCns + 2][0] = -1
+        C.append(array(Matrix([1]).tolist()).astype(float64))
+        C.append(array(Matrix([-1]).tolist()).astype(float64))
+        # Moment constraints
+        for idx in range(NumMomCns):
+            MomCns = Matrix([self.MomConst[idx][0]])
+            for i in range(N):
+                Blck[i].append(self.Calpha(ExpVec[i], MomCns))
+            C.append(array(
+                Matrix([self.MomConst[idx][1]]).tolist()).astype(float64))
+        self.SDP.C = C
+        self.SDP.b = self.PolyCoefFullVec()
+        self.SDP.A = Blck
+        elapsed = (time() - start)
+        self.InitTime = elapsed
+
+    def InitSDP(self):
+        r"""
+        Initializes the SDP based on availability of ``joblib``.
+        If it is available, it runs in parallel mode, otherwise
+        in serial.
+        """
+        if self.Parallel:
+            self.pInitSDP()
+        else:
+            self.sInitSDP()
 
     def Minimize(self):
         r"""

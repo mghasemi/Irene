@@ -19,6 +19,8 @@ Irene relies on the following packages:
 		- `NumPy <http://www.numpy.org/>`_.
 	+ for symbolic computations:
 		- `SymPy <http://www.sympy.org/>`_.
+	+ for parallel computations (optional):
+		- `Joblib <https://pythonhosted.org/joblib/>`_.
 	+ for semidefinite optimization, at least one of the following is required:
 		- `cvxopt <http://cvxopt.org/>`_,
 		- `dsdp <http://www.mcs.anl.gov/hs/software/DSDP/>`_,
