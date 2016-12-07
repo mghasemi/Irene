@@ -380,7 +380,7 @@ class sdp(base):
             RealNumber = float  # Required for CvxOpt
             Integer = int       # Required for CvxOpt
             self.CvxOpt_Available = True
-        except:
+        except Exception as e:
             self.CvxOpt_Available = False
             self.ErrorString = "CVXOPT is not available."
             raise Exception(self.ErrorString)
@@ -437,7 +437,7 @@ class sdp(base):
                 for ds in sol['zs']:
                     self.Info['X'].append(
                         array(list(ds)).reshape(*ds.size))
-        except:
+        except Exception as e:
             self.Info = {'Status': 'Infeasible'}
 
         self.Info['solver'] = self.solver
@@ -467,7 +467,10 @@ class sdp(base):
         if self.BlockStruct == []:
             self.BlockStruct = [len(B) for B in self.C]
         self.write_sdpa_dat_sparse(prg_file)
-        out = check_output(["csdp", prg_file, out_file])
+        try:
+            out = check_output(["csdp", prg_file, out_file])
+        except Exception as e:
+            pass
         self.read_csdp_out(out_file, out)
 
     def solve(self):

@@ -316,7 +316,7 @@ class SDPRelaxations(base):
         from math import ceil
         try:
             tot_deg = Poly(p).total_degree()
-        except:
+        except Exception as e::
             tot_deg = 0
         half_deg = int(ceil(tot_deg / 2.))
         mmntord = self.MmntOrd - half_deg
@@ -338,7 +338,7 @@ class SDPRelaxations(base):
         from math import ceil
         try:
             tot_deg = Poly(p).total_degree()
-        except:
+        except Exception as e:
             tot_deg = 0
         half_deg = int(ceil(tot_deg / 2.))
         mmntord = self.MmntOrd - half_deg
