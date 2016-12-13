@@ -17,6 +17,7 @@ Irene relies on the following packages:
 
 	+ for vector calculations:
 		- `NumPy <http://www.numpy.org/>`_.
+		- `SciPy <https://www.scipy.org/>`_.
 	+ for symbolic computations:
 		- `SymPy <http://www.sympy.org/>`_.
 	+ for parallel computations (optional):

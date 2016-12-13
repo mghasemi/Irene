@@ -40,7 +40,7 @@ class SDPRelaxations(base):
     MonomialOrder = 'lex'
     SDPSolver = 'cvxopt'
     Info = {}
-    ErrorTolerance = 10**-8
+    ErrorTolerance = 10**-6
     AvailableSolvers = []
 
     def __init__(self, gens, relations=[]):
@@ -316,7 +316,7 @@ class SDPRelaxations(base):
         from math import ceil
         try:
             tot_deg = Poly(p).total_degree()
-        except Exception as e::
+        except Exception as e:
             tot_deg = 0
         half_deg = int(ceil(tot_deg / 2.))
         mmntord = self.MmntOrd - half_deg
@@ -537,7 +537,8 @@ class SDPRelaxations(base):
         a lower bound for the actual minimum.
         """
         self.SDP.solve()
-        self.Solution = SDRelaxSol()
+        self.Solution = SDRelaxSol(
+            self.AuxSyms, symdict=self.SymDict, err_tol=self.ErrorTolerance)
         self.Info = {}
         self.Solution.Status = self.SDP.Info['Status']
         if self.SDP.Info['Status'] == 'Optimal':
@@ -562,6 +563,7 @@ class SDPRelaxations(base):
                     'moments'][idx]
             self.Solution.MomentMatrix = self.MomentMat()
             self.Solution.Solver = self.SDP.solver
+            self.Solution.NumGenerators = self.NumGenerators
         else:
             self.f_min = None
             self.Info['min'] = self.f_min
@@ -593,9 +595,13 @@ class SDRelaxSol(object):
         - ``SDRelaxSol.Status`` final status of the sdp solver
         - ``SDRelaxSol.RelaxationOrd`` order of relaxation
         - ``SDRelaxSol.Message`` the message that maybe returned by the sdp solver
+        - ``SDRelaxSol.ScipySolver`` the scipy solver to extract solutions
+        - ``SDRelaxSol.err_tol`` the minimum value which is considered to be nonzero
+        - ``SDRelaxSol.Support`` the support of discrete measure resulted from ``SDPRelaxation.Minimize()``
+        - ``SDRelaxSol.Weights`` corresponding weights for the Dirac measures
     """
 
-    def __init__(self):
+    def __init__(self, X, symdict={}, err_tol=10e-6):
         self.TruncatedMmntSeq = {}
         self.MomentMatrix = None
         self.Primal = None
@@ -606,6 +612,15 @@ class SDRelaxSol(object):
         self.Status = None
         self.RelaxationOrd = None
         self.Message = None
+        self.Xij = None
+        self.NumGenerators = None
+        # SDPRelaxations auxiliary symbols
+        self.X = X
+        self.SymDict = symdict
+        self.err_tol = err_tol
+        self.ScipySolver = 'lm'
+        self.Support = None
+        self.Weights = None
 
     def __str__(self):
         out_str = "Solution of a Semidefinite Program:\n"
@@ -617,8 +632,121 @@ class SDRelaxSol(object):
             str(self.RunTime) + " seconds\n"
         out_str += "Primal Objective Value: " + str(self.Primal) + "\n"
         out_str += "  Dual Objective Value: " + str(self.Dual) + "\n"
+        if self.Support is not None:
+            out_str += "               Support:\n"
+            for p in self.Support:
+                out_str += "\t\t" + str(p) + "\n"
+            out_str += "          Scipy solver: " + self.ScipySolver + "\n"
         out_str += self.Message + "\n"
         return out_str
+
+    def SetScipySolver(self, solver):
+        r"""
+        Sets the ``scipy.optimize.root`` solver to `solver`.
+        """
+        assert solver.lower() in ['hybr', 'lm', 'broyden1', 'broyden2', 'anderson', 'linearmixing', 'diagbroyden', 'excitingmixing',
+                                  'krylov'], "Unrecognized solver. The solver must be among 'hybr', 'lm', 'broyden1', 'broyden2', 'anderson', 'linearmixing', 'diagbroyden', 'excitingmixing', 'krylov'"
+        self.ScipySolver = solver.lower()
+
+    def NumericalRank(self):
+        r"""
+        Finds the rank of the moment matrix based on the size of its
+        eigenvalues. It considers those with absolute value less than 
+        ``self.err_tol`` to be zero.
+        """
+        from scipy.linalg import eigvals
+        from numpy import isreal, real, abs
+        num_rnk = 0
+        eignvls = eigvals(self.MomentMatrix)
+        for ev in eignvls:
+            if abs(ev) >= self.err_tol:
+                num_rnk += 1
+        return num_rnk
+
+    def Term2Mmnt(self, trm, rnk, X):
+        r"""
+        Converts a moment object into an algebraic equation.
+        """
+        num_vars = len(X)
+        expr = 0
+        for i in range(rnk):
+            expr += self.weight[i] * \
+                trm.subs({X[j]: self.Xij[i][j] for j in range(num_vars)})
+        return expr
+
+    def ExtractSolution(self):
+        r"""
+        This method tries to extract the corresponding values for 
+        generators of the ``SDPRelaxation`` class.
+        Number of points is the rank of the moment matrix which is 
+        computed numerically according to the size of its eigenvalues.
+        Then the points are extracted as solutions of a system of 
+        polynomial equations using a `scipy` solver.
+        The followin solvers are currently acceptable by ``scipy``:
+            - ``hybr``, 
+            - ``lm`` (default),
+            - ``broyden1``, 
+            - ``broyden2``,
+            - ``anderson``,
+            - ``linearmixing``,
+            - ``diagbroyden``, 
+            - ``excitingmixing``.
+        """
+        from scipy import optimize as opt
+        from sympy import Symbol, lambdify, abs
+        rnk = self.NumericalRank()
+        self.weight = [Symbol('w%d' % i, real=True) for i in range(1, rnk + 1)]
+        self.Xij = [[Symbol('X%d%d' % (i, j), real=True) for i in range(1, self.NumGenerators + 1)]
+                    for j in range(1, rnk + 1)]
+        syms = [s for row in self.Xij for s in row]
+        for ri in self.weight:
+            syms.append(ri)
+        req = sum(self.weight) - 1
+        algeqs = {idx.subs(self.SymDict): self.TruncatedMmntSeq[
+            idx] for idx in self.TruncatedMmntSeq}
+        indices = []
+        included_sysms = set(self.weight)
+        EQS = [req]
+        hold = []
+        for i in range(len(algeqs)):
+            trm = algeqs.keys()[i]
+            if trm != 1:
+                strm = self.Term2Mmnt(trm, rnk, self.X) - algeqs[trm]
+                strm_syms = strm.free_symbols
+                if not strm_syms.issubset(included_sysms):
+                    # EQS.append(strm)
+                    EQS.append(strm.subs({ri: abs(ri) for ri in self.weight}))
+                    included_sysms = included_sysms.union(strm_syms)
+                else:
+                    # hold.append(strm)
+                    hold.append(strm.subs({ri: abs(ri) for ri in self.weight}))
+        idx = 0
+        while (len(EQS) < len(syms)):
+            EQS.append(hold[idx])
+            idx += 1
+        if (included_sysms != set(syms)) or (len(EQS) != len(syms)):
+            raise Exception("Unable to find the support.")
+        f_ = [lambdify(syms, eq, 'numpy') for eq in EQS]
+
+        def f(x):
+            z = tuple(float(x.item(i)) for i in range(len(syms)))
+            return [fn(*z) for fn in f_]
+        init_point = tuple(0.  # uniform(-10, 10)
+                           for _ in range(len(syms)))
+        sol = opt.root(f, init_point, method=self.ScipySolver)
+        if sol['success']:
+            self.Support = []
+            self.Weights = []
+            idx = 0
+            while idx < len(syms) - rnk:
+                minimizer = []
+                for i in range(self.NumGenerators):
+                    minimizer.append(sol['x'][idx])
+                    idx += 1
+                self.Support.append(tuple(minimizer))
+            while idx < len(syms):
+                self.Weights.append(sol['x'][idx])
+                idx += 1
 
 #######################################################################
 # A Symbolic object to handle moment constraints

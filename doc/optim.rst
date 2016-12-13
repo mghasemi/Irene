@@ -224,6 +224,13 @@ Solution is::
 	Moment of x*y: 0.500000001712
 	Moment of y*z + z: 2.72623169152
 
+Equality Constraints
+-----------------------------
+Although it is possible to add equality constraints via ``AddConstraint`` and ``MomentConstraint``, but 
+`SDPRelaxation` converts them to two inequalities and considers a certain margin of error. 
+For :math:`A=B`, it considers :math:`A\ge B - \varepsilon` and :math:`A\leq B + \varepsilon`.
+In this case the value of :math:`\varepsilon` can be modified by setting `SDPRelaxation.ErrorTolerance`
+which its default value is :math:`10^{-6}`.
 
 Optimization over Varieties
 =============================
@@ -436,3 +443,32 @@ Solutions are::
 	Stopping search: Swarm best objective change less than 1e-08
 	(array([-1.57078003,  6.28318074]), -11.999999997051434)
 
+The ``SDRelaxSol``
+======================================
+
+This object is a container for the solution of ``SDPRelaxation`` objects.
+It contains the following informations:
+	- `Primal`: the value of the SDP in primal form,
+	- `Dual`: the value of the SDP in dual form,
+	- `RunTime`: the run time of the sdp solver,
+	- `InitTime`: the total time consumed for initialization of the sdp,
+	- `Solver`: the name of sdp solver,
+	- `Status`: final status of the sdp solver,
+	- `RelaxationOrd`: order of relaxation,
+	- `TruncatedMmntSeq`: a dictionary of resulted moments,
+	- `MomentMatrix`: the resulted moment matrix,
+	- `ScipySolver`: the scipy solver to extract solutions,
+	- `err_tol`: the minimum value which is considered to be nonzero,
+	- `Support`: the support of discrete measure resulted from ``SDPRelaxation.Minimize()``,
+	- `Weights`: corresponding weights for the Dirac measures.
+
+By default, the support of the measure is not calculated, but it can be approximated by calling 
+the method ``SDRelaxSol.ExtractSolution()``. There exists an exact theoretical method for 
+extracting the support of the solution measure as explained in [HL]_. But because of the numerical
+error of sdp solvers, computing rank and hence the support is quite difficult.
+So,``SDRelaxSol.ExtractSolution()`` estimates the rank numerically by assuming that eigenvalues 
+with absolute value less than ``err_tol`` which by default is set to ``SDPRelaxation.ErrorTolerance``.
+Then uses ``scipy.optimize.root`` to approximate the support. The default ``scipy`` solver is set to 
+`lm`, but other solvers can be selected using ``SDRelaxSol.SetScipySolver(solver)``.
+
+.. [HL] D. Henrion and J-B. Lasserre, *Detecting Global Optimality and Extracting Solutions in GloptiPoly*, Positive Polynomials in Control, LNCIS 312, 293-310 (2005).
