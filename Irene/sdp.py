@@ -234,7 +234,7 @@ class sdp(base):
                     xVec = array([float(m) for m in line.replace(
                         '{', '').replace('}', '').split(',')])
                 if line.find("phase.value") > -1:
-                    if line.find("pdOPT") > -1:
+                    if (line.find("pdOPT") > -1) or line.find("pdFEAS") > -1:
                         status_string = 'Optimal'
                     elif line.find("INF") > -1:
                         status_string = 'Infeasible'
@@ -417,7 +417,7 @@ class sdp(base):
         start2 = clock()
 
         try:
-            # if True:
+            #if True:
             sol = solvers.sdp(acvxopt, Gs=Acvxopt, hs=Ccvxopt,
                               solver=self.solver.lower())
             elapsed1 = (time() - start1)

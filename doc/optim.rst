@@ -232,6 +232,65 @@ For :math:`A=B`, it considers :math:`A\ge B - \varepsilon` and :math:`A\leq B + 
 In this case the value of :math:`\varepsilon` can be modified by setting `SDPRelaxation.ErrorTolerance`
 which its default value is :math:`10^{-6}`.
 
+Optimization of Rational Functions
+==================================
+
+Given two polynomials :math:`p(X), q(X), g_1(X),\dots,g_m(X)`, the minimum of :math:`\frac{p(X)}{q(X)}` over
+:math:`K=\{x:g_i(x)\ge0,~i=1,\dots,m\}` is equal to 
+
+.. math::
+
+	\left\lbrace
+	\begin{array}{ll}
+		\min & \int p(X)~d\mu \\
+		\textrm{subject to} & \\
+			& \int q(X)~d\mu = 1, \\
+			& \mu\in\mathcal{M}^+(K).
+	\end{array}\right.
+
+Note that in this case :math:`\mu` is not taken to be a probability measure, but instead :math:`\int q(X)~d\mu = 1`.
+We can use ``SDPRelaxations.Probability = False`` to relax the probability condition on :math:`\mu` and use moment
+constraints to enforce :math:`\int q(X)~d\mu = 1`. The following example explains this.
+
+**Example:** Find the minimum of :math:`\frac{x^2-2x}{x^2+2x+1}`.::
+
+	from sympy import *
+	from Irene import *
+	# define the symbolic variable
+	x = Symbol('x')
+	# initiate the SDPRelaxations object
+	Rlx = SDPRelaxations([x])
+	# settings
+	Rlx.Probability = False
+	# set the objective
+	Rlx.SetObjective(x**2 - 2*x)
+	# moment constraint
+	Rlx.MomentConstraint(Mom(x**2+2*x+1) == 1)
+	# set the sdp solver
+	Rlx.SetSDPSolver('cvxopt')
+	# initiate the SDP
+	Rlx.InitSDP()
+	# solve the SDP
+	Rlx.Minimize()
+	print Rlx.Solution
+
+The result is::
+
+	Solution of a Semidefinite Program:
+	                Solver: CVXOPT
+	                Status: Optimal
+	   Initialization Time: 0.167912006378 seconds
+	              Run Time: 0.008987 seconds
+	Primal Objective Value: -0.333333666913
+	  Dual Objective Value: -0.333333667469
+	Feasible solution for moments of order 1
+
+.. note::
+
+	Beside ``SDPRelaxations.Probability`` there is another attribute ``SDPRelaxations.PSDMoment``
+	which by default is set to ``True`` and makes sure that the sdp solver assumes positivity for
+	the moment matrix.
+
 Optimization over Varieties
 =============================
 
@@ -443,6 +502,70 @@ Solutions are::
 	Stopping search: Swarm best objective change less than 1e-08
 	(array([-1.57078003,  6.28318074]), -11.999999997051434)
 
+SOS Decomposition
+======================================
+
+Let :math:`f_*` be the result of ``SDPRelaxations.Minimize()``, then :math:`f-f_*\in Q_{\bf g}`.
+Therefore, there exist :math:`\sigma_0,\sigma_1,\dots,\sigma_m\in \sum A^2` such that
+:math:`f-f_*=\sigma_0+\sum_{i=1}^m\sigma_i g_i`. Once the ``Minimize()`` is called, the method
+``SDPRelaxations.Decompose()`` returns this a dictionary of elements of :math:`A` of the form
+``{0:[a(0, 1), ..., a(0, k_0)], ..., m:[a(m, 1), ..., a(m, k_m)}`` such that
+
+.. math::
+	f-f_* = \sum_{i=0}^{m}g_i\sum_{j=1}^{k_i} a^2_{ij},
+
+where :math:`g_0=1`.
+
+Usually there are extra coefficients that are very small in absolute value as a result of 
+round off error that should be ignored.
+
+The following example shows how to employ this functionality::
+
+	from sympy import *
+	from Irene import SDPRelaxations
+	# define the symbolic variables and functions
+	x = Symbol('x')
+	y = Symbol('y')
+	z = Symbol('z')
+
+	Rlx = SDPRelaxations([x, y, z])
+	Rlx.SetObjective(x**3 + x**2 * y**2 + z**2 * x * y - x * z)
+	Rlx.AddConstraint(9 - (x**2 + y**2 + z**2) >= 0)
+	# initiate the SDP
+	Rlx.InitSDP()
+	# solve the SDP
+	Rlx.Minimize()
+	print Rlx.Solution
+	# extract decomposition
+	V = Rlx.Decompose()
+	# test the decomposition
+	sos = 0
+	for v in V:
+	    # for g0 = 1
+	    if v == 0:
+	        sos = expand(Rlx.ReduceExp(sum([p**2 for p in V[v]])))
+	    # for g1, the constraint
+	    else:
+	        sos = expand(Rlx.ReduceExp(
+	            sos + Rlx.Constraints[v - 1] * sum([p**2 for p in V[v]])))
+	sos = sos.subs(Rlx.RevSymDict)
+	pln = Poly(sos).as_dict()
+	pln = {ex:round(pln[ex],5) for ex in pln}
+	print Poly(pln, (x,y,z)).as_expr()
+
+The output looks like this::
+
+	Solution of a Semidefinite Program:
+	                Solver: CVXOPT
+	                Status: Optimal
+	   Initialization Time: 0.875229120255 seconds
+	              Run Time: 0.031426 seconds
+	Primal Objective Value: -27.4974076889
+	  Dual Objective Value: -27.4974076213
+	Feasible solution for moments of order 2
+
+	1.0*x**3 + 1.0*x**2*y**2 + 1.0*x*y*z**2 - 1.0*x*z + 27.49741
+
 The ``SDRelaxSol``
 ======================================
 
@@ -466,9 +589,11 @@ By default, the support of the measure is not calculated, but it can be approxim
 the method ``SDRelaxSol.ExtractSolution()``. There exists an exact theoretical method for 
 extracting the support of the solution measure as explained in [HL]_. But because of the numerical
 error of sdp solvers, computing rank and hence the support is quite difficult.
-So,``SDRelaxSol.ExtractSolution()`` estimates the rank numerically by assuming that eigenvalues 
+So, ``SDRelaxSol.ExtractSolution()`` estimates the rank numerically by assuming that eigenvalues 
 with absolute value less than ``err_tol`` which by default is set to ``SDPRelaxation.ErrorTolerance``.
 Then uses ``scipy.optimize.root`` to approximate the support. The default ``scipy`` solver is set to 
 `lm`, but other solvers can be selected using ``SDRelaxSol.SetScipySolver(solver)``.
+It is not guaranteed that scipy solvers return a reliable answer, but modifying sdp solvers and other
+parameters like ``SDPRelaxation.ErrorTolerance`` may help to get better results.
 
 .. [HL] D. Henrion and J-B. Lasserre, *Detecting Global Optimality and Extracting Solutions in GloptiPoly*, Positive Polynomials in Control, LNCIS 312, 293-310 (2005).

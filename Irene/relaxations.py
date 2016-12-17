@@ -42,6 +42,8 @@ class SDPRelaxations(base):
     Info = {}
     ErrorTolerance = 10**-6
     AvailableSolvers = []
+    PSDMoment = True
+    Probability = True
 
     def __init__(self, gens, relations=[]):
         assert type(gens) is list, self.GensError
@@ -357,7 +359,7 @@ class SDPRelaxations(base):
         Returns the numerical moment matrix resulted from solving the SDP.
         """
         assert 'moments' in self.Info, "The sdp has not been (successfully) solved (yet)."
-        from numpy import array, float64
+        from numpy import array, float64, matrix
         from sympy import Poly
         from operator import mul
         Mmnt = self.LocalizedMoment(1.)
@@ -423,23 +425,27 @@ class SDPRelaxations(base):
             for i in range(N):
                 Blck[i].append(self.Calpha(ExpVec[i], Mmnt))
         ## Moment matrix should be psd ##
-        d = len(self.ReducedMonomialBase(self.MmntOrd))
-        # Corresponding C block is 0
-        h = zeros(d, d)
-        C.append(array(h.tolist()).astype(float64))
-        Mmnt = self.LocalizedMoment(1.)
-        for i in range(N):
-            Blck[i].append(self.Calpha(ExpVec[i], Mmnt))
+        if self.PSDMoment:
+            d = len(self.ReducedMonomialBase(self.MmntOrd))
+            # Corresponding C block is 0
+            h = zeros(d, d)
+            C.append(array(h.tolist()).astype(float64))
+            Mmnt = self.LocalizedMoment(1.)
+            for i in range(N):
+                Blck[i].append(self.Calpha(ExpVec[i], Mmnt))
         ## L(1) = 1 ##
-        for i in range(N):
-            Blck[i].append(array(
-                zeros(1, 1).tolist()).astype(float64))
-            Blck[i].append(array(
-                zeros(1, 1).tolist()).astype(float64))
-        Blck[0][NumCns + 1][0] = 1
-        Blck[0][NumCns + 2][0] = -1
-        C.append(array(Matrix([1]).tolist()).astype(float64))
-        C.append(array(Matrix([-1]).tolist()).astype(float64))
+        if self.Probability:
+            for i in range(N):
+                Blck[i].append(array(
+                    zeros(1, 1).tolist()).astype(float64))
+                Blck[i].append(array(
+                    zeros(1, 1).tolist()).astype(float64))
+            #Blck[0][NumCns + 1][0] = 1
+            #Blck[0][NumCns + 2][0] = -1
+            Blck[0][-2][0] = 1
+            Blck[0][-1][0] = -1
+            C.append(array(Matrix([1]).tolist()).astype(float64))
+            C.append(array(Matrix([-1]).tolist()).astype(float64))
         # Moment constraints
         for idx in range(NumMomCns):
             MomCns = Matrix([self.MomConst[idx][0]])
@@ -488,25 +494,29 @@ class SDPRelaxations(base):
             for i in range(N):
                 Blck[i].append(results[i])
         ## Moment matrix should be psd ##
-        d = len(self.ReducedMonomialBase(self.MmntOrd))
-        # Corresponding C block is 0
-        h = zeros(d, d)
-        C.append(array(h.tolist()).astype(float64))
-        Mmnt = self.LocalizedMoment_(1.)
-        results = Parallel(n_jobs=self.NumCores)(
-            delayed(Calpha_)(ExpVec[i], Mmnt) for i in range(N))
-        for i in range(N):
-            Blck[i].append(results[i])
+        if self.PSDMoment:
+            d = len(self.ReducedMonomialBase(self.MmntOrd))
+            # Corresponding C block is 0
+            h = zeros(d, d)
+            C.append(array(h.tolist()).astype(float64))
+            Mmnt = self.LocalizedMoment_(1.)
+            results = Parallel(n_jobs=self.NumCores)(
+                delayed(Calpha_)(ExpVec[i], Mmnt) for i in range(N))
+            for i in range(N):
+                Blck[i].append(results[i])
         ## L(1) = 1 ##
-        for i in range(N):
-            Blck[i].append(array(
-                zeros(1, 1).tolist()).astype(float64))
-            Blck[i].append(array(
-                zeros(1, 1).tolist()).astype(float64))
-        Blck[0][NumCns + 1][0] = 1
-        Blck[0][NumCns + 2][0] = -1
-        C.append(array(Matrix([1]).tolist()).astype(float64))
-        C.append(array(Matrix([-1]).tolist()).astype(float64))
+        if self.Probability:
+            for i in range(N):
+                Blck[i].append(array(
+                    zeros(1, 1).tolist()).astype(float64))
+                Blck[i].append(array(
+                    zeros(1, 1).tolist()).astype(float64))
+            #Blck[0][NumCns + 1][0] = 1
+            #Blck[0][NumCns + 2][0] = -1
+            Blck[0][-2][0] = 1
+            Blck[0][-1][0] = -1
+            C.append(array(Matrix([1]).tolist()).astype(float64))
+            C.append(array(Matrix([-1]).tolist()).astype(float64))
         # Moment constraints
         for idx in range(NumMomCns):
             MomCns = Matrix([self.MomConst[idx][0]])
@@ -576,6 +586,35 @@ class SDPRelaxations(base):
         self.Info["Size"] = self.MatSize
         return self.f_min
 
+    def Decompose(self):
+        r"""
+        Returns a dictionary that associates a list to every constraint,
+        :math:`g_i\ge0` for :math:`i=0,\dots,m`, where :math:`g_0=1`.
+        Each list consists of elements of algebra whose sums of squares
+        is equal to :math:`\sigma_i` and :math:`f-f_*=\sum_{i=0}^m\sigma_ig_i`.
+        Here, :math:`f_*` is the output of the ``SDPRelaxation.Minimize()``.
+        """
+        from numpy.linalg import cholesky
+        from sympy import Matrix
+        SOSCoefs = {}
+        blks = []
+        NumCns = len(self.CnsDegs)
+        for M in self.SDP.Info['X']:
+            blks.append(Matrix(cholesky(M)))
+        for idx in range(NumCns):
+            SOSCoefs[idx+1] = []
+            v = Matrix(self.ReducedMonomialBase(self.MmntOrd - self.CnsHalfDegs[idx])).T
+            decomp = v*blks[idx]
+            for p in decomp:
+                SOSCoefs[idx+1].append(p.subs(self.RevSymDict))
+        v = Matrix(self.ReducedMonomialBase(self.MmntOrd)).T
+        SOSCoefs[0] = []
+        decomp = v*blks[NumCns]
+        for p in decomp:
+            SOSCoefs[0].append(p.subs(self.RevSymDict))
+        return SOSCoefs
+
+
 #######################################################################
 # Solution of the Semidefinite Relaxation
 
@@ -644,8 +683,8 @@ class SDRelaxSol(object):
         r"""
         Sets the ``scipy.optimize.root`` solver to `solver`.
         """
-        assert solver.lower() in ['hybr', 'lm', 'broyden1', 'broyden2', 'anderson', 'linearmixing', 'diagbroyden', 'excitingmixing',
-                                  'krylov'], "Unrecognized solver. The solver must be among 'hybr', 'lm', 'broyden1', 'broyden2', 'anderson', 'linearmixing', 'diagbroyden', 'excitingmixing', 'krylov'"
+        assert solver.lower() in ['hybr', 'lm', 'broyden1', 'broyden2', 'anderson', 'linearmixing', 'diagbroyden', 'excitingmixing', 'krylov',
+                                  'df-sane'], "Unrecognized solver. The solver must be among 'hybr', 'lm', 'broyden1', 'broyden2', 'anderson', 'linearmixing', 'diagbroyden', 'excitingmixing', 'krylov', 'df-sane'"
         self.ScipySolver = solver.lower()
 
     def NumericalRank(self):
@@ -690,10 +729,12 @@ class SDRelaxSol(object):
             - ``anderson``,
             - ``linearmixing``,
             - ``diagbroyden``, 
-            - ``excitingmixing``.
+            - ``excitingmixing``,
+            - ``krylov``,
+            - ``df-sane``.
         """
         from scipy import optimize as opt
-        from sympy import Symbol, lambdify, abs
+        from sympy import Symbol, lambdify, Abs
         rnk = self.NumericalRank()
         self.weight = [Symbol('w%d' % i, real=True) for i in range(1, rnk + 1)]
         self.Xij = [[Symbol('X%d%d' % (i, j), real=True) for i in range(1, self.NumGenerators + 1)]
@@ -715,15 +756,18 @@ class SDRelaxSol(object):
                 strm_syms = strm.free_symbols
                 if not strm_syms.issubset(included_sysms):
                     # EQS.append(strm)
-                    EQS.append(strm.subs({ri: abs(ri) for ri in self.weight}))
+                    EQS.append(strm.subs({ri: Abs(ri) for ri in self.weight}))
                     included_sysms = included_sysms.union(strm_syms)
                 else:
                     # hold.append(strm)
-                    hold.append(strm.subs({ri: abs(ri) for ri in self.weight}))
+                    hold.append(strm.subs({ri: Abs(ri) for ri in self.weight}))
         idx = 0
         while (len(EQS) < len(syms)):
-            EQS.append(hold[idx])
-            idx += 1
+            if len(hold)>idx:
+                EQS.append(hold[idx])
+                idx += 1
+            else:
+                break
         if (included_sysms != set(syms)) or (len(EQS) != len(syms)):
             raise Exception("Unable to find the support.")
         f_ = [lambdify(syms, eq, 'numpy') for eq in EQS]
@@ -731,7 +775,7 @@ class SDRelaxSol(object):
         def f(x):
             z = tuple(float(x.item(i)) for i in range(len(syms)))
             return [fn(*z) for fn in f_]
-        init_point = tuple(0.  # uniform(-10, 10)
+        init_point = tuple(0.  # uniform(-self.err_tol, self.err_tol)
                            for _ in range(len(syms)))
         sol = opt.root(f, init_point, method=self.ScipySolver)
         if sol['success']:
@@ -769,8 +813,9 @@ class Mom(object):
 
     def __init__(self, expr):
         from types import IntType, LongType, FloatType
+        from sympy import sympify
         self.NumericTypes = [IntType, LongType, FloatType]
-        self.Content = expr
+        self.Content = sympify(expr)
         self.rhs = 0
         self.TYPE = None
 
