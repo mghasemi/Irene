@@ -6,7 +6,7 @@ There are benchmark problems to evaluated how good an optimization method works.
 We apply the generalized relaxation method to some of these benchmarks that are
 mainly taken from [MJXY]_.
 
-.. [MJXY] M. Jamil, Xin-She Yang, *A literature survey of benchmark functions for global optimization problems*, IJMMNO, Vol. 4(2), 2013.
+.. [MJXY] M\. Jamil, Xin-She Yang, *A literature survey of benchmark functions for global optimization problems*, IJMMNO, Vol. 4(2), 2013.
 
 Rosenbrock Function
 ==================================

@@ -19,6 +19,7 @@ Contents:
    code
    rev
    todo
+   appendix
 
 Indices and tables
 ==================

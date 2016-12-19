@@ -11,4 +11,5 @@ Revision History
 	- Extracting minimizers by ``SDRelaxSol.ExtractSolution()`` and help of ``scipy``,
 	- Adding ``SDPRelaxations.Probability`` and ``SDPRelaxations.PSDMoment`` to give more flexibility over moments and enables rational minimization.
 	- SOS decomposition implemented.
-	- ``__str__`` method for ``SDPRelaxations``
+	- ``__str__`` method for ``SDPRelaxations``.
+	- Using `pyOpt` as the external optimizer.

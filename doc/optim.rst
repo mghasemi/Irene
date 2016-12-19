@@ -93,6 +93,16 @@ the optimum value of the original program and semidefinite programs can be solve
 problem of optimization can be solved in P-time, but since the number of SDPs that is required to reach the optimum is unknown and such a bound does
 not exists when dealing with Archimedean modules.
 
+.. note::
+	
+
+	1. One behavior that distinguishes this method from others is that using SDP relaxations always provides a lower bound for the\ 
+	minimum value of the objective function over the feasibility set. While other methods usually involve evaluation of the objective\ 
+	and hence the result is always an upper bound for the minimum.
+	
+	2. The SDP relaxation method relies on symbolic computations which could be quite costly and slow. Therefore, dealing with rather large
+	problems -although `Irene` takes advantage from multiple cores- can be rather slow.
+
 .. [GIKM] M\. Ghasemi, M. Infusino, S. Kuhlmann and M. Marshall, *Truncated Moment Problem for unital commutative real algebras*, to appear.
 .. [JBL] J-B. Lasserre, *Global optimization with polynomials and the problem of moments*, SIAM J. Optim. 11(3) 796-817 (2000).
 
@@ -744,4 +754,4 @@ Then uses ``scipy.optimize.root`` to approximate the support. The default ``scip
 It is not guaranteed that scipy solvers return a reliable answer, but modifying sdp solvers and other
 parameters like ``SDPRelaxation.ErrorTolerance`` may help to get better results.
 
-.. [HL] D. Henrion and J-B. Lasserre, *Detecting Global Optimality and Extracting Solutions in GloptiPoly*, Positive Polynomials in Control, LNCIS 312, 293-310 (2005).
+.. [HL] D\. Henrion and J-B. Lasserre, *Detecting Global Optimality and Extracting Solutions in GloptiPoly*, Positive Polynomials in Control, LNCIS 312, 293-310 (2005).
