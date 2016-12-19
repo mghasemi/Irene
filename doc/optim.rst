@@ -163,7 +163,7 @@ The output looks like::
 	Solution of a Semidefinite Program:
 	                Solver: DSDP
 	                Status: Optimal
-	   Initialization Time: 31.0824120045 seconds
+	   Initialization Time: 8.04711222649 seconds
 	              Run Time: 1.056733 seconds
 	Primal Objective Value: -4.06848294478
 	  Dual Objective Value: -4.06848289445
@@ -176,6 +176,7 @@ by calling ``MomentConstraint`` on a ``Mom`` object. The following adds two cons
 :math:`\int yz~d\mu + \int z~d\mu\ge 1` to the previous example::
 
 	from sympy import *
+	from Irene import *
 	# introduce variables
 	x = Symbol('x')
 	y = Symbol('y')
@@ -215,7 +216,7 @@ Solution is::
 	Solution of a Semidefinite Program:
 	                Solver: DSDP
 	                Status: Optimal
-	   Initialization Time: 32.9848718643 seconds
+	   Initialization Time: 7.91646790504 seconds
 	              Run Time: 1.041935 seconds
 	Primal Objective Value: -4.03644346623
 	  Dual Objective Value: -4.03644340796
@@ -252,7 +253,7 @@ Note that in this case :math:`\mu` is not taken to be a probability measure, but
 We can use ``SDPRelaxations.Probability = False`` to relax the probability condition on :math:`\mu` and use moment
 constraints to enforce :math:`\int q(X)~d\mu = 1`. The following example explains this.
 
-**Example:** Find the minimum of :math:`\frac{x^2-2x}{x^2+2x+1}`.::
+**Example:** Find the minimum of :math:`\frac{x^2-2x}{x^2+2x+1}`::
 
 	from sympy import *
 	from Irene import *
@@ -302,8 +303,8 @@ In order to deal with the term :math:`\sqrt[3]{(xy)^2}`, we introduce an algebra
 monomial order for Groebner basis computations (default is `lex` for lexicographic order).
 Clearly :math:`xy-\sqrt[3]{(xy)}^3=0`. Therefore by introducing an auxiliary variable or function symbol, say :math:`f(x,y)` the problem
 can be stated in the quotient of :math:`\frac{\mathbb{R}[x,y,f]}{\langle xy-f^3\rangle}`. To check the result of ``SDPRelaxations`` we
-employ ``scipy.optimize.minimize`` with two solvers ``COBYLA`` and ``COBYLA`` and a PSO minimizer like 
-`pyswarm <https://github.com/asciimoo/pyswarm>`_::
+employ ``scipy.optimize.minimize`` with two solvers ``COBYLA`` and ``COBYLA`` as well as two solvers, `Augmented Lagrangian Particle Swarm 
+Optimizer` and `Non Sorting Genetic Algorithm II` from `pyOpt <http://www.pyopt.org/>`_::
 
 	from sympy import *
 	from Irene import *
@@ -331,8 +332,9 @@ employ ``scipy.optimize.minimize`` with two solvers ``COBYLA`` and ``COBYLA`` an
 	# output
 	print Rlx.Solution
 	# using scipy
+	from numpy import power
 	from scipy.optimize import minimize
-	fun = lambda x: numpy.power(x[0]**2 * x[1]**2, 1. / 3.) - x[0] + x[1]**2
+	fun = lambda x: power(x[0]**2 * x[1]**2, 1. / 3.) - x[0] + x[1]**2
 	cons = (
 	    {'type': 'ineq', 'fun': lambda x: 9 - x[0]**2 - x[1]**2})
 	sol1 = minimize(fun, (0, 0), method='COBYLA', constraints=cons)
@@ -341,13 +343,30 @@ employ ``scipy.optimize.minimize`` with two solvers ``COBYLA`` and ``COBYLA`` an
 	print sol1
 	print "solution according to 'SLSQP'"
 	print sol2
-	# particle swarm optimization
-	from pyswarm import pso
-	lb = [-9, -9]
-	ub = [9, 9]
-	cns = [cons['fun']]
-	print "PSO:"
-	print pso(fun, lb, ub, ieqcons=cns)
+
+	# pyOpt
+	from pyOpt import *
+
+	def objfunc(x):
+		from numpy import power
+		f = power(x[0]**2 * x[1]**2, 1. / 3.) - x[0] + x[1]**2
+		g = [x[0]**2 + x[1]**2 - 9]
+		fail = 0
+		return f, g, fail
+
+	opt_prob = Optimization('A third root function', objfunc)
+	opt_prob.addVar('x1', 'c', lower=-3, upper=3, value=0.0)
+	opt_prob.addVar('x2', 'c', lower=-3, upper=3, value=0.0)
+	opt_prob.addObj('f')
+	opt_prob.addCon('g1', 'i')
+	# Augmented Lagrangian Particle Swarm Optimizer
+	alpso = ALPSO()
+	alpso(opt_prob)
+	print opt_prob.solution(0)
+	# Non Sorting Genetic Algorithm II
+	nsg2 = NSGA2()
+	nsg2(opt_prob)
+	print opt_prob.solution(1)
 
 The output will be::
 	
@@ -378,9 +397,60 @@ The output will be::
 	  status: 0
 	 success: True
 	       x: array([  3.00000000e+00,  -1.25290367e-09])
-	PSO:
-	Stopping search: Swarm best position change less than 1e-08
-	(array([  2.99999996e+00,   4.41523681e-12]), -2.9999999060604554)
+	
+	ALPSO Solution to A third root function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.1174
+	    Total Function Evaluations:      1720
+	    Lambda: [ 0.00023458]
+	    Seed: 1482111093.38230896
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f        -2.99915             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	      3.000000      -3.00e+00     3.00e+00 
+		     x2       c	      0.000008      -3.00e+00     3.00e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= 0.000000 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+
+	NSGA-II Solution to A third root function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.3833
+	    Total Function Evaluations:          
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f        -2.99898             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	      3.000000      -3.00e+00     3.00e+00 
+		     x2       c	     -0.000011      -3.00e+00     3.00e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= -0.000000 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
 
 
 Optimization over arbitrary functions
@@ -450,31 +520,54 @@ the optimization problem. We also compare the outcome of ``SDPRelaxations`` with
 	# using scipy
 	from scipy.optimize import minimize
 	fun = lambda x: -(sin(x[0]) - 1)**3 - (sin(x[0]) -
-	                                        cos(x[1]))**4 - (cos(x[1]) - 3)**2
+	                                       cos(x[1]))**4 - (cos(x[1]) - 3)**2
 	cons = (
 	    {'type': 'ineq', 'fun': lambda x: 10 - (sin(x[0]) - 1)**2},
 	    {'type': 'ineq', 'fun': lambda x: 10 - (sin(x[0]) - cos(x[1]))**2},
 	    {'type': 'ineq', 'fun': lambda x: 10 - (cos(x[1]) - 3)**2})
 	sol1 = minimize(fun, (0, 0), method='COBYLA', constraints=cons)
 	sol2 = minimize(fun, (0, 0), method='SLSQP', constraints=cons)
-	print  "solution according to 'COBYLA':"
+	print "solution according to 'COBYLA':"
 	print sol1
 	print "solution according to 'SLSQP':"
 	print sol2
-	# particle swarm optimization
-	from pyswarm import pso
-	lb = [-10, -10]
-	ub = [10, 10]
-	cns = [cons[0]['fun'], cons[1]['fun'], cons[2]['fun']]
-	print "PSO:"
-	print pso(fun, lb, ub, ieqcons=cns)
+	# pyOpt
+	from pyOpt import *
+
+
+	def objfunc(x):
+	    from numpy import sin, cos
+	    f = -(sin(x[0]) - 1)**3 - (sin(x[0]) - cos(x[1]))**4 - (cos(x[1]) - 3)**2
+	    g = [
+	        (sin(x[0]) - 1)**2 - 10,
+	        (sin(x[0]) - cos(x[1]))**2 - 10,
+	        (cos(x[1]) - 3)**2 - 10
+	    ]
+	    fail = 0
+	    return f, g, fail
+
+	opt_prob = Optimization('A trigonometric function', objfunc)
+	opt_prob.addVar('x1', 'c', lower=-10, upper=10, value=0.0)
+	opt_prob.addVar('x2', 'c', lower=-10, upper=10, value=0.0)
+	opt_prob.addObj('f')
+	opt_prob.addCon('g1', 'i')
+	opt_prob.addCon('g2', 'i')
+	opt_prob.addCon('g3', 'i')
+	# Augmented Lagrangian Particle Swarm Optimizer
+	alpso = ALPSO()
+	alpso(opt_prob)
+	print opt_prob.solution(0)
+	# Non Sorting Genetic Algorithm II
+	nsg2 = NSGA2()
+	nsg2(opt_prob)
+	print opt_prob.solution(1)
 
 Solutions are::
 
 	Solution of a Semidefinite Program:
 	                Solver: CSDP
 	                Status: Optimal
-	   Initialization Time: 4.23285317421 seconds
+	   Initialization Time: 3.22915506363 seconds
 	              Run Time: 0.016662 seconds
 	Primal Objective Value: -12.0
 	  Dual Objective Value: -12.0
@@ -498,9 +591,63 @@ Solutions are::
 	  status: 0
 	 success: True
 	       x: array([ -1.57079782e+00,  -6.42618794e-07])
-	PSO:
-	Stopping search: Swarm best objective change less than 1e-08
-	(array([-1.57078003,  6.28318074]), -11.999999997051434)
+
+	ALPSO Solution to A trigonometric function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.3503
+	    Total Function Evaluations:      3640
+	    Lambda: [ 0.         0.         2.0077542]
+	    Seed: 1482111691.32805490
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f        -11.8237             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	      7.854321      -1.00e+01     1.00e+01 
+		     x2       c	      4.549489      -1.00e+01     1.00e+01 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= -10.000000 <= 0.00e+00
+		     g2   	  i       -1.00e+21 <= -8.649336 <= 0.00e+00
+		     g3   	  i       -1.00e+21 <= -0.000612 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+
+	NSGA-II Solution to A trigonometric function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.7216
+	    Total Function Evaluations:          
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f             -12             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	     -7.854036      -1.00e+01     1.00e+01 
+		     x2       c	      0.000004      -1.00e+01     1.00e+01 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= -6.000000 <= 0.00e+00
+		     g2   	  i       -1.00e+21 <= -6.000000 <= 0.00e+00
+		     g3   	  i       -1.00e+21 <= -6.000000 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
 
 SOS Decomposition
 ======================================
@@ -571,6 +718,7 @@ The ``SDRelaxSol``
 
 This object is a container for the solution of ``SDPRelaxation`` objects.
 It contains the following informations:
+	
 	- `Primal`: the value of the SDP in primal form,
 	- `Dual`: the value of the SDP in dual form,
 	- `RunTime`: the run time of the sdp solver,

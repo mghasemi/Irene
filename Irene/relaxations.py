@@ -602,18 +602,53 @@ class SDPRelaxations(base):
         for M in self.SDP.Info['X']:
             blks.append(Matrix(cholesky(M)))
         for idx in range(NumCns):
-            SOSCoefs[idx+1] = []
-            v = Matrix(self.ReducedMonomialBase(self.MmntOrd - self.CnsHalfDegs[idx])).T
-            decomp = v*blks[idx]
+            SOSCoefs[idx + 1] = []
+            v = Matrix(self.ReducedMonomialBase(
+                self.MmntOrd - self.CnsHalfDegs[idx])).T
+            decomp = v * blks[idx]
             for p in decomp:
-                SOSCoefs[idx+1].append(p.subs(self.RevSymDict))
+                SOSCoefs[idx + 1].append(p.subs(self.RevSymDict))
         v = Matrix(self.ReducedMonomialBase(self.MmntOrd)).T
         SOSCoefs[0] = []
-        decomp = v*blks[NumCns]
+        decomp = v * blks[NumCns]
         for p in decomp:
             SOSCoefs[0].append(p.subs(self.RevSymDict))
         return SOSCoefs
 
+    def getObjective(self):
+        r"""
+        Returns the objective function of the problem after reduction modulo the relations, if given.
+        """
+        return self.RedObjective.subs(self.RevSymDict)
+
+    def getConstraint(self, idx):
+        r"""
+        Returns the constraint number `idx` of the problem after reduction modulo the relations, if given.
+        """
+        assert idx < len(self.Constraints), "Index out of range."
+        return self.Constraints[idx].subs(self.RevSymDict) >= 0
+
+    def getMomentConstraint(self, idx):
+        r"""
+        Returns the moment constraint number `idx` of the problem after reduction modulo the relations, if given.
+        """
+        assert idx < len(self.MomConst), "Index out of range."
+        from sympy import sympify
+        return self.MomConst[idx][0].subs(self.RevSymDict) >= sympify(self.MomConst[idx][1]).subs(self.RevSymDict)
+
+    def __str__(self):
+        from sympy import sympify
+        out_txt = "="*70+"\n"
+        out_txt += "Minimize\t"
+        out_txt += str(self.RedObjective.subs(self.RevSymDict)) + "\n"
+        out_txt += "Subject to\n"
+        for cns in self.Constraints:
+            out_txt += "\t\t" + str(cns.subs(self.RevSymDict) >= 0)+"\n"
+        out_txt += "And\n"
+        for cns in self.MomConst:
+            out_txt += "\t\tMoment " + str(cns[0].subs(self.RevSymDict) >= sympify(cns[1]).subs(self.RevSymDict))+"\n"
+        out_txt += "="*70+"\n"
+        return out_txt
 
 #######################################################################
 # Solution of the Semidefinite Relaxation
@@ -763,7 +798,7 @@ class SDRelaxSol(object):
                     hold.append(strm.subs({ri: Abs(ri) for ri in self.weight}))
         idx = 0
         while (len(EQS) < len(syms)):
-            if len(hold)>idx:
+            if len(hold) > idx:
                 EQS.append(hold[idx])
                 idx += 1
             else:

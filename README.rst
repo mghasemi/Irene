@@ -24,6 +24,8 @@ Installation
 
 To obtain *Irene* visit `https://github.com/mghasemi/Irene <https://github.com/mghasemi/Irene>`_.
 
+For more detals refer to the `documentation <http://irene.readthedocs.io/>`_.
+
 For system-wide installation run::
 
 	sudo python setup.py install

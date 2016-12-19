@@ -53,6 +53,7 @@ To make a pdf file,subject to existence of ``latexpdf`` run::
 
 	$Irene/doc/make latexpdf
 
+Documentation is also available at `http://irene.readthedocs.io <http://irene.readthedocs.io/>`_.
 
 License
 =======================
