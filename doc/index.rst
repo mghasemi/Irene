@@ -20,11 +20,3 @@ Contents:
    rev
    todo
    appendix
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-

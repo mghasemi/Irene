@@ -724,7 +724,7 @@ The output looks like this::
 	1.0*x**3 + 1.0*x**2*y**2 + 1.0*x*y*z**2 - 1.0*x*z + 27.49741
 
 The ``SDRelaxSol``
-======================================
+=======================================
 
 This object is a container for the solution of ``SDPRelaxation`` objects.
 It contains the following informations:
@@ -743,15 +743,52 @@ It contains the following informations:
 	- `Support`: the support of discrete measure resulted from ``SDPRelaxation.Minimize()``,
 	- `Weights`: corresponding weights for the Dirac measures.
 
+Extracting solutions
+---------------------------------------
 By default, the support of the measure is not calculated, but it can be approximated by calling 
-the method ``SDRelaxSol.ExtractSolution()``. There exists an exact theoretical method for 
-extracting the support of the solution measure as explained in [HL]_. But because of the numerical
-error of sdp solvers, computing rank and hence the support is quite difficult.
-So, ``SDRelaxSol.ExtractSolution()`` estimates the rank numerically by assuming that eigenvalues 
+the method ``SDRelaxSol.ExtractSolution()``. 
+
+There exists an exact theoretical method for extracting the support of the solution measure as explained 
+in [HL]_. But because of the numerical error of sdp solvers, computing rank and hence the support is quite 
+difficult. So, ``SDRelaxSol.ExtractSolution()`` estimates the rank numerically by assuming that eigenvalues 
 with absolute value less than ``err_tol`` which by default is set to ``SDPRelaxation.ErrorTolerance``.
-Then uses ``scipy.optimize.root`` to approximate the support. The default ``scipy`` solver is set to 
-`lm`, but other solvers can be selected using ``SDRelaxSol.SetScipySolver(solver)``.
-It is not guaranteed that scipy solvers return a reliable answer, but modifying sdp solvers and other
-parameters like ``SDPRelaxation.ErrorTolerance`` may help to get better results.
+
+Two methods are implemented for extracting solutions:
+
+	- **Lasserre-Henrion** method as explained in [HL]_. To employ this method simply call ``SDRelaxSol.ExtractSolution('LH', card)``, where ``card`` is the maximum cardinality of the support.
+
+	- **Moment Matching** method which employs ``scipy.optimize.root`` to approximate the support. The default ``scipy`` solver is set to `lm`, but other solvers can be selected using ``SDRelaxSol.SetScipySolver(solver)``. It is not guaranteed that scipy solvers return a reliable answer, but modifying sdp solvers and other parameters like ``SDPRelaxation.ErrorTolerance`` may help to get better results. To use this method call ``SDRelaxSol.ExtractSolution('scipy', card)`` where ``card`` is as above.
+
+**Example.** Solve and find minimizers of :math:`x^2+y^2+z^4` where :math:`x+y+z=4`::
+
+	from sympy import *
+	from Irene import *
+
+	x, y, z = symbols('x,y,z')
+
+	Rlx = SDPRelaxations([x, y, z])
+	Rlx.SetSDPSolver('cvxopt')
+	Rlx.SetObjective(x**2 + y**2 + z**4)
+	Rlx.AddConstraint(Eq(x + y + z, 4))
+	Rlx.InitSDP()
+	# solve the SDP
+	Rlx.Minimize()
+	# extract support
+	Rlx.Solution.ExtractSolution('LH', 1)
+	print Rlx.Solution
+
+The output is::
+
+	Solution of a Semidefinite Program:
+	                Solver: CVXOPT
+	                Status: Optimal
+	   Initialization Time: 1.59334087372 seconds
+	              Run Time: 0.021102 seconds
+	Primal Objective Value: 5.45953579912
+	  Dual Objective Value: 5.45953586121
+	               Support:
+			(0.91685039306810523, 1.541574317520042, 1.5415743175200163)
+	        Support solver: Lasserre--Henrion
+	Feasible solution for moments of order 2
 
 .. [HL] D\. Henrion and J-B. Lasserre, *Detecting Global Optimality and Extracting Solutions in GloptiPoly*, Positive Polynomials in Control, LNCIS 312, 293-310 (2005).

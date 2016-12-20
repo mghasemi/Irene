@@ -112,6 +112,7 @@ where:
 	+ :math:`n` is the number of design variables
 	+ :math:`m_e` is the number of equality constraints
 	+ :math:`m` is the total number of constraints (number of equality constraints: :math:`m_i=m-m_e`).
+
 The following is a pseudo-code demonstrating the basic usage of ``pyOpt``::
 
 	# General Objective Function Template:

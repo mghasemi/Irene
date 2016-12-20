@@ -81,6 +81,7 @@ class sdp(base):
         r"""
         Sets the `param` option of the solver to `val` if the solver accepts
         such an option. The following options are supported by solvers:
+        
             + ``CVXOPT``:
 
                 + ``show_progress``: ``True`` or ``False``, turns the output to the screen on or off (default: ``True``);
