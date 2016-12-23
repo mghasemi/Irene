@@ -702,3 +702,278 @@ return incorrect values.
 
 Moreover, we employed 20 different optimizers included in `pyOpt <http://www.pyopt.org/>`_
 and only 4 of them returned the correct optimum value.
+
+McCormick Function
+==================================
+McCormick function is defined by
+
+.. math::
+	f(x, y) = \sin(x+y) + (x-y)^2-1.5x+2.5y+1.
+
+Attains its minimum at :math:`f(-.54719, -1.54719)\approx-1.9133`::
+
+	from sympy import *
+	from Irene import *
+	from pyProximation import OrthSystem
+	# introduce symbols
+	x = Symbol('x')
+	y = Symbol('y')
+	z = Symbol('z')
+	# transcendental term of objective
+	f = sin(z)
+	# Legendre polynomials via pyProximation
+	D_f = [(-2, 2)]
+	Orth_f = OrthSystem([z], D_f)
+	# set bases
+	B_f = Orth_f.PolyBasis(10)
+	# link B_f to Orth_f
+	Orth_f.Basis(B_f)
+	# generate the orthonormal bases
+	Orth_f.FormBasis()
+	# extract the coefficients of approximations
+	Coeffs_f = Orth_f.Series(f)
+	# form the approximations
+	f_app = sum([Orth_f.OrthBase[i] * Coeffs_f[i]
+	             for i in range(len(Orth_f.OrthBase))])
+	# objective function
+	obj = f_app.subs({z: x + y}) + (x - y)**2 - 1.5 * x + 2.5 * y + 1
+	# initiate the Relaxation object
+	Rlx = SDPRelaxations([x, y])
+	# set the objective
+	Rlx.SetObjective(obj)
+	# add support constraints
+	Rlx.AddConstraint(4 - (x**2 + y**2) >= 0)
+	# set the sdp solver
+	Rlx.SetSDPSolver('cvxopt')
+	# initialize the SDP
+	Rlx.InitSDP()
+	# solve the SDP
+	Rlx.Minimize()
+	Rlx.Solution.ExtractSolution('lh',1)
+	print Rlx.Solution
+
+Results in::
+
+	Solution of a Semidefinite Program:
+	                Solver: CVXOPT
+	                Status: Optimal
+	   Initialization Time: 10.6071600914 seconds
+	              Run Time: 0.070002 seconds
+	Primal Objective Value: -1.91322353633
+	  Dual Objective Value: -1.91322352558
+	               Support:
+			(-0.54724056855672309, -1.5473099043318805)
+	        Support solver: Lasserre--Henrion
+	Feasible solution for moments of order 5
+
+Schaffer Function N.2
+==================================
+Schaffer function N.2 is 
+
+.. math::
+	f(x, y) = \frac{\sin^2(x^2-y^2)-.5}{(1+.001(x^2+y^2))^2}.
+
+Attains its minimum at :math:`f(0, 0)=.5`::
+
+	from sympy import *
+	from Irene import *
+	from pyProximation import OrthSystem, Measure
+	# introduce symbols and functions
+	x = Symbol('x')
+	y = Symbol('y')
+	z = Symbol('z')
+	# transcendental term of objective
+	f = (sin(z))**2
+	# Chebyshev polynomials via pyProximation
+	D_f = [(-2, 2)]
+	w = lambda x: 1. / sqrt(4 - x**2)
+	M = Measure(D_f, w)
+	# link the measure to S
+	Orth_f = OrthSystem([z], D_f)
+	Orth_f.SetMeasure(M)
+	# set bases
+	B_f = Orth_f.PolyBasis(8)
+	# link B to S
+	Orth_f.Basis(B_f)
+	# generate the orthonormal bases
+	Orth_f.FormBasis()
+	# extract the coefficients of approximations
+	Coeffs_f = Orth_f.Series(f)
+	# form the approximations
+	f_app = sum([Orth_f.OrthBase[i] * Coeffs_f[i]
+	             for i in range(len(Orth_f.OrthBase))])
+	# objective function
+	obj = f_app.subs({z: x**2 - y**2}) - .5
+	# initiate the Relaxation object
+	Rlx = SDPRelaxations([x, y])
+	# settings
+	Rlx.Probability = False
+	# set the objective
+	Rlx.SetObjective(obj)
+	# add support constraints
+	Rlx.AddConstraint(4 - (x**2 + y**2) >= 0)
+	# moment constraint
+	Rlx.MomentConstraint(Mom((1 + .001 * (x**2 + y**2)**2)) == 1)
+	# set the sdp solver
+	Rlx.SetSDPSolver('cvxopt')
+	# initialize the SDP
+	Rlx.InitSDP()
+	# solve the SDP
+	Rlx.Minimize()
+	Rlx.Solution.ExtractSolution('lh', 1)
+	print Rlx.Solution
+
+The result::
+
+	Solution of a Semidefinite Program:
+	                Solver: CVXOPT
+	                Status: Optimal
+	   Initialization Time: 26.6285181046 seconds
+	              Run Time: 0.110288 seconds
+	Primal Objective Value: -0.495770329702
+	  Dual Objective Value: -0.495770335895
+	               Support:
+			(1.3348173524856991e-15, 8.3700760032311997e-17)
+	        Support solver: Lasserre--Henrion
+	Feasible solution for moments of order 6
+
+Schaffer Function N.4
+==================================
+Schaffer function N.4 is 
+
+.. math::
+	f(x, y) = \frac{\cos^2(\sin(|(x^2-y^2)|))-.5}{(1+.001(x^2+y^2))^2}.
+
+The minimum value is :math:`-0.207421`::
+
+	from sympy import *
+	from Irene import *
+	from pyProximation import OrthSystem, Measure
+	# introduce symbols and functions
+	x = Symbol('x')
+	y = Symbol('y')
+	z = Symbol('z')
+	# transcendental term of objective
+	f = (cos(sin(abs(z))))**2
+	# Chebyshev polynomials via pyProximation
+	D_f = [(-2, 2)]
+	w = lambda x: 1. / sqrt(4 - x**2)
+	M = Measure(D_f, w)
+	# link the measure to S
+	Orth_f = OrthSystem([z], D_f)
+	Orth_f.SetMeasure(M)
+	# set bases
+	B_f = Orth_f.PolyBasis(12)
+	# link B_f to Orth_f
+	Orth_f.Basis(B_f)
+	# generate the orthonormal bases
+	Orth_f.FormBasis()
+	# extract the coefficients of approximations
+	Coeffs_f = Orth_f.Series(f)
+	# form the approximations
+	f_app = sum([Orth_f.OrthBase[i] * Coeffs_f[i]
+	             for i in range(len(Orth_f.OrthBase))])
+	# objective function
+	obj = f_app.subs({z: x**2 - y**2}) - .5
+	# initiate the Relaxation object
+	Rlx = SDPRelaxations([x, y])
+	# settings
+	Rlx.Probability = False
+	# set the objective
+	Rlx.SetObjective(obj)
+	# add support constraints
+	Rlx.AddConstraint(4 - (x**2 + y**2) >= 0)
+	# moment constraint
+	Rlx.MomentConstraint(Mom((1 + .001 * (x**2 + y**2)**2)) == 1)
+	# set the sdp solver
+	Rlx.SetSDPSolver('csdp')
+	# initialize the SDP
+	Rlx.InitSDP()
+	# solve the SDP
+	Rlx.Minimize()
+	print Rlx.Solution
+
+
+Result is::
+
+	Solution of a Semidefinite Program:
+	                Solver: DSDP
+	                Status: Optimal
+	   Initialization Time: 497.670987129 seconds
+	              Run Time: 75.423031 seconds
+	Primal Objective Value: -0.203973186683
+	  Dual Objective Value: -0.208094722977
+	Feasible solution for moments of order 12
+
+Drop-Wave Function
+==================================
+The Drop-Wave function is multimodal and highly complex:
+
+.. math::
+	f(x, y) = -\frac{1+\cos(12\sqrt{x^2+y^2})}{.5(x^2+y^2)+2}
+
+It has a global minimum at :math:`f(0, 0) = -1`::
+
+	from sympy import *
+	from Irene import *
+	from pyProximation import OrthSystem, Measure
+	# introduce symbols and functions
+	x = Symbol('x')
+	y = Symbol('y')
+	z = Symbol('z')
+	s = Symbol('s')
+	# transcendental term of objective
+	f = cos(z)
+	# Legendre polynomials via pyProximation
+	D_f = [(-2, 2)]
+	# link the measure to S
+	Orth_f = OrthSystem([z], D_f)
+	# set bases
+	B_f = Orth_f.PolyBasis(8)
+	# link B_f to Orth_f
+	Orth_f.Basis(B_f)
+	# generate the orthonormal bases
+	Orth_f.FormBasis()
+	# extract the coefficients of approximations
+	Coeffs_f = Orth_f.Series(f)
+	# form the approximations
+	f_app = sum([Orth_f.OrthBase[i] * Coeffs_f[i]
+	             for i in range(len(Orth_f.OrthBase))])
+	# objective function
+	obj = -1 - f_app.subs({z: 12 * s})
+	# relations
+	rels = [s**2 - (x**2 + y**2)]
+	# initiate the Relaxation object
+	Rlx = SDPRelaxations([x, y, s])
+	# settings
+	Rlx.Probability = False
+	# set the objective
+	Rlx.SetObjective(obj)
+	# add support constraints
+	Rlx.AddConstraint(4 - s**2 >= 0)
+	# moment constraint
+	Rlx.MomentConstraint(Mom((2 + .5 * s**2) == 1))
+	# set the sdp solver
+	Rlx.SetSDPSolver('dsdp')
+	# initialize the SDP
+	Rlx.InitSDP()
+	# solve the SDP
+	Rlx.Minimize()
+	Rlx.Solution.ExtractSolution('lh', 1)
+	print Rlx.Solution
+
+The output is::
+
+	Solution of a Semidefinite Program:
+	                Solver: DSDP
+	                Status: Optimal
+	   Initialization Time: 24.8883750439 seconds
+	              Run Time: 1.85318 seconds
+	Primal Objective Value: -86177004058.9
+	  Dual Objective Value: -0.0
+	               Support:
+			(5.015829856065089e-08, -1.5584184369059079e-09, -2.7794786040781493e-09)
+	        Support solver: Lasserre--Henrion
+	Feasible solution for moments of order 4
+
+Note that although the solver did not converge, but the dual objective value and calculated support are correct.

@@ -26,7 +26,7 @@ Example 1:
 The objective function includes terms of :math:`x` and transcendental functions. So, it is 
 difficult to find a suitable algebraic representation to transform this optimization problem.
 Let us try to use Taylor expansion of :math:`e^{x\sin x}` to find an approximation for the 
-optimum and compare the result with ``scipy.optimize`` and ``pyswarm.pso``::
+optimum and compare the result with ``scipy.optimize``, ``pyOpt.ALPSO`` and ``pyOpt.NSGA2``::
 
 	from sympy import *
 	from Irene import *
@@ -302,7 +302,7 @@ Again, we use Legendre approximations for :math:`\sinh y` and :math:`e^{y\sin x}
 	# set bases
 	B_f = Orth_f.PolyBasis(10)
 	B_g = Orth_g.PolyBasis(10)
-	# link B to S
+	# link B_f to Orth_f and B_g to Orth_g
 	Orth_f.Basis(B_f)
 	Orth_g.Basis(B_g)
 	# generate the orthonormal bases

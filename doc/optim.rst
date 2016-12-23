@@ -759,7 +759,7 @@ Two methods are implemented for extracting solutions:
 
 	- **Moment Matching** method which employs ``scipy.optimize.root`` to approximate the support. The default ``scipy`` solver is set to `lm`, but other solvers can be selected using ``SDRelaxSol.SetScipySolver(solver)``. It is not guaranteed that scipy solvers return a reliable answer, but modifying sdp solvers and other parameters like ``SDPRelaxation.ErrorTolerance`` may help to get better results. To use this method call ``SDRelaxSol.ExtractSolution('scipy', card)`` where ``card`` is as above.
 
-**Example.** Solve and find minimizers of :math:`x^2+y^2+z^4` where :math:`x+y+z=4`::
+**Example 1.** Solve and find minimizers of :math:`x^2+y^2+z^4` where :math:`x+y+z=4`::
 
 	from sympy import *
 	from Irene import *
@@ -777,6 +777,26 @@ Two methods are implemented for extracting solutions:
 	Rlx.Solution.ExtractSolution('LH', 1)
 	print Rlx.Solution
 
+	# pyOpt
+	from pyOpt import *
+
+	def objfunc(x):
+		f = x[0]**2 + x[1]**2 + x[2]**4
+		g = [x[0] + x[1] + x[2] - 4]
+		fail = 0
+		return f, g, fail
+
+	opt_prob = Optimization('Testing solutions', objfunc)
+	opt_prob.addVar('x1', 'c', lower=-4, upper=4, value=0.0)
+	opt_prob.addVar('x2', 'c', lower=-4, upper=4, value=0.0)
+	opt_prob.addVar('x3', 'c', lower=-4, upper=4, value=0.0)
+	opt_prob.addObj('f')
+	opt_prob.addCon('g1', 'e')
+	# Augmented Lagrangian Particle Swarm Optimizer
+	alpso = ALPSO()
+	alpso(opt_prob)
+	print opt_prob.solution(0)
+
 The output is::
 
 	Solution of a Semidefinite Program:
@@ -790,5 +810,163 @@ The output is::
 			(0.91685039306810523, 1.541574317520042, 1.5415743175200163)
 	        Support solver: Lasserre--Henrion
 	Feasible solution for moments of order 2
+
+	ALPSO Solution to Testing solutions
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.1443
+	    Total Function Evaluations:      1720
+	    Lambda: [-3.09182651]
+	    Seed: 1482274189.55335808
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f         5.46051             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	      1.542371      -4.00e+00     4.00e+00 
+		     x2       c	      1.541094      -4.00e+00     4.00e+00 
+		     x3       c	      0.916848      -4.00e+00     4.00e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1       e                0.000314 = 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+**Example 2.** Minimize :math:`-(x-1)^2-(x-y)^2-(y-3)^2` where :math:`1-(x-1)^2\ge0`, 
+:math:`1-(x-y)^2\ge0` and :math:`1-(y-3)^2\ge0`. It has three minimizers 
+:math:`(2, 3), (1, 2)`, and :math:`(2, 2)`::
+
+	from sympy import *
+	from Irene import *
+
+	x, y = symbols('x, y')
+
+	Rlx = SDPRelaxations([x, y])
+	Rlx.SetSDPSolver('csdp')
+	Rlx.SetObjective(-(x - 1)**2 - (x - y)**2 - (y - 3)**2)
+	Rlx.AddConstraint(1 - (x - 1)**2 >= 0)
+	Rlx.AddConstraint(1 - (x - y)**2 >= 0)
+	Rlx.AddConstraint(1 - (y - 3)**2 >= 0)
+	Rlx.MomentsOrd(2)
+	Rlx.InitSDP()
+	# solve the SDP
+	Rlx.Minimize()
+	# extract support
+	Rlx.Solution.ExtractSolution('LH')
+	print Rlx.Solution
+
+	# pyOpt
+	from pyOpt import *
+
+
+	def objfunc(x):
+	    f = -(x[0] - 1)**2 - (x[0] - x[1])**2 - (x[1] - 3)**2
+	    g = [
+	        (x[0] - 1)**2 - 1,
+	        (x[0] - x[1])**2 - 1,
+	        (x[1] - 3)**2 - 1
+	    ]
+	    fail = 0
+	    return f, g, fail
+
+	opt_prob = Optimization("Lasserre's Example", objfunc)
+	opt_prob.addVar('x1', 'c', lower=-3, upper=3, value=0.0)
+	opt_prob.addVar('x2', 'c', lower=-3, upper=3, value=0.0)
+	opt_prob.addObj('f')
+	opt_prob.addCon('g1', 'i')
+	opt_prob.addCon('g2', 'i')
+	opt_prob.addCon('g3', 'i')
+	# Augmented Lagrangian Particle Swarm Optimizer
+	alpso = ALPSO()
+	alpso(opt_prob)
+	print opt_prob.solution(0)
+	# Non Sorting Genetic Algorithm II
+	nsg2 = NSGA2()
+	nsg2(opt_prob)
+	print opt_prob.solution(1)
+
+which results in::
+
+	Solution of a Semidefinite Program:
+	                Solver: CSDP
+	                Status: Optimal
+	   Initialization Time: 0.861004114151 seconds
+	              Run Time: 0.00645 seconds
+	Primal Objective Value: -2.0
+	  Dual Objective Value: -2.0
+	               Support:
+			(2.000000006497352, 3.000000045123556)
+			(0.99999993829586131, 1.9999999487412694)
+			(1.9999999970209055, 1.9999999029899564)
+	        Support solver: Lasserre--Henrion
+	Feasible solution for moments of order 2
+
+
+	ALPSO Solution to Lasserre's Example
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.1353
+	    Total Function Evaluations:      1720
+	    Lambda: [ 0.08278879  0.08220848  0.        ]
+	    Seed: 1482307696.27431393
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f              -2             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	      1.999967      -3.00e+00     3.00e+00 
+		     x2       c	      3.000000      -3.00e+00     3.00e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= -0.000065 <= 0.00e+00
+		     g2   	  i       -1.00e+21 <= 0.000065 <= 0.00e+00
+		     g3   	  i       -1.00e+21 <= -1.000000 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+
+	NSGA-II Solution to Lasserre's Example
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.2406
+	    Total Function Evaluations:          
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f        -1.99941             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	      1.999947      -3.00e+00     3.00e+00 
+		     x2       c	      2.000243      -3.00e+00     3.00e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= -0.000106 <= 0.00e+00
+		     g2   	  i       -1.00e+21 <= -1.000000 <= 0.00e+00
+		     g3   	  i       -1.00e+21 <= -0.000486 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+`Irene` detects all minimizers correctly, but each `pyOpt` solvers only detect one.
+Note that we did not specify number of solutions, but the solver extracted them all.
 
 .. [HL] D\. Henrion and J-B. Lasserre, *Detecting Global Optimality and Extracting Solutions in GloptiPoly*, Positive Polynomials in Control, LNCIS 312, 293-310 (2005).
