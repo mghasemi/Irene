@@ -4,7 +4,7 @@ except ImportError:
     from distutils.core import setup
 
 Description = "Solve a generic optimization problem based on truncated moment\
-				problem by constructing a series of semidefinite relaxations."
+                problem by constructing a series of semidefinite relaxations."
 
 setup(
     name='Irene',
@@ -18,5 +18,5 @@ setup(
     long_description=open('README.rst').read(),
     keywords=["Optimization", "Semidefinite Programming", "Convex Optimization",
               "Polynomial Optimization", "Non-Convex Optimization"],
-    install_requires=['sympy', 'numpy', 'joblib']
+    install_requires=['sympy', 'numpy', 'scipy', 'joblib']
 )

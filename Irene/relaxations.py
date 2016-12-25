@@ -41,11 +41,7 @@ class SDPRelaxations(base):
     MonomialOrder = 'lex'
     SDPSolver = 'cvxopt'
     Info = {}
-<<<<<<< HEAD
-    ErrorTolerance = 10**-6
-=======
     ErrorTolerance = 1e-6
->>>>>>> dev
     AvailableSolvers = []
     PSDMoment = True
     Probability = True
@@ -695,18 +691,11 @@ class SDRelaxSol(object):
         self.Status = None
         self.RelaxationOrd = None
         self.Message = None
-<<<<<<< HEAD
-        self.Xij = None
-        self.NumGenerators = None
-        # SDPRelaxations auxiliary symbols
-        self.X = X
-=======
         self.MonoBase = None
         self.NumGenerators = None
         # SDPRelaxations auxiliary symbols
         self.X = X
         self.Xij = None
->>>>>>> dev
         self.SymDict = symdict
         self.err_tol = err_tol
         self.ScipySolver = 'lm'
@@ -727,23 +716,12 @@ class SDRelaxSol(object):
             out_str += "               Support:\n"
             for p in self.Support:
                 out_str += "\t\t" + str(p) + "\n"
-<<<<<<< HEAD
-            out_str += "          Scipy solver: " + self.ScipySolver + "\n"
-=======
             out_str += "        Support solver: " + self.ScipySolver + "\n"
->>>>>>> dev
         out_str += self.Message + "\n"
         return out_str
 
     def SetScipySolver(self, solver):
         r"""
-<<<<<<< HEAD
-        """
-        assert solver.lower() in ['hybr', 'lm', 'broyden1', 'broyden2', 'anderson', 'linearmixing', 'diagbroyden', 'excitingmixing',
-                                  'krylov'], "Unrecognized solver. The solver must be among 'hybr', 'lm', 'broyden1', 'broyden2', 'anderson', 'linearmixing', 'diagbroyden', 'excitingmixing', 'krylov'"
-        self.ScipySolver = solver.lower()
-
-=======
         Sets the ``scipy.optimize.root`` solver to `solver`.
         """
         assert solver.lower() in ['hybr', 'lm', 'broyden1', 'broyden2', 'anderson', 'linearmixing', 'diagbroyden', 'excitingmixing', 'krylov',
@@ -814,7 +792,6 @@ class SDRelaxSol(object):
 
         return array(Q).T, R
 
->>>>>>> dev
     def NumericalRank(self):
         r"""
         Finds the rank of the moment matrix based on the size of its
@@ -826,11 +803,7 @@ class SDRelaxSol(object):
         num_rnk = 0
         eignvls = eigvals(self.MomentMatrix)
         for ev in eignvls:
-<<<<<<< HEAD
-            if abs(ev) >= self.err_tol:
-=======
             if ev >= self.err_tol:
->>>>>>> dev
                 num_rnk += 1
         return num_rnk
 
@@ -845,11 +818,7 @@ class SDRelaxSol(object):
                 trm.subs({X[j]: self.Xij[i][j] for j in range(num_vars)})
         return expr
 
-<<<<<<< HEAD
-    def ExtractSolution(self):
-=======
     def ExtractSolutionScipy(self, card=0):
->>>>>>> dev
         r"""
         This method tries to extract the corresponding values for 
         generators of the ``SDPRelaxation`` class.
@@ -858,10 +827,7 @@ class SDRelaxSol(object):
         Then the points are extracted as solutions of a system of 
         polynomial equations using a `scipy` solver.
         The followin solvers are currently acceptable by ``scipy``:
-<<<<<<< HEAD
-=======
 
->>>>>>> dev
             - ``hybr``, 
             - ``lm`` (default),
             - ``broyden1``, 
@@ -869,13 +835,6 @@ class SDRelaxSol(object):
             - ``anderson``,
             - ``linearmixing``,
             - ``diagbroyden``, 
-<<<<<<< HEAD
-            - ``excitingmixing``.
-        """
-        from scipy import optimize as opt
-        from sympy import Symbol, lambdify, abs
-        rnk = self.NumericalRank()
-=======
             - ``excitingmixing``,
             - ``krylov``,
             - ``df-sane``.
@@ -886,7 +845,6 @@ class SDRelaxSol(object):
             rnk = min(self.NumericalRank(), card)
         else:
             rnk = self.NumericalRank()
->>>>>>> dev
         self.weight = [Symbol('w%d' % i, real=True) for i in range(1, rnk + 1)]
         self.Xij = [[Symbol('X%d%d' % (i, j), real=True) for i in range(1, self.NumGenerators + 1)]
                     for j in range(1, rnk + 1)]
@@ -907,17 +865,6 @@ class SDRelaxSol(object):
                 strm_syms = strm.free_symbols
                 if not strm_syms.issubset(included_sysms):
                     # EQS.append(strm)
-<<<<<<< HEAD
-                    EQS.append(strm.subs({ri: abs(ri) for ri in self.weight}))
-                    included_sysms = included_sysms.union(strm_syms)
-                else:
-                    # hold.append(strm)
-                    hold.append(strm.subs({ri: abs(ri) for ri in self.weight}))
-        idx = 0
-        while (len(EQS) < len(syms)):
-            EQS.append(hold[idx])
-            idx += 1
-=======
                     EQS.append(strm.subs({ri: Abs(ri) for ri in self.weight}))
                     included_sysms = included_sysms.union(strm_syms)
                 else:
@@ -930,7 +877,6 @@ class SDRelaxSol(object):
                 idx += 1
             else:
                 break
->>>>>>> dev
         if (included_sysms != set(syms)) or (len(EQS) != len(syms)):
             raise Exception("Unable to find the support.")
         f_ = [lambdify(syms, eq, 'numpy') for eq in EQS]
@@ -938,11 +884,7 @@ class SDRelaxSol(object):
         def f(x):
             z = tuple(float(x.item(i)) for i in range(len(syms)))
             return [fn(*z) for fn in f_]
-<<<<<<< HEAD
-        init_point = tuple(0.  # uniform(-10, 10)
-=======
         init_point = tuple(0.  # uniform(-self.err_tol, self.err_tol)
->>>>>>> dev
                            for _ in range(len(syms)))
         sol = opt.root(f, init_point, method=self.ScipySolver)
         if sol['success']:
@@ -959,8 +901,6 @@ class SDRelaxSol(object):
                 self.Weights.append(sol['x'][idx])
                 idx += 1
 
-<<<<<<< HEAD
-=======
     def ExtractSolutionLH(self, card=0):
         r"""
         Extract solutions based on Lasserre--Henrion's method.
@@ -977,11 +917,9 @@ class SDRelaxSol(object):
             count = min(Kmax, sum(Sigma > self.err_tol), card)
         else:
             count = min(Kmax, sum(Sigma > self.err_tol))
-
         sols = {}
-        numiter = 3
-        # for i in range(numiter):
         T, Ut = self.StblRedEch(Vs[0:count, :])
+        # normalize
         for r in Ut:
             lead = trim_zeros(r)[0]
             r /= lead
@@ -1041,7 +979,6 @@ class SDRelaxSol(object):
         else:
             raise Exception("Unsupported solver.")
 
->>>>>>> dev
 #######################################################################
 # A Symbolic object to handle moment constraints
 
