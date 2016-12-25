@@ -26,7 +26,7 @@ Example 1:
 The objective function includes terms of :math:`x` and transcendental functions. So, it is 
 difficult to find a suitable algebraic representation to transform this optimization problem.
 Let us try to use Taylor expansion of :math:`e^{x\sin x}` to find an approximation for the 
-optimum and compare the result with ``scipy.optimize`` and ``pyswarm.pso``::
+optimum and compare the result with ``scipy.optimize``, ``pyOpt.ALPSO`` and ``pyOpt.NSGA2``::
 
 	from sympy import *
 	from Irene import *
@@ -60,13 +60,32 @@ optimum and compare the result with ``scipy.optimize`` and ``pyswarm.pso``::
 	print sol1
 	print "solution according to 'SLSQP':"
 	print sol2
-	# particle swarm optimization
-	from pyswarm import pso
-	lb = [-3.3, -3.3]
-	ub = [3.3, 3.3]
-	cns = [cons[0]['fun']]
-	print "PSO:"
-	print pso(fun, lb, ub, ieqcons=cns)
+
+	# pyOpt
+	from pyOpt import *
+
+
+	def objfunc(x):
+	    from numpy import sin, exp, pi
+	    f = x[0] + exp(x[0] * sin(x[0]))
+	    g = [
+	        x[0]**2 - pi**2
+	    ]
+	    fail = 0
+	    return f, g, fail
+
+	opt_prob = Optimization('A mixed function', objfunc)
+	opt_prob.addVar('x1', 'c', lower=-pi, upper=pi, value=0.0)
+	opt_prob.addObj('f')
+	opt_prob.addCon('g1', 'i')
+	# Augmented Lagrangian Particle Swarm Optimizer
+	alpso = ALPSO()
+	alpso(opt_prob)
+	print opt_prob.solution(0)
+	# Non Sorting Genetic Algorithm II
+	nsg2 = NSGA2()
+	nsg2(opt_prob)
+	print opt_prob.solution(1)
 
 The output will look like::
 
@@ -97,11 +116,62 @@ The output will look like::
 	  status: 0
 	 success: True
 	       x: array([-0.44164406,  0.        ])
-	PSO:
-	Stopping search: Swarm best objective change less than 1e-08
-	(array([-3.14159265,  1.94020281]), -2.1415926274654815)
+	
+	ALPSO Solution to A mixed function
+	================================================================================
 
-Now instead of Taylor expansion, we use Legendre polynomials to estimate :math:`e^{x\sin x}`::
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.0683
+	    Total Function Evaluations:      1240
+	    Lambda:     [ 0.]
+	    Seed: 1482112089.31088901
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f        -2.14159             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	     -3.141593      -3.14e+00     3.14e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= 0.000000 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+
+	NSGA-II Solution to A mixed function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.4231
+	    Total Function Evaluations:          
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f        -2.14159             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	     -3.141593      -3.14e+00     3.14e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= 0.000000 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+
+Now instead of Taylor expansion, we use Legendre polynomials to estimate :math:`e^{x\sin x}`.
+To find Legendre estimators, we use `pyProximation <https://github.com/mghasemi/pyProximation>`_ which
+implements general Hilbert space methods (see Appendix-:ref:`pyProximationRef`)::
 
 	from sympy import *
 	from Irene import *
@@ -232,7 +302,7 @@ Again, we use Legendre approximations for :math:`\sinh y` and :math:`e^{y\sin x}
 	# set bases
 	B_f = Orth_f.PolyBasis(10)
 	B_g = Orth_g.PolyBasis(10)
-	# link B to S
+	# link B_f to Orth_f and B_g to Orth_g
 	Orth_f.Basis(B_f)
 	Orth_g.Basis(B_g)
 	# generate the orthonormal bases
@@ -273,20 +343,43 @@ Again, we use Legendre approximations for :math:`\sinh y` and :math:`e^{y\sin x}
 	print sol1
 	print "solution according to 'SLSQP':"
 	print sol2
-	# particle swarm optimization
-	from pyswarm import pso
-	lb = [-3.3, -3.3]
-	ub = [3.3, 3.3]
-	cns = [cons[0]['fun'], cons[1]['fun']]
-	print "PSO:"
-	print pso(fun, lb, ub, ieqcons=cns)
 
+	# pyOpt
+	from pyOpt import *
+
+
+	def objfunc(x):
+	    from numpy import sin, sinh, exp, pi
+	    f = x[0] * sinh(x[1]) + exp(x[1] * sin(x[0]))
+	    g = [
+	        x[0]**2 - pi**2,
+	        x[1]**2 - pi**2
+	    ]
+	    fail = 0
+	    return f, g, fail
+
+	opt_prob = Optimization(
+	    'A trigonometric-hyperbolic-exponential function', objfunc)
+	opt_prob.addVar('x1', 'c', lower=-pi, upper=pi, value=0.0)
+	opt_prob.addVar('x2', 'c', lower=-pi, upper=pi, value=0.0)
+	opt_prob.addObj('f')
+	opt_prob.addCon('g1', 'i')
+	opt_prob.addCon('g2', 'i')
+	# Augmented Lagrangian Particle Swarm Optimizer
+	alpso = ALPSO()
+	alpso(opt_prob)
+	print opt_prob.solution(0)
+	# Non Sorting Genetic Algorithm II
+	nsg2 = NSGA2()
+	nsg2(opt_prob)
+	print opt_prob.solution(1)
+	
 The result will be::
 
 	Solution of a Semidefinite Program:
 	                Solver: CVXOPT
 	                Status: Optimal
-	   Initialization Time: 18.4279370308 seconds
+	   Initialization Time: 4.09241986275 seconds
 	              Run Time: 0.123869 seconds
 	Primal Objective Value: -35.3574475835
 	  Dual Objective Value: -35.3574473266
@@ -310,8 +403,60 @@ The result will be::
 	  status: 0
 	 success: True
 	       x: array([ 0.,  0.])
-	PSO:
-	Stopping search: Swarm best position change less than 1e-08
-	(array([ 3.14159265, -3.14159265]), -35.281434655101151)
+
+	ALPSO Solution to A trigonometric-hyperbolic-exponential function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.0946
+	    Total Function Evaluations:      1240
+	    Lambda: [ 0.  0.]
+	    Seed: 1482112613.82665610
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f        -35.2814             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	     -3.141593      -3.14e+00     3.14e+00 
+		     x2       c	      3.141593      -3.14e+00     3.14e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= 0.000000 <= 0.00e+00
+		     g2   	  i       -1.00e+21 <= 0.000000 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+
+	NSGA-II Solution to A trigonometric-hyperbolic-exponential function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.5331
+	    Total Function Evaluations:          
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f        -35.2814             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	      3.141593      -3.14e+00     3.14e+00 
+		     x2       c	     -3.141593      -3.14e+00     3.14e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= 0.000000 <= 0.00e+00
+		     g2   	  i       -1.00e+21 <= 0.000000 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
 
 which shows a significant improvement compare to results of ``scipi.minimize``.

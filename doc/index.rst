@@ -19,11 +19,4 @@ Contents:
    code
    rev
    todo
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+   appendix

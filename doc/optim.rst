@@ -93,6 +93,16 @@ the optimum value of the original program and semidefinite programs can be solve
 problem of optimization can be solved in P-time, but since the number of SDPs that is required to reach the optimum is unknown and such a bound does
 not exists when dealing with Archimedean modules.
 
+.. note::
+	
+
+	1. One behavior that distinguishes this method from others is that using SDP relaxations always provides a lower bound for the\ 
+	minimum value of the objective function over the feasibility set. While other methods usually involve evaluation of the objective\ 
+	and hence the result is always an upper bound for the minimum.
+	
+	2. The SDP relaxation method relies on symbolic computations which could be quite costly and slow. Therefore, dealing with rather large
+	problems -although `Irene` takes advantage from multiple cores- can be rather slow.
+
 .. [GIKM] M\. Ghasemi, M. Infusino, S. Kuhlmann and M. Marshall, *Truncated Moment Problem for unital commutative real algebras*, to appear.
 .. [JBL] J-B. Lasserre, *Global optimization with polynomials and the problem of moments*, SIAM J. Optim. 11(3) 796-817 (2000).
 
@@ -163,7 +173,7 @@ The output looks like::
 	Solution of a Semidefinite Program:
 	                Solver: DSDP
 	                Status: Optimal
-	   Initialization Time: 31.0824120045 seconds
+	   Initialization Time: 8.04711222649 seconds
 	              Run Time: 1.056733 seconds
 	Primal Objective Value: -4.06848294478
 	  Dual Objective Value: -4.06848289445
@@ -176,6 +186,7 @@ by calling ``MomentConstraint`` on a ``Mom`` object. The following adds two cons
 :math:`\int yz~d\mu + \int z~d\mu\ge 1` to the previous example::
 
 	from sympy import *
+	from Irene import *
 	# introduce variables
 	x = Symbol('x')
 	y = Symbol('y')
@@ -215,7 +226,7 @@ Solution is::
 	Solution of a Semidefinite Program:
 	                Solver: DSDP
 	                Status: Optimal
-	   Initialization Time: 32.9848718643 seconds
+	   Initialization Time: 7.91646790504 seconds
 	              Run Time: 1.041935 seconds
 	Primal Objective Value: -4.03644346623
 	  Dual Objective Value: -4.03644340796
@@ -224,6 +235,72 @@ Solution is::
 	Moment of x*y: 0.500000001712
 	Moment of y*z + z: 2.72623169152
 
+Equality Constraints
+-----------------------------
+Although it is possible to add equality constraints via ``AddConstraint`` and ``MomentConstraint``, but 
+`SDPRelaxation` converts them to two inequalities and considers a certain margin of error. 
+For :math:`A=B`, it considers :math:`A\ge B - \varepsilon` and :math:`A\leq B + \varepsilon`.
+In this case the value of :math:`\varepsilon` can be modified by setting `SDPRelaxation.ErrorTolerance`
+which its default value is :math:`10^{-6}`.
+
+Optimization of Rational Functions
+==================================
+
+Given two polynomials :math:`p(X), q(X), g_1(X),\dots,g_m(X)`, the minimum of :math:`\frac{p(X)}{q(X)}` over
+:math:`K=\{x:g_i(x)\ge0,~i=1,\dots,m\}` is equal to 
+
+.. math::
+
+	\left\lbrace
+	\begin{array}{ll}
+		\min & \int p(X)~d\mu \\
+		\textrm{subject to} & \\
+			& \int q(X)~d\mu = 1, \\
+			& \mu\in\mathcal{M}^+(K).
+	\end{array}\right.
+
+Note that in this case :math:`\mu` is not taken to be a probability measure, but instead :math:`\int q(X)~d\mu = 1`.
+We can use ``SDPRelaxations.Probability = False`` to relax the probability condition on :math:`\mu` and use moment
+constraints to enforce :math:`\int q(X)~d\mu = 1`. The following example explains this.
+
+**Example:** Find the minimum of :math:`\frac{x^2-2x}{x^2+2x+1}`::
+
+	from sympy import *
+	from Irene import *
+	# define the symbolic variable
+	x = Symbol('x')
+	# initiate the SDPRelaxations object
+	Rlx = SDPRelaxations([x])
+	# settings
+	Rlx.Probability = False
+	# set the objective
+	Rlx.SetObjective(x**2 - 2*x)
+	# moment constraint
+	Rlx.MomentConstraint(Mom(x**2+2*x+1) == 1)
+	# set the sdp solver
+	Rlx.SetSDPSolver('cvxopt')
+	# initiate the SDP
+	Rlx.InitSDP()
+	# solve the SDP
+	Rlx.Minimize()
+	print Rlx.Solution
+
+The result is::
+
+	Solution of a Semidefinite Program:
+	                Solver: CVXOPT
+	                Status: Optimal
+	   Initialization Time: 0.167912006378 seconds
+	              Run Time: 0.008987 seconds
+	Primal Objective Value: -0.333333666913
+	  Dual Objective Value: -0.333333667469
+	Feasible solution for moments of order 1
+
+.. note::
+
+	Beside ``SDPRelaxations.Probability`` there is another attribute ``SDPRelaxations.PSDMoment``
+	which by default is set to ``True`` and makes sure that the sdp solver assumes positivity for
+	the moment matrix.
 
 Optimization over Varieties
 =============================
@@ -236,8 +313,8 @@ In order to deal with the term :math:`\sqrt[3]{(xy)^2}`, we introduce an algebra
 monomial order for Groebner basis computations (default is `lex` for lexicographic order).
 Clearly :math:`xy-\sqrt[3]{(xy)}^3=0`. Therefore by introducing an auxiliary variable or function symbol, say :math:`f(x,y)` the problem
 can be stated in the quotient of :math:`\frac{\mathbb{R}[x,y,f]}{\langle xy-f^3\rangle}`. To check the result of ``SDPRelaxations`` we
-employ ``scipy.optimize.minimize`` with two solvers ``COBYLA`` and ``COBYLA`` and a PSO minimizer like 
-`pyswarm <https://github.com/asciimoo/pyswarm>`_::
+employ ``scipy.optimize.minimize`` with two solvers ``COBYLA`` and ``COBYLA`` as well as two solvers, `Augmented Lagrangian Particle Swarm 
+Optimizer` and `Non Sorting Genetic Algorithm II` from `pyOpt <http://www.pyopt.org/>`_::
 
 	from sympy import *
 	from Irene import *
@@ -265,8 +342,9 @@ employ ``scipy.optimize.minimize`` with two solvers ``COBYLA`` and ``COBYLA`` an
 	# output
 	print Rlx.Solution
 	# using scipy
+	from numpy import power
 	from scipy.optimize import minimize
-	fun = lambda x: numpy.power(x[0]**2 * x[1]**2, 1. / 3.) - x[0] + x[1]**2
+	fun = lambda x: power(x[0]**2 * x[1]**2, 1. / 3.) - x[0] + x[1]**2
 	cons = (
 	    {'type': 'ineq', 'fun': lambda x: 9 - x[0]**2 - x[1]**2})
 	sol1 = minimize(fun, (0, 0), method='COBYLA', constraints=cons)
@@ -275,13 +353,30 @@ employ ``scipy.optimize.minimize`` with two solvers ``COBYLA`` and ``COBYLA`` an
 	print sol1
 	print "solution according to 'SLSQP'"
 	print sol2
-	# particle swarm optimization
-	from pyswarm import pso
-	lb = [-9, -9]
-	ub = [9, 9]
-	cns = [cons['fun']]
-	print "PSO:"
-	print pso(fun, lb, ub, ieqcons=cns)
+
+	# pyOpt
+	from pyOpt import *
+
+	def objfunc(x):
+		from numpy import power
+		f = power(x[0]**2 * x[1]**2, 1. / 3.) - x[0] + x[1]**2
+		g = [x[0]**2 + x[1]**2 - 9]
+		fail = 0
+		return f, g, fail
+
+	opt_prob = Optimization('A third root function', objfunc)
+	opt_prob.addVar('x1', 'c', lower=-3, upper=3, value=0.0)
+	opt_prob.addVar('x2', 'c', lower=-3, upper=3, value=0.0)
+	opt_prob.addObj('f')
+	opt_prob.addCon('g1', 'i')
+	# Augmented Lagrangian Particle Swarm Optimizer
+	alpso = ALPSO()
+	alpso(opt_prob)
+	print opt_prob.solution(0)
+	# Non Sorting Genetic Algorithm II
+	nsg2 = NSGA2()
+	nsg2(opt_prob)
+	print opt_prob.solution(1)
 
 The output will be::
 	
@@ -312,9 +407,60 @@ The output will be::
 	  status: 0
 	 success: True
 	       x: array([  3.00000000e+00,  -1.25290367e-09])
-	PSO:
-	Stopping search: Swarm best position change less than 1e-08
-	(array([  2.99999996e+00,   4.41523681e-12]), -2.9999999060604554)
+	
+	ALPSO Solution to A third root function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.1174
+	    Total Function Evaluations:      1720
+	    Lambda: [ 0.00023458]
+	    Seed: 1482111093.38230896
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f        -2.99915             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	      3.000000      -3.00e+00     3.00e+00 
+		     x2       c	      0.000008      -3.00e+00     3.00e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= 0.000000 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+
+	NSGA-II Solution to A third root function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.3833
+	    Total Function Evaluations:          
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f        -2.99898             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	      3.000000      -3.00e+00     3.00e+00 
+		     x2       c	     -0.000011      -3.00e+00     3.00e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= -0.000000 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
 
 
 Optimization over arbitrary functions
@@ -384,31 +530,54 @@ the optimization problem. We also compare the outcome of ``SDPRelaxations`` with
 	# using scipy
 	from scipy.optimize import minimize
 	fun = lambda x: -(sin(x[0]) - 1)**3 - (sin(x[0]) -
-	                                        cos(x[1]))**4 - (cos(x[1]) - 3)**2
+	                                       cos(x[1]))**4 - (cos(x[1]) - 3)**2
 	cons = (
 	    {'type': 'ineq', 'fun': lambda x: 10 - (sin(x[0]) - 1)**2},
 	    {'type': 'ineq', 'fun': lambda x: 10 - (sin(x[0]) - cos(x[1]))**2},
 	    {'type': 'ineq', 'fun': lambda x: 10 - (cos(x[1]) - 3)**2})
 	sol1 = minimize(fun, (0, 0), method='COBYLA', constraints=cons)
 	sol2 = minimize(fun, (0, 0), method='SLSQP', constraints=cons)
-	print  "solution according to 'COBYLA':"
+	print "solution according to 'COBYLA':"
 	print sol1
 	print "solution according to 'SLSQP':"
 	print sol2
-	# particle swarm optimization
-	from pyswarm import pso
-	lb = [-10, -10]
-	ub = [10, 10]
-	cns = [cons[0]['fun'], cons[1]['fun'], cons[2]['fun']]
-	print "PSO:"
-	print pso(fun, lb, ub, ieqcons=cns)
+	# pyOpt
+	from pyOpt import *
+
+
+	def objfunc(x):
+	    from numpy import sin, cos
+	    f = -(sin(x[0]) - 1)**3 - (sin(x[0]) - cos(x[1]))**4 - (cos(x[1]) - 3)**2
+	    g = [
+	        (sin(x[0]) - 1)**2 - 10,
+	        (sin(x[0]) - cos(x[1]))**2 - 10,
+	        (cos(x[1]) - 3)**2 - 10
+	    ]
+	    fail = 0
+	    return f, g, fail
+
+	opt_prob = Optimization('A trigonometric function', objfunc)
+	opt_prob.addVar('x1', 'c', lower=-10, upper=10, value=0.0)
+	opt_prob.addVar('x2', 'c', lower=-10, upper=10, value=0.0)
+	opt_prob.addObj('f')
+	opt_prob.addCon('g1', 'i')
+	opt_prob.addCon('g2', 'i')
+	opt_prob.addCon('g3', 'i')
+	# Augmented Lagrangian Particle Swarm Optimizer
+	alpso = ALPSO()
+	alpso(opt_prob)
+	print opt_prob.solution(0)
+	# Non Sorting Genetic Algorithm II
+	nsg2 = NSGA2()
+	nsg2(opt_prob)
+	print opt_prob.solution(1)
 
 Solutions are::
 
 	Solution of a Semidefinite Program:
 	                Solver: CSDP
 	                Status: Optimal
-	   Initialization Time: 4.23285317421 seconds
+	   Initialization Time: 3.22915506363 seconds
 	              Run Time: 0.016662 seconds
 	Primal Objective Value: -12.0
 	  Dual Objective Value: -12.0
@@ -432,7 +601,372 @@ Solutions are::
 	  status: 0
 	 success: True
 	       x: array([ -1.57079782e+00,  -6.42618794e-07])
-	PSO:
-	Stopping search: Swarm best objective change less than 1e-08
-	(array([-1.57078003,  6.28318074]), -11.999999997051434)
 
+	ALPSO Solution to A trigonometric function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.3503
+	    Total Function Evaluations:      3640
+	    Lambda: [ 0.         0.         2.0077542]
+	    Seed: 1482111691.32805490
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f        -11.8237             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	      7.854321      -1.00e+01     1.00e+01 
+		     x2       c	      4.549489      -1.00e+01     1.00e+01 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= -10.000000 <= 0.00e+00
+		     g2   	  i       -1.00e+21 <= -8.649336 <= 0.00e+00
+		     g3   	  i       -1.00e+21 <= -0.000612 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+
+	NSGA-II Solution to A trigonometric function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.7216
+	    Total Function Evaluations:          
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f             -12             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	     -7.854036      -1.00e+01     1.00e+01 
+		     x2       c	      0.000004      -1.00e+01     1.00e+01 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= -6.000000 <= 0.00e+00
+		     g2   	  i       -1.00e+21 <= -6.000000 <= 0.00e+00
+		     g3   	  i       -1.00e+21 <= -6.000000 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+SOS Decomposition
+======================================
+
+Let :math:`f_*` be the result of ``SDPRelaxations.Minimize()``, then :math:`f-f_*\in Q_{\bf g}`.
+Therefore, there exist :math:`\sigma_0,\sigma_1,\dots,\sigma_m\in \sum A^2` such that
+:math:`f-f_*=\sigma_0+\sum_{i=1}^m\sigma_i g_i`. Once the ``Minimize()`` is called, the method
+``SDPRelaxations.Decompose()`` returns this a dictionary of elements of :math:`A` of the form
+``{0:[a(0, 1), ..., a(0, k_0)], ..., m:[a(m, 1), ..., a(m, k_m)}`` such that
+
+.. math::
+	f-f_* = \sum_{i=0}^{m}g_i\sum_{j=1}^{k_i} a^2_{ij},
+
+where :math:`g_0=1`.
+
+Usually there are extra coefficients that are very small in absolute value as a result of 
+round off error that should be ignored.
+
+The following example shows how to employ this functionality::
+
+	from sympy import *
+	from Irene import SDPRelaxations
+	# define the symbolic variables and functions
+	x = Symbol('x')
+	y = Symbol('y')
+	z = Symbol('z')
+
+	Rlx = SDPRelaxations([x, y, z])
+	Rlx.SetObjective(x**3 + x**2 * y**2 + z**2 * x * y - x * z)
+	Rlx.AddConstraint(9 - (x**2 + y**2 + z**2) >= 0)
+	# initiate the SDP
+	Rlx.InitSDP()
+	# solve the SDP
+	Rlx.Minimize()
+	print Rlx.Solution
+	# extract decomposition
+	V = Rlx.Decompose()
+	# test the decomposition
+	sos = 0
+	for v in V:
+	    # for g0 = 1
+	    if v == 0:
+	        sos = expand(Rlx.ReduceExp(sum([p**2 for p in V[v]])))
+	    # for g1, the constraint
+	    else:
+	        sos = expand(Rlx.ReduceExp(
+	            sos + Rlx.Constraints[v - 1] * sum([p**2 for p in V[v]])))
+	sos = sos.subs(Rlx.RevSymDict)
+	pln = Poly(sos).as_dict()
+	pln = {ex:round(pln[ex],5) for ex in pln}
+	print Poly(pln, (x,y,z)).as_expr()
+
+The output looks like this::
+
+	Solution of a Semidefinite Program:
+	                Solver: CVXOPT
+	                Status: Optimal
+	   Initialization Time: 0.875229120255 seconds
+	              Run Time: 0.031426 seconds
+	Primal Objective Value: -27.4974076889
+	  Dual Objective Value: -27.4974076213
+	Feasible solution for moments of order 2
+
+	1.0*x**3 + 1.0*x**2*y**2 + 1.0*x*y*z**2 - 1.0*x*z + 27.49741
+
+The ``SDRelaxSol``
+=======================================
+
+This object is a container for the solution of ``SDPRelaxation`` objects.
+It contains the following informations:
+	
+	- `Primal`: the value of the SDP in primal form,
+	- `Dual`: the value of the SDP in dual form,
+	- `RunTime`: the run time of the sdp solver,
+	- `InitTime`: the total time consumed for initialization of the sdp,
+	- `Solver`: the name of sdp solver,
+	- `Status`: final status of the sdp solver,
+	- `RelaxationOrd`: order of relaxation,
+	- `TruncatedMmntSeq`: a dictionary of resulted moments,
+	- `MomentMatrix`: the resulted moment matrix,
+	- `ScipySolver`: the scipy solver to extract solutions,
+	- `err_tol`: the minimum value which is considered to be nonzero,
+	- `Support`: the support of discrete measure resulted from ``SDPRelaxation.Minimize()``,
+	- `Weights`: corresponding weights for the Dirac measures.
+
+Extracting solutions
+---------------------------------------
+By default, the support of the measure is not calculated, but it can be approximated by calling 
+the method ``SDRelaxSol.ExtractSolution()``. 
+
+There exists an exact theoretical method for extracting the support of the solution measure as explained 
+in [HL]_. But because of the numerical error of sdp solvers, computing rank and hence the support is quite 
+difficult. So, ``SDRelaxSol.ExtractSolution()`` estimates the rank numerically by assuming that eigenvalues 
+with absolute value less than ``err_tol`` which by default is set to ``SDPRelaxation.ErrorTolerance``.
+
+Two methods are implemented for extracting solutions:
+
+	- **Lasserre-Henrion** method as explained in [HL]_. To employ this method simply call ``SDRelaxSol.ExtractSolution('LH', card)``, where ``card`` is the maximum cardinality of the support.
+
+	- **Moment Matching** method which employs ``scipy.optimize.root`` to approximate the support. The default ``scipy`` solver is set to `lm`, but other solvers can be selected using ``SDRelaxSol.SetScipySolver(solver)``. It is not guaranteed that scipy solvers return a reliable answer, but modifying sdp solvers and other parameters like ``SDPRelaxation.ErrorTolerance`` may help to get better results. To use this method call ``SDRelaxSol.ExtractSolution('scipy', card)`` where ``card`` is as above.
+
+**Example 1.** Solve and find minimizers of :math:`x^2+y^2+z^4` where :math:`x+y+z=4`::
+
+	from sympy import *
+	from Irene import *
+
+	x, y, z = symbols('x,y,z')
+
+	Rlx = SDPRelaxations([x, y, z])
+	Rlx.SetSDPSolver('cvxopt')
+	Rlx.SetObjective(x**2 + y**2 + z**4)
+	Rlx.AddConstraint(Eq(x + y + z, 4))
+	Rlx.InitSDP()
+	# solve the SDP
+	Rlx.Minimize()
+	# extract support
+	Rlx.Solution.ExtractSolution('LH', 1)
+	print Rlx.Solution
+
+	# pyOpt
+	from pyOpt import *
+
+	def objfunc(x):
+		f = x[0]**2 + x[1]**2 + x[2]**4
+		g = [x[0] + x[1] + x[2] - 4]
+		fail = 0
+		return f, g, fail
+
+	opt_prob = Optimization('Testing solutions', objfunc)
+	opt_prob.addVar('x1', 'c', lower=-4, upper=4, value=0.0)
+	opt_prob.addVar('x2', 'c', lower=-4, upper=4, value=0.0)
+	opt_prob.addVar('x3', 'c', lower=-4, upper=4, value=0.0)
+	opt_prob.addObj('f')
+	opt_prob.addCon('g1', 'e')
+	# Augmented Lagrangian Particle Swarm Optimizer
+	alpso = ALPSO()
+	alpso(opt_prob)
+	print opt_prob.solution(0)
+
+The output is::
+
+	Solution of a Semidefinite Program:
+	                Solver: CVXOPT
+	                Status: Optimal
+	   Initialization Time: 1.59334087372 seconds
+	              Run Time: 0.021102 seconds
+	Primal Objective Value: 5.45953579912
+	  Dual Objective Value: 5.45953586121
+	               Support:
+			(0.91685039306810523, 1.541574317520042, 1.5415743175200163)
+	        Support solver: Lasserre--Henrion
+	Feasible solution for moments of order 2
+
+	ALPSO Solution to Testing solutions
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.1443
+	    Total Function Evaluations:      1720
+	    Lambda: [-3.09182651]
+	    Seed: 1482274189.55335808
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f         5.46051             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	      1.542371      -4.00e+00     4.00e+00 
+		     x2       c	      1.541094      -4.00e+00     4.00e+00 
+		     x3       c	      0.916848      -4.00e+00     4.00e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1       e                0.000314 = 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+**Example 2.** Minimize :math:`-(x-1)^2-(x-y)^2-(y-3)^2` where :math:`1-(x-1)^2\ge0`, 
+:math:`1-(x-y)^2\ge0` and :math:`1-(y-3)^2\ge0`. It has three minimizers 
+:math:`(2, 3), (1, 2)`, and :math:`(2, 2)`::
+
+	from sympy import *
+	from Irene import *
+
+	x, y = symbols('x, y')
+
+	Rlx = SDPRelaxations([x, y])
+	Rlx.SetSDPSolver('csdp')
+	Rlx.SetObjective(-(x - 1)**2 - (x - y)**2 - (y - 3)**2)
+	Rlx.AddConstraint(1 - (x - 1)**2 >= 0)
+	Rlx.AddConstraint(1 - (x - y)**2 >= 0)
+	Rlx.AddConstraint(1 - (y - 3)**2 >= 0)
+	Rlx.MomentsOrd(2)
+	Rlx.InitSDP()
+	# solve the SDP
+	Rlx.Minimize()
+	# extract support
+	Rlx.Solution.ExtractSolution('LH')
+	print Rlx.Solution
+
+	# pyOpt
+	from pyOpt import *
+
+
+	def objfunc(x):
+	    f = -(x[0] - 1)**2 - (x[0] - x[1])**2 - (x[1] - 3)**2
+	    g = [
+	        (x[0] - 1)**2 - 1,
+	        (x[0] - x[1])**2 - 1,
+	        (x[1] - 3)**2 - 1
+	    ]
+	    fail = 0
+	    return f, g, fail
+
+	opt_prob = Optimization("Lasserre's Example", objfunc)
+	opt_prob.addVar('x1', 'c', lower=-3, upper=3, value=0.0)
+	opt_prob.addVar('x2', 'c', lower=-3, upper=3, value=0.0)
+	opt_prob.addObj('f')
+	opt_prob.addCon('g1', 'i')
+	opt_prob.addCon('g2', 'i')
+	opt_prob.addCon('g3', 'i')
+	# Augmented Lagrangian Particle Swarm Optimizer
+	alpso = ALPSO()
+	alpso(opt_prob)
+	print opt_prob.solution(0)
+	# Non Sorting Genetic Algorithm II
+	nsg2 = NSGA2()
+	nsg2(opt_prob)
+	print opt_prob.solution(1)
+
+which results in::
+
+	Solution of a Semidefinite Program:
+	                Solver: CSDP
+	                Status: Optimal
+	   Initialization Time: 0.861004114151 seconds
+	              Run Time: 0.00645 seconds
+	Primal Objective Value: -2.0
+	  Dual Objective Value: -2.0
+	               Support:
+			(2.000000006497352, 3.000000045123556)
+			(0.99999993829586131, 1.9999999487412694)
+			(1.9999999970209055, 1.9999999029899564)
+	        Support solver: Lasserre--Henrion
+	Feasible solution for moments of order 2
+
+
+	ALPSO Solution to Lasserre's Example
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.1353
+	    Total Function Evaluations:      1720
+	    Lambda: [ 0.08278879  0.08220848  0.        ]
+	    Seed: 1482307696.27431393
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f              -2             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	      1.999967      -3.00e+00     3.00e+00 
+		     x2       c	      3.000000      -3.00e+00     3.00e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= -0.000065 <= 0.00e+00
+		     g2   	  i       -1.00e+21 <= 0.000065 <= 0.00e+00
+		     g3   	  i       -1.00e+21 <= -1.000000 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+
+	NSGA-II Solution to Lasserre's Example
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.2406
+	    Total Function Evaluations:          
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f        -1.99941             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	      1.999947      -3.00e+00     3.00e+00 
+		     x2       c	      2.000243      -3.00e+00     3.00e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= -0.000106 <= 0.00e+00
+		     g2   	  i       -1.00e+21 <= -1.000000 <= 0.00e+00
+		     g3   	  i       -1.00e+21 <= -0.000486 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+`Irene` detects all minimizers correctly, but each `pyOpt` solvers only detect one.
+Note that we did not specify number of solutions, but the solver extracted them all.
+
+.. [HL] D\. Henrion and J-B. Lasserre, *Detecting Global Optimality and Extracting Solutions in GloptiPoly*, Positive Polynomials in Control, LNCIS 312, 293-310 (2005).

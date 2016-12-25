@@ -6,7 +6,7 @@ There are benchmark problems to evaluated how good an optimization method works.
 We apply the generalized relaxation method to some of these benchmarks that are
 mainly taken from [MJXY]_.
 
-.. [MJXY] M. Jamil, Xin-She Yang, *A literature survey of benchmark functions for global optimization problems*, IJMMNO, Vol. 4(2), 2013.
+.. [MJXY] M\. Jamil, Xin-She Yang, *A literature survey of benchmark functions for global optimization problems*, IJMMNO, Vol. 4(2), 2013.
 
 Rosenbrock Function
 ==================================
@@ -57,19 +57,40 @@ where :math:`9-x_i^2\ge0` for :math:`i=1,\dots,9`::
 	cons = [
 	    {'type': 'ineq', 'fun': lambda x: 9 - x[i]**2} for i in range(NumVars)]
 	x0 = tuple([0 for _ in range(NumVars)])
-	print  "solution according to 'COBYLA':"
 	sol1 = minimize(fun, x0, method='COBYLA', constraints=cons)
-	print "solution according to 'SLSQP':"
 	sol2 = minimize(fun, x0, method='SLSQP', constraints=cons)
+
+	print "solution according to 'COBYLA':"
 	print sol1
+	print "solution according to 'SLSQP':"
 	print sol2
-	# solve with pso
-	print "PSO:"
-	from pyswarm import pso
-	lb = [-3 for i in range(NumVars)]
-	ub = [3 for i in range(NumVars)]
-	cns = [cn['fun'] for cn in cons]
-	print pso(fun, lb, ub, ieqcons=cns)
+
+	# pyOpt
+	from pyOpt import *
+
+
+	def objfunc(x):
+	    f = sum([100 * (x[i + 1] - x[i]**2)**2 + (1 - x[i])
+	             ** 2 for i in range(NumVars - 1)])
+	    g = [x[i]**2 - 9 for i in range(NumVars)]
+	    fail = 0
+	    return f, g, fail
+
+	opt_prob = Optimization(
+	    'The Rosenbrock function', objfunc)
+	opt_prob.addObj('f')
+	for i in range(NumVars):
+	    opt_prob.addVar('x%d' % (i + 1), 'c', lower=-3, upper=3, value=0.0)
+	    opt_prob.addCon('g%d' % (i + 1), 'i')
+
+	# Augmented Lagrangian Particle Swarm Optimizer
+	alpso = ALPSO()
+	alpso(opt_prob)
+	print opt_prob.solution(0)
+	# Non Sorting Genetic Algorithm II
+	nsg2 = NSGA2()
+	nsg2(opt_prob)
+	print opt_prob.solution(1)
 
 The result is::
 
@@ -105,10 +126,89 @@ The result is::
 	 success: True
 	       x: array([ 1.00000841,  1.00001216,  1.00000753,  1.00001129,  1.00000134,
 	        1.00000067,  1.00000502,  1.00000682,  0.99999006])
-	PSO:
-	Stopping search: maximum iterations reached --> 100
-	(array([-0.30495496,  0.10698904, -0.129344  ,  0.07972014,  0.027356  ,
-	        0.02170117, -0.0036854 ,  0.10778454,  0.04141022]), 12.067752160169965)
+
+	ALPSO Solution to The Rosenbrock function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                   10.6371
+	    Total Function Evaluations:     48040
+	    Lambda: [ 0.  0.  0.  0.  0.  0.  0.  0.  0.]
+	    Seed: 1482114864.60097694
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f        0.590722             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	      0.992774      -3.00e+00     3.00e+00 
+		     x2       c	      0.986019      -3.00e+00     3.00e+00 
+		     x3       c	      0.970756      -3.00e+00     3.00e+00 
+		     x4       c	      0.942489      -3.00e+00     3.00e+00 
+		     x5       c	      0.886910      -3.00e+00     3.00e+00 
+		     x6       c	      0.787367      -3.00e+00     3.00e+00 
+		     x7       c	      0.618875      -3.00e+00     3.00e+00 
+		     x8       c	      0.382054      -3.00e+00     3.00e+00 
+		     x9       c	      0.143717      -3.00e+00     3.00e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= -8.014399 <= 0.00e+00
+		     g2   	  i       -1.00e+21 <= -8.027767 <= 0.00e+00
+		     g3   	  i       -1.00e+21 <= -8.057633 <= 0.00e+00
+		     g4   	  i       -1.00e+21 <= -8.111714 <= 0.00e+00
+		     g5   	  i       -1.00e+21 <= -8.213391 <= 0.00e+00
+		     g6   	  i       -1.00e+21 <= -8.380053 <= 0.00e+00
+		     g7   	  i       -1.00e+21 <= -8.616994 <= 0.00e+00
+		     g8   	  i       -1.00e+21 <= -8.854035 <= 0.00e+00
+		     g9   	  i       -1.00e+21 <= -8.979345 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+
+	NSGA-II Solution to The Rosenbrock function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    0.6244
+	    Total Function Evaluations:          
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f          5.5654             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	      0.727524      -3.00e+00     3.00e+00 
+		     x2       c	      0.537067      -3.00e+00     3.00e+00 
+		     x3       c	      0.296186      -3.00e+00     3.00e+00 
+		     x4       c	      0.094420      -3.00e+00     3.00e+00 
+		     x5       c	      0.017348      -3.00e+00     3.00e+00 
+		     x6       c	      0.009658      -3.00e+00     3.00e+00 
+		     x7       c	      0.015372      -3.00e+00     3.00e+00 
+		     x8       c	      0.009712      -3.00e+00     3.00e+00 
+		     x9       c	      0.001387      -3.00e+00     3.00e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= -8.470708 <= 0.00e+00
+		     g2   	  i       -1.00e+21 <= -8.711559 <= 0.00e+00
+		     g3   	  i       -1.00e+21 <= -8.912274 <= 0.00e+00
+		     g4   	  i       -1.00e+21 <= -8.991085 <= 0.00e+00
+		     g5   	  i       -1.00e+21 <= -8.999699 <= 0.00e+00
+		     g6   	  i       -1.00e+21 <= -8.999907 <= 0.00e+00
+		     g7   	  i       -1.00e+21 <= -8.999764 <= 0.00e+00
+		     g8   	  i       -1.00e+21 <= -8.999906 <= 0.00e+00
+		     g9   	  i       -1.00e+21 <= -8.999998 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
 
 The relaxation method returns values very close to the actual minimum but 
 two out of other three methods fail to estimate the minimum correctly.
@@ -159,50 +259,123 @@ The following code optimizes :math:`f` when :math:`1-x^2\ge0` and :math:`1-y^2\g
 	x0 = tuple([0 for _ in range(2)])
 	sol1 = minimize(fun, x0, method='COBYLA', constraints=cons)
 	sol2 = minimize(fun, x0, method='SLSQP', constraints=cons)
-	print  "solution according to 'COBYLA':"
+	print "solution according to 'COBYLA':"
 	print sol1
 	print "solution according to 'SLSQP':"
 	print sol2
-	# solve with pso
-	print "PSO:"
-	from pyswarm import pso
-	lb = [-1 for i in range(2)]
-	ub = [1 for i in range(2)]
-	cns = [cn['fun'] for cn in cons]
-	print pso(fun, lb, ub, ieqcons=cns)
+
+	# pyOpt
+	from pyOpt import *
+
+
+	def objfunc(x):
+	    f = .6 + (sin((16. / 15.) * x[0] - 1) + (sin((16. / 15.) * x[0] - 1))**2 + .02 * sin(4 * ((16. / 15.) * x[0] - 1))) + (
+	        sin((16. / 15.) * x[1] - 1) + (sin((16. / 15.) * x[1] - 1))**2 + .02 * sin(4 * ((16. / 15.) * x[1] - 1)))
+	    g = [x[i]**2 - 1 for i in range(2)]
+	    fail = 0
+	    return f, g, fail
+
+	opt_prob = Optimization(
+	    'The Giunta function', objfunc)
+	opt_prob.addObj('f')
+	for i in range(2):
+	    opt_prob.addVar('x%d' % (i + 1), 'c', lower=-1, upper=1, value=0.0)
+	    opt_prob.addCon('g%d' % (i + 1), 'i')
+
+	# Augmented Lagrangian Particle Swarm Optimizer
+	alpso = ALPSO()
+	alpso(opt_prob)
+	print opt_prob.solution(0)
+	# Non Sorting Genetic Algorithm II
+	nsg2 = NSGA2()
+	nsg2(opt_prob)
+	print opt_prob.solution(1)
 
 and the result is::
 
 	Solution of a Semidefinite Program:
 	                Solver: CVXOPT
 	                Status: Optimal
-	   Initialization Time: 3.03993797302 seconds
-	              Run Time: 0.015762 seconds
+	   Initialization Time: 2.53814482689 seconds
+	              Run Time: 0.041321 seconds
 	Primal Objective Value: 0.0644704534329
 	  Dual Objective Value: 0.0644704595475
 	Feasible solution for moments of order 2
 
 	solution according to 'COBYLA':
-	     fun: 0.064470433766030344
+	     fun: 0.064470430891900576
 	   maxcv: 0.0
 	 message: 'Optimization terminated successfully.'
-	    nfev: 45
+	    nfev: 40
 	  status: 1
 	 success: True
-	       x: array([ 0.49835509,  0.49847982])
+	       x: array([ 0.46730658,  0.4674184 ])
 	solution according to 'SLSQP':
-	     fun: 0.0644705317528075
-	     jac: array([ 0.00045323,  0.00045323,  0.        ])
+	     fun: 0.0644704633430450
+	     jac: array([-0.00029983, -0.00029983,  0.        ])
 	 message: 'Optimization terminated successfully.'
-	    nfev: 17
-	     nit: 4
-	    njev: 4
+	    nfev: 13
+	     nit: 3
+	    njev: 3
 	  status: 0
 	 success: True
-	       x: array([ 0.4987201,  0.4987201])
-	PSO:
-	Stopping search: Swarm best objective change less than 1e-08
-	(array([ 0.49858097,  0.49835221]), 0.064470444814555605)
+	       x: array([ 0.46717727,  0.46717727])
+
+	ALPSO Solution to The Giunta function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                   10.6180
+	    Total Function Evaluations:      1240
+	    Lambda: [ 0.  0.]
+	    Seed: 1482115204.08583212
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f       0.0644704             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	      0.467346      -1.00e+00     1.00e+00 
+		     x2       c	      0.467369      -1.00e+00     1.00e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= -0.781588 <= 0.00e+00
+		     g2   	  i       -1.00e+21 <= -0.781566 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+
+	NSGA-II Solution to The Giunta function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                   50.9196
+	    Total Function Evaluations:          
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f       0.0644704             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	      0.467403      -1.00e+00     1.00e+00 
+		     x2       c	      0.467324      -1.00e+00     1.00e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= -0.781535 <= 0.00e+00
+		     g2   	  i       -1.00e+21 <= -0.781608 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
 
 Parsopoulos Function
 ==================================
@@ -241,27 +414,46 @@ The following code computes its minimum where :math:`-5\leq x,y\leq5`::
 	print sol1
 	print "solution according to 'SLSQP':"
 	print sol2
-	# solve with pso
-	print "PSO:"
-	from pyswarm import pso
-	lb = [-5 for i in range(2)]
-	ub = [5 for i in range(2)]
-	cns = [cn['fun'] for cn in cons]
-	print pso(fun, lb, ub, ieqcons=cns)
+
+	# pyOpt
+	from pyOpt import *
+
+
+	def objfunc(x):
+	    f = cos(x[0])**2 + sin(x[1])**2
+	    g = [x[i]**2 - 25 for i in range(2)]
+	    fail = 0
+	    return f, g, fail
+
+	opt_prob = Optimization(
+	    'The Parsopoulos function', objfunc)
+	opt_prob.addObj('f')
+	for i in range(2):
+	    opt_prob.addVar('x%d' % (i + 1), 'c', lower=-5, upper=5, value=0.0)
+	    opt_prob.addCon('g%d' % (i + 1), 'i')
+
+	# Augmented Lagrangian Particle Swarm Optimizer
+	alpso = ALPSO()
+	alpso(opt_prob)
+	print opt_prob.solution(0)
+	# Non Sorting Genetic Algorithm II
+	nsg2 = NSGA2()
+	nsg2(opt_prob)
+	print opt_prob.solution(1)
 
 which returns::
 
 	Solution of a Semidefinite Program:
 	                Solver: CVXOPT
 	                Status: Optimal
-	   Initialization Time: 3.01474308968 seconds
-	              Run Time: 0.013299 seconds
-	Primal Objective Value: -3.7471929546e-10
-	  Dual Objective Value: 5.43046022792e-12
+	   Initialization Time: 2.48692297935 seconds
+	              Run Time: 0.035358 seconds
+	Primal Objective Value: -3.74719295193e-10
+	  Dual Objective Value: 5.43053240402e-12
 	Feasible solution for moments of order 2
 
 	solution according to 'COBYLA':
-	     fun: 1.8371674257900859e-08
+	     fun: 1.83716742579312e-08
 	   maxcv: 0.0
 	 message: 'Optimization terminated successfully.'
 	    nfev: 35
@@ -278,14 +470,67 @@ which returns::
 	  status: 0
 	 success: True
 	       x: array([ 0.,  0.])
-	PSO:
-	Stopping search: Swarm best objective change less than 1e-08
-	(array([ 4.71233715,  3.14155673]), 3.9770280273184657e-09)
+
+	ALPSO Solution to The Parsopoulos function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                    4.4576
+	    Total Function Evaluations:      1240
+	    Lambda: [ 0.  0.]
+	    Seed: 1482115438.17070389
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f     5.68622e-09             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	     -4.712408      -5.00e+00     5.00e+00 
+		     x2       c	     -0.000073      -5.00e+00     5.00e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= -2.793212 <= 0.00e+00
+		     g2   	  i       -1.00e+21 <= -25.000000 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+
+	NSGA-II Solution to The Parsopoulos function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                   17.7197
+	    Total Function Evaluations:          
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f     2.37167e-08             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	     -1.570676      -5.00e+00     5.00e+00 
+		     x2       c	      3.141496      -5.00e+00     5.00e+00 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= -22.532977 <= 0.00e+00
+		     g2   	  i       -1.00e+21 <= -15.131000 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
 
 Shubert Function
 ==================================
 
-Subert function is defined by:
+Shubert function is defined by:
 
 .. math::
 	f(x_1,\dots,x_n) = \prod_{i=1}^n\left(\sum_{j=1}^5\cos((j+1)x_i+i)\right).
@@ -336,19 +581,40 @@ and :math:`n=2`::
 	print "Sage:"
 	print "minimize_constrained (default):", m1, g(m1)
 	print "minimize_constrained (l-bfgs-b):", m2, g(m2)
-	print "PSO:"
-	from pyswarm import pso
-	lb = [-10, -10]
-	ub = [10, 10]
-	cns = [cn['fun'] for cn in cons]
-	print pso(g, lb, ub, ieqcons=cns)
+
+	# pyOpt
+	from pyOpt import *
+
+
+	def objfunc(x):
+	    f = sum([cos((j + 1) * x[0] + j) for j in range(1, 6)]) * \
+	        sum([cos((j + 1) * x[1] + j) for j in range(1, 6)])
+	    g = [x[i]**2 - 100 for i in range(2)]
+	    fail = 0
+	    return f, g, fail
+
+	opt_prob = Optimization(
+	    'The Shubert function', objfunc)
+	opt_prob.addObj('f')
+	for i in range(2):
+	    opt_prob.addVar('x%d' % (i + 1), 'c', lower=-10, upper=10, value=0.0)
+	    opt_prob.addCon('g%d' % (i + 1), 'i')
+
+	# Augmented Lagrangian Particle Swarm Optimizer
+	alpso = ALPSO()
+	alpso(opt_prob)
+	print opt_prob.solution(0)
+	# Non Sorting Genetic Algorithm II
+	nsg2 = NSGA2()
+	nsg2(opt_prob)
+	print opt_prob.solution(1)
 
 The result is::
 
 	Solution of a Semidefinite Program:
 	                Solver: CVXOPT
 	                Status: Optimal
-	   Initialization Time: 1129.02412415 seconds
+	   Initialization Time: 730.02412415 seconds
 	              Run Time: 5.258507 seconds
 	Primal Objective Value: -18.0955649723
 	  Dual Objective Value: -18.0955648855
@@ -374,9 +640,320 @@ The result is::
 	Sage:
 	minimize_constrained (default): (-3.962032420336303, 4.811734682897321) -3.32611819422
 	minimize_constrained (l-bfgs-b): (-3.962032420336303, 4.811734682897321) -3.32611819422
-	PSO:
-	Stopping search: Swarm best objective change less than 1e-08
-	(array([-0.77822054,  4.8118272 ]), -18.095565036766224)
 
-We note that four out of five optimizers stuck at a local minimum and 
+	ALPSO Solution to The Shubert function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                   37.7526
+	    Total Function Evaluations:      2200
+	    Lambda: [ 0.  0.]
+	    Seed: 1482115770.57303905
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f        -18.0956             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	     -7.061398      -1.00e+01     1.00e+01 
+		     x2       c	     -1.471424      -1.00e+01     1.00e+01 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= -50.136654 <= 0.00e+00
+		     g2   	  i       -1.00e+21 <= -97.834910 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+
+	NSGA-II Solution to The Shubert function
+	================================================================================
+
+	        Objective Function: objfunc
+
+	    Solution: 
+	--------------------------------------------------------------------------------
+	    Total Time:                   97.6291
+	    Total Function Evaluations:          
+
+	    Objectives:
+	        Name        Value        Optimum
+		     f        -18.0955             0
+
+		Variables (c - continuous, i - integer, d - discrete):
+	        Name    Type       Value       Lower Bound  Upper Bound
+		     x1       c	     -0.778010      -1.00e+01     1.00e+01 
+		     x2       c	     -7.754277      -1.00e+01     1.00e+01 
+
+		Constraints (i - inequality, e - equality):
+	        Name    Type                    Bounds
+		     g1   	  i       -1.00e+21 <= -99.394700 <= 0.00e+00
+		     g2   	  i       -1.00e+21 <= -39.871193 <= 0.00e+00
+
+	--------------------------------------------------------------------------------
+
+
+We note that four out of six other optimizers stuck at a local minimum and 
 return incorrect values.
+
+Moreover, we employed 20 different optimizers included in `pyOpt <http://www.pyopt.org/>`_
+and only 4 of them returned the correct optimum value.
+
+McCormick Function
+==================================
+McCormick function is defined by
+
+.. math::
+	f(x, y) = \sin(x+y) + (x-y)^2-1.5x+2.5y+1.
+
+Attains its minimum at :math:`f(-.54719, -1.54719)\approx-1.9133`::
+
+	from sympy import *
+	from Irene import *
+	from pyProximation import OrthSystem
+	# introduce symbols
+	x = Symbol('x')
+	y = Symbol('y')
+	z = Symbol('z')
+	# transcendental term of objective
+	f = sin(z)
+	# Legendre polynomials via pyProximation
+	D_f = [(-2, 2)]
+	Orth_f = OrthSystem([z], D_f)
+	# set bases
+	B_f = Orth_f.PolyBasis(10)
+	# link B_f to Orth_f
+	Orth_f.Basis(B_f)
+	# generate the orthonormal bases
+	Orth_f.FormBasis()
+	# extract the coefficients of approximations
+	Coeffs_f = Orth_f.Series(f)
+	# form the approximations
+	f_app = sum([Orth_f.OrthBase[i] * Coeffs_f[i]
+	             for i in range(len(Orth_f.OrthBase))])
+	# objective function
+	obj = f_app.subs({z: x + y}) + (x - y)**2 - 1.5 * x + 2.5 * y + 1
+	# initiate the Relaxation object
+	Rlx = SDPRelaxations([x, y])
+	# set the objective
+	Rlx.SetObjective(obj)
+	# add support constraints
+	Rlx.AddConstraint(4 - (x**2 + y**2) >= 0)
+	# set the sdp solver
+	Rlx.SetSDPSolver('cvxopt')
+	# initialize the SDP
+	Rlx.InitSDP()
+	# solve the SDP
+	Rlx.Minimize()
+	Rlx.Solution.ExtractSolution('lh',1)
+	print Rlx.Solution
+
+Results in::
+
+	Solution of a Semidefinite Program:
+	                Solver: CVXOPT
+	                Status: Optimal
+	   Initialization Time: 10.6071600914 seconds
+	              Run Time: 0.070002 seconds
+	Primal Objective Value: -1.91322353633
+	  Dual Objective Value: -1.91322352558
+	               Support:
+			(-0.54724056855672309, -1.5473099043318805)
+	        Support solver: Lasserre--Henrion
+	Feasible solution for moments of order 5
+
+Schaffer Function N.2
+==================================
+Schaffer function N.2 is 
+
+.. math::
+	f(x, y) = \frac{\sin^2(x^2-y^2)-.5}{(1+.001(x^2+y^2))^2}.
+
+Attains its minimum at :math:`f(0, 0)=.5`::
+
+	from sympy import *
+	from Irene import *
+	from pyProximation import OrthSystem, Measure
+	# introduce symbols and functions
+	x = Symbol('x')
+	y = Symbol('y')
+	z = Symbol('z')
+	# transcendental term of objective
+	f = (sin(z))**2
+	# Chebyshev polynomials via pyProximation
+	D_f = [(-2, 2)]
+	w = lambda x: 1. / sqrt(4 - x**2)
+	M = Measure(D_f, w)
+	# link the measure to S
+	Orth_f = OrthSystem([z], D_f)
+	Orth_f.SetMeasure(M)
+	# set bases
+	B_f = Orth_f.PolyBasis(8)
+	# link B to S
+	Orth_f.Basis(B_f)
+	# generate the orthonormal bases
+	Orth_f.FormBasis()
+	# extract the coefficients of approximations
+	Coeffs_f = Orth_f.Series(f)
+	# form the approximations
+	f_app = sum([Orth_f.OrthBase[i] * Coeffs_f[i]
+	             for i in range(len(Orth_f.OrthBase))])
+	# objective function
+	obj = f_app.subs({z: x**2 - y**2}) - .5
+	# initiate the Relaxation object
+	Rlx = SDPRelaxations([x, y])
+	# settings
+	Rlx.Probability = False
+	# set the objective
+	Rlx.SetObjective(obj)
+	# add support constraints
+	Rlx.AddConstraint(4 - (x**2 + y**2) >= 0)
+	# moment constraint
+	Rlx.MomentConstraint(Mom((1 + .001 * (x**2 + y**2)**2)) == 1)
+	# set the sdp solver
+	Rlx.SetSDPSolver('cvxopt')
+	# initialize the SDP
+	Rlx.InitSDP()
+	# solve the SDP
+	Rlx.Minimize()
+	Rlx.Solution.ExtractSolution('lh', 1)
+	print Rlx.Solution
+
+The result::
+
+	Solution of a Semidefinite Program:
+	                Solver: CVXOPT
+	                Status: Optimal
+	   Initialization Time: 26.6285181046 seconds
+	              Run Time: 0.110288 seconds
+	Primal Objective Value: -0.495770329702
+	  Dual Objective Value: -0.495770335895
+	               Support:
+			(1.3348173524856991e-15, 8.3700760032311997e-17)
+	        Support solver: Lasserre--Henrion
+	Feasible solution for moments of order 6
+
+Schaffer Function N.4
+==================================
+Schaffer function N.4 is 
+
+.. math::
+	f(x, y) = \frac{\cos^2(\sin(|(x^2-y^2)|))-.5}{(1+.001(x^2+y^2))^2}.
+
+The minimum value is :math:`-0.207421`::
+
+	from sympy import *
+	from Irene import *
+	from pyProximation import OrthSystem, Measure
+	# introduce symbols and functions
+	x = Symbol('x')
+	y = Symbol('y')
+	z = Symbol('z')
+	# transcendental term of objective
+	f = (cos(sin(abs(z))))**2
+	# Chebyshev polynomials via pyProximation
+	D_f = [(-2, 2)]
+	w = lambda x: 1. / sqrt(4 - x**2)
+	M = Measure(D_f, w)
+	# link the measure to S
+	Orth_f = OrthSystem([z], D_f)
+	Orth_f.SetMeasure(M)
+	# set bases
+	B_f = Orth_f.PolyBasis(12)
+	# link B_f to Orth_f
+	Orth_f.Basis(B_f)
+	# generate the orthonormal bases
+	Orth_f.FormBasis()
+	# extract the coefficients of approximations
+	Coeffs_f = Orth_f.Series(f)
+	# form the approximations
+	f_app = sum([Orth_f.OrthBase[i] * Coeffs_f[i]
+	             for i in range(len(Orth_f.OrthBase))])
+	# objective function
+	obj = f_app.subs({z: x**2 - y**2}) - .5
+	# initiate the Relaxation object
+	Rlx = SDPRelaxations([x, y])
+	# settings
+	Rlx.Probability = False
+	# set the objective
+	Rlx.SetObjective(obj)
+	# add support constraints
+	Rlx.AddConstraint(4 - (x**2 + y**2) >= 0)
+	# moment constraint
+	Rlx.MomentConstraint(Mom((1 + .001 * (x**2 + y**2)**2)) == 1)
+	# set the sdp solver
+	Rlx.SetSDPSolver('csdp')
+	# initialize the SDP
+	Rlx.InitSDP()
+	# solve the SDP
+	Rlx.Minimize()
+	print Rlx.Solution
+
+
+Result is::
+
+	Solution of a Semidefinite Program:
+	                Solver: DSDP
+	                Status: Optimal
+	   Initialization Time: 497.670987129 seconds
+	              Run Time: 75.423031 seconds
+	Primal Objective Value: -0.203973186683
+	  Dual Objective Value: -0.208094722977
+	Feasible solution for moments of order 12
+
+Drop-Wave Function
+==================================
+The Drop-Wave function is multimodal and highly complex:
+
+.. math::
+	f(x, y) = -\frac{1+\cos(12\sqrt{x^2+y^2})}{.5(x^2+y^2)+2}.
+
+It has a global minimum at :math:`f(0, 0) = -1`. We use Bhaskara's approximation :math:`\cos(x)\approx\frac{\pi^2-4x^2}{\pi^2+x^2}`
+to solve this problem::
+
+	from sympy import *
+	from Irene import *
+	# introduce symbols and functions
+	x = Symbol('x')
+	y = Symbol('y')
+	# objective function
+	obj = -((pi**2 + 12**2 * (x**2 + y**2)) + (pi**2 - 4 * 12**2 * (x**2 + y**2))
+	        ) / (((pi**2 + 12**2 * (x**2 + y**2))) * (2 + .5 * (x**2 + y**2)))
+	# numerator
+	top = numer(obj)
+	# denominator
+	bot = expand(denom(obj))
+	# initiate the Relaxation object
+	Rlx = SDPRelaxations([x, y])
+	# settings
+	Rlx.Probability = False
+	# set the objective
+	Rlx.SetObjective(top)
+	# moment constraint
+	Rlx.MomentConstraint(Mom(bot) == 1)
+	# set the sdp solver
+	Rlx.SetSDPSolver('cvxopt')
+	# initialize the SDP
+	Rlx.InitSDP()
+	# solve the SDP
+	Rlx.Minimize()
+	Rlx.Solution.ExtractSolution('lh', 1)
+	print Rlx.Solution
+
+The output is::
+
+	Solution of a Semidefinite Program:
+	                Solver: CVXOPT
+	                Status: Optimal
+	   Initialization Time: 0.0663878917694 seconds
+	              Run Time: 0.005548 seconds
+	Primal Objective Value: -1.00000132341
+	  Dual Objective Value: -1.00000123991
+	               Support:
+			(-0.0, 0.0)
+	        Support solver: Lasserre--Henrion
+	Feasible solution for moments of order 1

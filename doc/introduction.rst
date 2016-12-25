@@ -17,6 +17,7 @@ Irene relies on the following packages:
 
 	+ for vector calculations:
 		- `NumPy <http://www.numpy.org/>`_.
+		- `SciPy <https://www.scipy.org/>`_.
 	+ for symbolic computations:
 		- `SymPy <http://www.sympy.org/>`_.
 	+ for parallel computations (optional):
@@ -52,6 +53,7 @@ To make a pdf file,subject to existence of ``latexpdf`` run::
 
 	$Irene/doc/make latexpdf
 
+Documentation is also available at `http://irene.readthedocs.io <http://irene.readthedocs.io/>`_.
 
 License
 =======================
