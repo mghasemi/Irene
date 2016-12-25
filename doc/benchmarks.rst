@@ -910,51 +910,33 @@ Drop-Wave Function
 The Drop-Wave function is multimodal and highly complex:
 
 .. math::
-	f(x, y) = -\frac{1+\cos(12\sqrt{x^2+y^2})}{.5(x^2+y^2)+2}
+	f(x, y) = -\frac{1+\cos(12\sqrt{x^2+y^2})}{.5(x^2+y^2)+2}.
 
-It has a global minimum at :math:`f(0, 0) = -1`::
+It has a global minimum at :math:`f(0, 0) = -1`. We use Bhaskara's approximation :math:`\cos(x)\approx\frac{\pi^2-4x^2}{\pi^2+x^2}`
+to solve this problem::
 
 	from sympy import *
 	from Irene import *
-	from pyProximation import OrthSystem, Measure
 	# introduce symbols and functions
 	x = Symbol('x')
 	y = Symbol('y')
-	z = Symbol('z')
-	s = Symbol('s')
-	# transcendental term of objective
-	f = cos(z)
-	# Legendre polynomials via pyProximation
-	D_f = [(-2, 2)]
-	# link the measure to S
-	Orth_f = OrthSystem([z], D_f)
-	# set bases
-	B_f = Orth_f.PolyBasis(8)
-	# link B_f to Orth_f
-	Orth_f.Basis(B_f)
-	# generate the orthonormal bases
-	Orth_f.FormBasis()
-	# extract the coefficients of approximations
-	Coeffs_f = Orth_f.Series(f)
-	# form the approximations
-	f_app = sum([Orth_f.OrthBase[i] * Coeffs_f[i]
-	             for i in range(len(Orth_f.OrthBase))])
 	# objective function
-	obj = -1 - f_app.subs({z: 12 * s})
-	# relations
-	rels = [s**2 - (x**2 + y**2)]
+	obj = -((pi**2 + 12**2 * (x**2 + y**2)) + (pi**2 - 4 * 12**2 * (x**2 + y**2))
+	        ) / (((pi**2 + 12**2 * (x**2 + y**2))) * (2 + .5 * (x**2 + y**2)))
+	# numerator
+	top = numer(obj)
+	# denominator
+	bot = expand(denom(obj))
 	# initiate the Relaxation object
-	Rlx = SDPRelaxations([x, y, s])
+	Rlx = SDPRelaxations([x, y])
 	# settings
 	Rlx.Probability = False
 	# set the objective
-	Rlx.SetObjective(obj)
-	# add support constraints
-	Rlx.AddConstraint(4 - s**2 >= 0)
+	Rlx.SetObjective(top)
 	# moment constraint
-	Rlx.MomentConstraint(Mom((2 + .5 * s**2) == 1))
+	Rlx.MomentConstraint(Mom(bot) == 1)
 	# set the sdp solver
-	Rlx.SetSDPSolver('dsdp')
+	Rlx.SetSDPSolver('cvxopt')
 	# initialize the SDP
 	Rlx.InitSDP()
 	# solve the SDP
@@ -965,15 +947,13 @@ It has a global minimum at :math:`f(0, 0) = -1`::
 The output is::
 
 	Solution of a Semidefinite Program:
-	                Solver: DSDP
+	                Solver: CVXOPT
 	                Status: Optimal
-	   Initialization Time: 24.8883750439 seconds
-	              Run Time: 1.85318 seconds
-	Primal Objective Value: -86177004058.9
-	  Dual Objective Value: -0.0
+	   Initialization Time: 0.0663878917694 seconds
+	              Run Time: 0.005548 seconds
+	Primal Objective Value: -1.00000132341
+	  Dual Objective Value: -1.00000123991
 	               Support:
-			(5.015829856065089e-08, -1.5584184369059079e-09, -2.7794786040781493e-09)
+			(-0.0, 0.0)
 	        Support solver: Lasserre--Henrion
-	Feasible solution for moments of order 4
-
-Note that although the solver did not converge, but the dual objective value and calculated support are correct.
+	Feasible solution for moments of order 1
