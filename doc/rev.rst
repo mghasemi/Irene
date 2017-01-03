@@ -2,7 +2,11 @@
 Revision History
 =============================
 
-**Version 1.1.0 (December 25, 2016- Merry Christmas)**
+**Version 1.1.5 ()**
+
+	- LaTeX representation of Irene's objects.
+
+**Version 1.1.0 (December 25, 2016 - Merry Christmas)**
 
 	- Extracting minimizers via ``SDRelaxSol.ExtractSolution()`` and help of ``scipy``,
 	- Extracting minimizers implementing Lasserre-Henrion algorithm,
@@ -14,4 +18,4 @@ Revision History
 
 **Version 1.0.0 (Dec 07, 2016)**
 	
-	- Initial release (Irene's birthday)
+	- Initial release (Birth of Irene)

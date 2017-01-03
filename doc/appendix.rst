@@ -160,3 +160,21 @@ The following is a pseudo-code demonstrating the basic usage of ``pyOpt``::
 	print opt_prob
 
 For more details, see `pyOpt documentation <http://www.pyopt.org/quickguide/quickguide.html>`_.
+
+LaTeX support
+===================
+
+There is a method implemented for every class of Irene module that generates a LaTeX code related
+to the object. This code can be retrieved by calling ``LaTeX`` function on the instance.
+
+Calling ``LaTeX`` on a
+
+	- ``SDPRelaxations`` instance returns the code which demonstrates user entered optimization problem.
+	- ``SDRelaxSol`` instance returns the code for the moment matrix of the solution.
+	- ``Mom`` instance (moment object) returns the LaTeX code of the object.
+	- ``sdp`` instance returns the code for the SDP.
+
+Moreover, if ``LaTeX`` function is called on a ``SymPy`` object it calls ``sympy.latex`` function and returns 
+the output.
+
+The ``LaTeX`` function is a member of ``Irene.base`` module which calls ``__latex__`` method of its classes.

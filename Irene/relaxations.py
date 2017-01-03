@@ -77,11 +77,14 @@ class SDPRelaxations(base):
         self.ReducedBases = {}
         #
         self.Constraints = []
+        self.OrgConst = []
         self.MomConst = []
+        self.OrgMomConst = []
         self.ObjDeg = 0
         self.ObjHalfDeg = 0
         self.CnsDegs = []
         self.CnsHalfDegs = []
+        self.MmntCnsDeg = 0
         # check generators
         for f in gens:
             if isinstance(f, Function) or isinstance(f, Symbol):
@@ -150,8 +153,11 @@ class SDPRelaxations(base):
         is present, otherwise it just substitutes generating functions with
         their corresponding internal symbols.
         """
-        from sympy import reduced
-        T = expr.subs(self.SymDict)
+        from sympy import reduced, Poly
+        try:
+            T = expr.subs(self.SymDict)
+        except:
+            T = Poly(expr, *self.AuxSyms)
         if self.Groebner != []:
             return reduced(T, self.Groebner)[1]
         else:
@@ -165,11 +171,11 @@ class SDPRelaxations(base):
         according to the given relations.
         """
         from math import ceil
-        from sympy import Poly
-        self.Objective = obj
-        self.RedObjective = self.ReduceExp(obj)
+        from sympy import Poly, sympify
+        self.Objective = sympify(obj)
+        self.RedObjective = self.ReduceExp(sympify(obj))
         # self.CheckVars(obj)
-        tot_deg = Poly(self.RedObjective).total_degree()
+        tot_deg = Poly(self.RedObjective, *self.AuxSyms).total_degree()
         self.ObjDeg = tot_deg
         self.ObjHalfDeg = int(ceil(tot_deg / 2.))
 
@@ -182,6 +188,7 @@ class SDPRelaxations(base):
         """
         from sympy import Poly
         from math import ceil
+        self.OrgConst.append(cnst)
         CnsTyp = type(cnst)
         if CnsTyp in self.ExpTypes:
             if CnsTyp in [self.GEQ, self.GT]:
@@ -219,16 +226,23 @@ class SDPRelaxations(base):
         from math import ceil
         assert isinstance(
             cnst, Mom), "The argument must be of moment type 'Mom'"
+        self.OrgMomConst.append(cnst)
         CnsTyp = cnst.TYPE
         if CnsTyp in ['ge', 'gt']:
             expr = self.ReduceExp(cnst.Content)
+            tot_deg = Poly(expr).total_degree()
+            self.MmntCnsDeg = max(int(ceil(tot_deg / 2.)), self.MmntCnsDeg)
             self.MomConst.append([expr, cnst.rhs])
         elif CnsTyp in ['le', 'lt']:
             expr = self.ReduceExp(-cnst.Content)
+            tot_deg = Poly(expr).total_degree()
+            self.MmntCnsDeg = max(int(ceil(tot_deg / 2.)), self.MmntCnsDeg)
             self.MomConst.append([expr, -cnst.rhs])
         elif CnsTyp == 'eq':
             non_red_exp = cnst.Content - cnst.rhs
             expr = self.ReduceExp(cnst.Content)
+            tot_deg = Poly(expr).total_degree()
+            self.MmntCnsDeg = max(int(ceil(tot_deg / 2.)), self.MmntCnsDeg)
             self.MomConst.append([expr, cnst.rhs - self.ErrorTolerance])
             self.MomConst.append([-expr, -cnst.rhs - self.ErrorTolerance])
 
@@ -272,13 +286,13 @@ class SDPRelaxations(base):
                     exponents.append(expnt)
         return exponents
 
-    def MomentsOrd(self, ord):
+    def MomentsOrd(self, ordr):
         r"""
         Sets the order of moments to be considered.
         """
         from types import IntType
-        assert (type(ord) is IntType) and (ord > 0), self.MmntOrdError
-        self.MmntOrd = ord
+        assert (type(ordr) is IntType) and (ordr > 0), self.MmntOrdError
+        self.MmntOrd = ordr
 
     def RelaxationDeg(self):
         r"""
@@ -289,7 +303,7 @@ class SDPRelaxations(base):
             CHD = 0
         else:
             CHD = max(self.CnsHalfDegs)
-        RlxDeg = max([CHD, self.ObjHalfDeg, self.MmntOrd])
+        RlxDeg = max([CHD, self.ObjHalfDeg, self.MmntOrd, self.MmntCnsDeg])
         self.MmntOrd = RlxDeg
         return RlxDeg
 
@@ -654,6 +668,23 @@ class SDPRelaxations(base):
         out_txt += "=" * 70 + "\n"
         return out_txt
 
+    def __latex__(self):
+        r"""
+        """
+        from sympy import latex
+        latexcode = "\\left\\lbrace\n"
+        latexcode += "\\begin{array}{ll}\n"
+        latexcode += "\t\\min & " + latex(self.Objective) + "\\\\\n"
+        latexcode += "\t\\textrm{subject to} & \\\\\n"
+        for cns in self.OrgConst:
+            latexcode += "\t\t & " + latex(cns) + "\\\\\n"
+        latexcode += "\t\\textrm{where} & \\\\\n"
+        for cns in self.OrgMomConst:
+            latexcode += "\t\t" + cns.__latex__(True) + "\\\\\n"
+        latexcode += "\\end{array}"
+        latexcode += "\\right."
+        return latexcode
+
 #######################################################################
 # Solution of the Semidefinite Relaxation
 
@@ -703,6 +734,9 @@ class SDRelaxSol(object):
         self.Weights = None
 
     def __str__(self):
+        r"""
+        Generate the output for print.
+        """
         out_str = "Solution of a Semidefinite Program:\n"
         out_str += "                Solver: " + self.Solver + "\n"
         out_str += "                Status: " + self.Status + "\n"
@@ -719,6 +753,25 @@ class SDRelaxSol(object):
             out_str += "        Support solver: " + self.ScipySolver + "\n"
         out_str += self.Message + "\n"
         return out_str
+
+    def __getitem__(self, idx):
+        r"""
+        Returns the moment corresponding to the index ``idx`` if exists,
+        otherwise, returns ``None``.
+        """
+        if idx in self.TruncatedMmntSeq:
+            return self.TruncatedMmntSeq[idx]
+        else:
+            return None
+
+    def __len__(self):
+        r"""
+        Returns the length of the moment sequence.
+        """
+        return len(self.TruncatedMmntSeq)
+
+    def __iter__(self):
+        return iter(self.TruncatedMmntSeq)
 
     def SetScipySolver(self, solver):
         r"""
@@ -979,6 +1032,14 @@ class SDRelaxSol(object):
         else:
             raise Exception("Unsupported solver.")
 
+    def __latex__(self):
+        a = self.MomentMatrix
+        lines = str(a).replace('[', '').replace(']', '').splitlines()
+        rv = [r'\begin{bmatrix}']
+        rv += ['  ' + ' & '.join(l.split()) + r'\\' for l in lines]
+        rv += [r'\end{bmatrix}']
+        return '\n'.join(rv)
+
 #######################################################################
 # A Symbolic object to handle moment constraints
 
@@ -1091,3 +1152,13 @@ class Mom(object):
             strng += " " + symbs[self.TYPE]
             strng += " " + str(self.rhs)
         return strng
+
+    def __latex__(self, external=False):
+        from sympy import latex
+        symbs = {'lt': '<', 'le': '\\leq', 'gt': '>', 'ge': '\\geq', 'eq': '='}
+        latexcode = "\\textrm{Moment of }"
+        if external:
+            latexcode += " & "
+        latexcode += latex(self.Content)
+        latexcode += symbs[self.TYPE] + latex(self.rhs)
+        return latexcode

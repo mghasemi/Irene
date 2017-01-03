@@ -218,8 +218,8 @@ by calling ``MomentConstraint`` on a ``Mom`` object. The following adds two cons
 	Rlx.Minimize()
 	# output
 	print Rlx.Solution
-	print "Moment of x*y:", Rlx.Solution.TruncatedMmntSeq[x * y]
-	print "Moment of y*z + z:", Rlx.Solution.TruncatedMmntSeq[y * z] + Rlx.Solution.TruncatedMmntSeq[z]
+	print "Moment of x*y:", Rlx.Solution[x * y]
+	print "Moment of y*z + z:", Rlx.Solution[y * z] + Rlx.Solution[z]
 
 Solution is::
 
@@ -242,6 +242,70 @@ Although it is possible to add equality constraints via ``AddConstraint`` and ``
 For :math:`A=B`, it considers :math:`A\ge B - \varepsilon` and :math:`A\leq B + \varepsilon`.
 In this case the value of :math:`\varepsilon` can be modified by setting `SDPRelaxation.ErrorTolerance`
 which its default value is :math:`10^{-6}`.
+
+Truncated Moment Problem
+==================================
+It must be clear that we can use ``SDPRelaxations.MomentConstraint`` to introduce a typical truncated
+moment problem over polynomials as described in [JNie]_.
+
+**Example** Find the support of a measure :math:`\mu` whose support is a subset of :math:`[-1,1]^2` and the followings hold:
+
+.. math::
+	\begin{array}{cc}
+		\int x^2d\mu=\int y^2d\mu=\frac{1}{3} & \int x^2yd\mu=\int xy^2d\mu=0\\
+		\int x^2y^2d\mu=\frac{1}{9} & \int x^4y^2d\mu=\int x^2y^4d\mu=\frac{1}{15}.
+	\end{array}
+
+The following code does the job::
+
+	from sympy import *
+	from Irene import *
+	# introduce variables
+	x = Symbol('x')
+	y = Symbol('y')
+	# initiate the Relaxation object
+	Rlx = SDPRelaxations([x, y])
+	# set the objective
+	Rlx.SetObjective(0)
+	# add support constraints
+	Rlx.AddConstraint(1 - x**2 >= 0)
+	Rlx.AddConstraint(1 - y**2 >= 0)
+	# add moment constraints
+	Rlx.MomentConstraint(Mom(x**2) == 1. / 3.)
+	Rlx.MomentConstraint(Mom(y**2) == 1. / 3.)
+	Rlx.MomentConstraint(Mom(x**2 * y) == 0.)
+	Rlx.MomentConstraint(Mom(x * y**2) == 0.)
+	Rlx.MomentConstraint(Mom(x**2 * y**2) == 1. / 9.)
+	Rlx.MomentConstraint(Mom(x**4 * y**2) == 1. / 15.)
+	Rlx.MomentConstraint(Mom(x**2 * y**4) == 1. / 15.)
+	# set the solver
+	Rlx.SetSDPSolver('dsdp')
+	# initialize the SDP
+	Rlx.InitSDP()
+	# solve the SDP
+	Rlx.Minimize()
+	# output
+	Rlx.Solution.ExtractSolution('lh', 3)
+	print Rlx.Solution
+
+and the result is::
+
+	Solution of a Semidefinite Program:
+	                Solver: DSDP
+	                Status: Optimal
+	   Initialization Time: 1.08686900139 seconds
+	              Run Time: 0.122459 seconds
+	Primal Objective Value: 0.0
+	  Dual Objective Value: -9.36054051771e-09
+	               Support:
+			(0.40181215311129925, 0.54947643681480196)
+			(-0.40181215311127805, -0.54947643681498193)
+	        Support solver: Lasserre--Henrion
+	Feasible solution for moments of order 3
+
+Note that the solution is not necessarily unique.
+
+.. [JNie] J\. Nie, *The A-Truncated K-Moment Problem*, Found. Comput. Math., Vol.14(6), 1243-1276 (2014).
 
 Optimization of Rational Functions
 ==================================
@@ -742,6 +806,9 @@ It contains the following informations:
 	- `err_tol`: the minimum value which is considered to be nonzero,
 	- `Support`: the support of discrete measure resulted from ``SDPRelaxation.Minimize()``,
 	- `Weights`: corresponding weights for the Dirac measures.
+
+The ``SDRelaxSol`` after initiation is an iterable object. The moments can be retrieved by
+passing the index to the iterable ``SDRelaxSol[idx]``.
 
 Extracting solutions
 ---------------------------------------

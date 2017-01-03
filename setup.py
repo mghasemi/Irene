@@ -4,11 +4,11 @@ except ImportError:
     from distutils.core import setup
 
 Description = "Solve a generic optimization problem based on truncated moment\
-                problem by constructing a series of semidefinite relaxations."
+				problem by constructing a series of semidefinite relaxations."
 
 setup(
     name='Irene',
-    version='1.1.0',
+    version='1.2.0',
     author='Mehdi Ghasemi',
     author_email='mehdi.ghasemi@gmail.com',
     packages=['Irene'],

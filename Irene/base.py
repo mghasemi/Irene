@@ -1,3 +1,18 @@
+def LaTeX(obj):
+    r"""
+    Returns LaTeX representation of Irene's objects.
+    """
+    from sympy.core.core import all_classes
+    from Irene import SDPRelaxations, SDRelaxSol, Mom
+    inst = isinstance(obj, SDPRelaxations) or isinstance(
+        obj, SDRelaxSol) or isinstance(obj, Mom)
+    if inst:
+        return obj.__latex__()
+    elif isinstance(obj, tuple(all_classes)):
+        from sympy import latex
+        return latex(obj)
+
+
 class base(object):
     r"""
     All the modules in `Irene` extend this class which perform some common

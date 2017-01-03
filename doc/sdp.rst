@@ -98,32 +98,32 @@ To initialize and set the solver to one of the above simply use::
 Set the :math:`b` vector:
 ----------------------------
 
-To set the vector :math:`b=(b_1,\dots,b_m)` one should use the method `sdp.SetObjective` which takes a list or a numpy array of
+To set the vector :math:`b=(b_1,\dots,b_m)` one should use the method ``sdp.SetObjective`` which takes a list or a numpy array of
 numbers as :math:`b`.
 
 Set a block constraint:
 ----------------------------
 
 To introduce the block of matrices :math:`A_{i1},\dots, A_{ik}` associated with :math:`x_i`, one should use the method
-`sdp.AddConstraintBlock` that takes a list of matrices as blocks.
+``sdp.AddConstraintBlock`` that takes a list of matrices as blocks.
 
 Set the constant block `C`:
 ----------------------------
 
-The method `sdp.AddConstantBlock` takes a list of square matrices and use them to construct :math:`C`.
+The method ``sdp.AddConstantBlock`` takes a list of square matrices and use them to construct :math:`C`.
 
 Solve the input SDP:
 ----------------------------
 
-To solve the input SDP simply call the method `sdp.solve()`. This will call the selected solver on the entered SDP and
-the output of the solver will be set as dictionary in `sdp.Info` with the following keys:
+To solve the input SDP simply call the method ``sdp.solve()``. This will call the selected solver on the entered SDP and
+the output of the solver will be set as dictionary in ``sdp.Info`` with the following keys:
 
-	+ `PObj`: The value of the primal objective.
-	+ `DObj`: The value of the dual objective.
-	+ `X`: The final :math:`X` matrix.
-	+ `Z`: The final :math:`Z` matrix.
-	+ `Status`: The final status of the solver.
-	+ `CPU`: Total run time of the solver.
+	+ ``PObj``: The value of the primal objective.
+	+ ``DObj``: The value of the dual objective.
+	+ ``X``: The final :math:`X` matrix.
+	+ ``Z``: The final :math:`Z` matrix.
+	+ ``Status``: The final status of the solver.
+	+ ``CPU``: Total run time of the solver.
 
 Example:
 ----------------------------
