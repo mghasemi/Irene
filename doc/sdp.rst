@@ -56,7 +56,7 @@ and
 
 This simplifies the :math:`k` constraints of the primal form in to one constraint 
 :math:`\sum_{i=1}^m A_i x_i - C \succeq 0` and the objective and constraints of the 
-dual form as :math:`tr(C\times Y)` and :math:`tr(A_i\times Z_i) = b_i` for :math:`i=1,dots,m`.
+dual form as :math:`tr(C\times Y)` and :math:`tr(A_i\times Z_i) = b_i` for :math:`i=1,\dots,m`.
 
 
 The ``sdp`` class

@@ -266,7 +266,6 @@ The following code does the job::
 	# initiate the Relaxation object
 	Rlx = SDPRelaxations([x, y])
 	# set the objective
-	Rlx.SetObjective(0)
 	# add support constraints
 	Rlx.AddConstraint(1 - x**2 >= 0)
 	Rlx.AddConstraint(1 - y**2 >= 0)
@@ -285,7 +284,7 @@ The following code does the job::
 	# solve the SDP
 	Rlx.Minimize()
 	# output
-	Rlx.Solution.ExtractSolution('lh', 3)
+	Rlx.Solution.ExtractSolution('lh', 2)
 	print Rlx.Solution
 
 and the result is::

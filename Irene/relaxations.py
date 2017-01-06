@@ -49,7 +49,7 @@ class SDPRelaxations(base):
     def __init__(self, gens, relations=[]):
         assert type(gens) is list, self.GensError
         assert type(gens) is list, self.RelsError
-        from sympy import Function, Symbol, QQ, RR, groebner
+        from sympy import Function, Symbol, QQ, RR, groebner, Poly
         from sympy.core.relational import Equality, GreaterThan, LessThan, StrictGreaterThan, StrictLessThan
         import multiprocessing
         try:
@@ -96,6 +96,7 @@ class SDPRelaxations(base):
                 self.AuxSyms.append(t_sym)
             else:
                 raise TypeError(self.GensError)
+        self.RedObjective = Poly(0, *self.AuxSyms)
         # check the relations
         # TBI
         for r in relations:
@@ -670,6 +671,7 @@ class SDPRelaxations(base):
 
     def __latex__(self):
         r"""
+        Generates LaTeX code of the optimization problem.
         """
         from sympy import latex
         latexcode = "\\left\\lbrace\n"
@@ -782,8 +784,8 @@ class SDRelaxSol(object):
         self.ScipySolver = solver.lower()
 
     def Pivot(self, arr):
-        """
-        Get the leading term of arr > tau
+        r"""
+        Get the leading term of each column.
         """
         if arr.ndim == 1:
             idxs, = arr.nonzero()
@@ -802,7 +804,7 @@ class SDRelaxSol(object):
         return 0, arr[0]
 
     def StblRedEch(self, A):
-        """
+        r"""
         Compute the stabilized row reduced echelon form.
         """
         from numpy import array, sqrt, zeros
@@ -1033,6 +1035,9 @@ class SDRelaxSol(object):
             raise Exception("Unsupported solver.")
 
     def __latex__(self):
+        r"""
+        Generates LaTeX code for the moment matrix.
+        """
         a = self.MomentMatrix
         lines = str(a).replace('[', '').replace(']', '').splitlines()
         rv = [r'\begin{bmatrix}']
@@ -1154,6 +1159,9 @@ class Mom(object):
         return strng
 
     def __latex__(self, external=False):
+        r"""
+        Generates LaTeX code for the moment term.
+        """        
         from sympy import latex
         symbs = {'lt': '<', 'le': '\\leq', 'gt': '>', 'ge': '\\geq', 'eq': '='}
         latexcode = "\\textrm{Moment of }"

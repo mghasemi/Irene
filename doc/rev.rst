@@ -2,11 +2,13 @@
 Revision History
 =============================
 
-**Version 1.1.5 ()**
+**Version 1.2.0 (Jan 5, 2017)**
 
 	- LaTeX representation of Irene's objects.
+	- ``SDRelaxSol`` can be called as an iterable.
+	- Default objective function is set to a ``sympy`` object for truncated moment problems.
 
-**Version 1.1.0 (December 25, 2016 - Merry Christmas)**
+**Version 1.1.0 (Dec 25, 2016 - Merry Christmas)**
 
 	- Extracting minimizers via ``SDRelaxSol.ExtractSolution()`` and help of ``scipy``,
 	- Extracting minimizers implementing Lasserre-Henrion algorithm,
