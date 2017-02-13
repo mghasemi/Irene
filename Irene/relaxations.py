@@ -196,14 +196,14 @@ class SDPRelaxations(base):
                 non_red_exp = cnst.lhs - cnst.rhs
                 expr = self.ReduceExp(non_red_exp)
                 self.Constraints.append(expr)
-                tot_deg = Poly(expr).total_degree()
+                tot_deg = Poly(expr, *self.AuxSyms).total_degree()
                 self.CnsDegs.append(tot_deg)
                 self.CnsHalfDegs.append(int(ceil(tot_deg / 2.)))
             elif CnsTyp in [self.LEQ, self.LT]:
                 non_red_exp = cnst.rhs - cnst.lhs
                 expr = self.ReduceExp(non_red_exp)
                 self.Constraints.append(expr)
-                tot_deg = Poly(expr).total_degree()
+                tot_deg = Poly(expr, *self.AuxSyms).total_degree()
                 self.CnsDegs.append(tot_deg)
                 self.CnsHalfDegs.append(int(ceil(tot_deg / 2.)))
             elif CnsTyp is self.EQ:
@@ -211,7 +211,7 @@ class SDPRelaxations(base):
                 expr = self.ReduceExp(non_red_exp)
                 self.Constraints.append(self.ErrorTolerance + expr)
                 self.Constraints.append(self.ErrorTolerance - expr)
-                tot_deg = Poly(expr).total_degree()
+                tot_deg = Poly(expr, *self.AuxSyms).total_degree()
                 # add twice
                 self.CnsDegs.append(tot_deg)
                 self.CnsDegs.append(tot_deg)
@@ -231,18 +231,18 @@ class SDPRelaxations(base):
         CnsTyp = cnst.TYPE
         if CnsTyp in ['ge', 'gt']:
             expr = self.ReduceExp(cnst.Content)
-            tot_deg = Poly(expr).total_degree()
+            tot_deg = Poly(expr, *self.AuxSyms).total_degree()
             self.MmntCnsDeg = max(int(ceil(tot_deg / 2.)), self.MmntCnsDeg)
             self.MomConst.append([expr, cnst.rhs])
         elif CnsTyp in ['le', 'lt']:
             expr = self.ReduceExp(-cnst.Content)
-            tot_deg = Poly(expr).total_degree()
+            tot_deg = Poly(expr, *self.AuxSyms).total_degree()
             self.MmntCnsDeg = max(int(ceil(tot_deg / 2.)), self.MmntCnsDeg)
             self.MomConst.append([expr, -cnst.rhs])
         elif CnsTyp == 'eq':
             non_red_exp = cnst.Content - cnst.rhs
             expr = self.ReduceExp(cnst.Content)
-            tot_deg = Poly(expr).total_degree()
+            tot_deg = Poly(expr, *self.AuxSyms).total_degree()
             self.MmntCnsDeg = max(int(ceil(tot_deg / 2.)), self.MmntCnsDeg)
             self.MomConst.append([expr, cnst.rhs - self.ErrorTolerance])
             self.MomConst.append([-expr, -cnst.rhs - self.ErrorTolerance])
@@ -333,7 +333,7 @@ class SDPRelaxations(base):
         from sympy import Poly, Matrix, expand, zeros
         from math import ceil
         try:
-            tot_deg = Poly(p).total_degree()
+            tot_deg = Poly(p, *self.AuxSyms).total_degree()
         except Exception as e:
             tot_deg = 0
         half_deg = int(ceil(tot_deg / 2.))
@@ -355,7 +355,7 @@ class SDPRelaxations(base):
         from sympy import Poly, Matrix, expand, zeros
         from math import ceil
         try:
-            tot_deg = Poly(p).total_degree()
+            tot_deg = Poly(p, *self.AuxSyms).total_degree()
         except Exception as e:
             tot_deg = 0
         half_deg = int(ceil(tot_deg / 2.))
