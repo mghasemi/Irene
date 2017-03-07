@@ -2,6 +2,10 @@
 Revision History
 =============================
 
+**Version 1.2.1 (Mar 2, 2017)**
+
+	- Removed dependency on ``joblib`` for multiprocessing.
+
 **Version 1.2.0 (Jan 5, 2017)**
 
 	- LaTeX representation of Irene's objects.

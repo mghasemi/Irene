@@ -7,6 +7,7 @@ Based on the current implementation, the followings seems to be implemented/modi
 	+ Reduce dependency on SymPy.
 	+ Include sdp solvers installation (subject to copyright limitations).
 	+ Error handling for CSDP and SDPA failure.
+	+ Save the current status on break and resume later.
 
 Done
 ==================

@@ -20,6 +20,24 @@ def Calpha_(expn, Mmnt):
     return array(C.tolist()).astype(float64)
 
 
+def Calpha__(expn, Mmnt, ii, q):
+    r"""
+    Given an exponent `expn`, this function finds the corresponding
+    :math:`C_{expn}` matrix which can be used for parallel processing.
+    """
+    from numpy import array, float64
+    from sympy import zeros, Poly
+    r = Mmnt.shape[0]
+    C = zeros(r, r)
+    for i in range(r):
+        for j in range(i, r):
+            entity = Mmnt[i, j]
+            if expn in entity:
+                C[i, j] = entity[expn]
+                C[j, i] = C[i, j]
+    q.put([ii, array(C.tolist()).astype(float64)])
+
+
 class SDPRelaxations(base):
     r"""
     This class defines a function space by taking a family of sympy
@@ -45,6 +63,7 @@ class SDPRelaxations(base):
     AvailableSolvers = []
     PSDMoment = True
     Probability = True
+    Parallel = True
 
     def __init__(self, gens, relations=[]):
         assert type(gens) is list, self.GensError
@@ -52,11 +71,7 @@ class SDPRelaxations(base):
         from sympy import Function, Symbol, QQ, RR, groebner, Poly
         from sympy.core.relational import Equality, GreaterThan, LessThan, StrictGreaterThan, StrictLessThan
         import multiprocessing
-        try:
-            from joblib import Parallel
-            self.Parallel = True
-        except Exception as e:
-            self.Parallel = False
+
         self.NumCores = multiprocessing.cpu_count()
         self.EQ = Equality
         self.GEQ = GreaterThan
@@ -483,7 +498,7 @@ class SDPRelaxations(base):
         from numpy import array, float64
         from sympy import zeros, Matrix
         from time import time
-        from joblib import Parallel, delayed
+        import multiprocessing as mp
         start = time()
         self.SDP = sdp(self.SDPSolver)
         self.RelaxationDeg()
@@ -505,8 +520,19 @@ class SDPRelaxations(base):
             h = zeros(d, d)
             C.append(array(h.tolist()).astype(float64))
             Mmnt = self.LocalizedMoment_(self.Constraints[idx])
-            results = Parallel(n_jobs=self.NumCores)(
-                delayed(Calpha_)(ExpVec[i], Mmnt) for i in range(N))
+            # Run in parallel
+            queue1 = mp.Queue(self.NumCores)
+            procs1 = []
+            results = [None for _ in range(N)]
+            for cnt in range(N):
+                procs1.append(mp.Process(target=Calpha__,
+                                         args=(ExpVec[cnt], Mmnt, cnt, queue1)))
+            for pr in procs1:
+                pr.start()
+            for _ in range(N):
+                tmp = queue1.get()
+                results[tmp[0]] = tmp[1]
+            # done with parallel
             for i in range(N):
                 Blck[i].append(results[i])
         ## Moment matrix should be psd ##
@@ -516,8 +542,19 @@ class SDPRelaxations(base):
             h = zeros(d, d)
             C.append(array(h.tolist()).astype(float64))
             Mmnt = self.LocalizedMoment_(1.)
-            results = Parallel(n_jobs=self.NumCores)(
-                delayed(Calpha_)(ExpVec[i], Mmnt) for i in range(N))
+            # Run in parallel
+            queue2 = mp.Queue(self.NumCores)
+            procs2 = []
+            results = [None for _ in range(N)]
+            for cnt in range(N):
+                procs2.append(mp.Process(target=Calpha__,
+                                         args=(ExpVec[cnt], Mmnt, cnt, queue2)))
+            for pr in procs2:
+                pr.start()
+            for _ in range(N):
+                tmp = queue2.get()
+                results[tmp[0]] = tmp[1]
+            # done with parallel
             for i in range(N):
                 Blck[i].append(results[i])
         ## L(1) = 1 ##
@@ -548,8 +585,8 @@ class SDPRelaxations(base):
 
     def InitSDP(self):
         r"""
-        Initializes the SDP based on availability of ``joblib``.
-        If it is available, it runs in parallel mode, otherwise
+        Initializes the SDP based on the value of ``self.Parallel``.
+        If it is ``True``, it runs in parallel mode, otherwise
         in serial.
         """
         if self.Parallel:
@@ -1147,6 +1184,8 @@ class Mom(object):
             self.Content -= x.Content
         elif type(x) in self.NumericTypes:
             self.rhs = x
+        else:
+            self.rhs += x
         self.TYPE = 'eq'
         return self
 
@@ -1161,7 +1200,7 @@ class Mom(object):
     def __latex__(self, external=False):
         r"""
         Generates LaTeX code for the moment term.
-        """        
+        """
         from sympy import latex
         symbs = {'lt': '<', 'le': '\\leq', 'gt': '>', 'ge': '\\geq', 'eq': '='}
         latexcode = "\\textrm{Moment of }"

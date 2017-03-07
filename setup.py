@@ -8,7 +8,7 @@ Description = "Solve a generic optimization problem based on truncated moment\
 
 setup(
     name='Irene',
-    version='1.2.0',
+    version='1.2.1',
     author='Mehdi Ghasemi',
     author_email='mehdi.ghasemi@gmail.com',
     packages=['Irene'],
@@ -18,5 +18,5 @@ setup(
     long_description=open('README.rst').read(),
     keywords=["Optimization", "Semidefinite Programming", "Convex Optimization",
               "Polynomial Optimization", "Non-Convex Optimization"],
-    install_requires=['sympy', 'numpy', 'scipy', 'joblib']
+    install_requires=['sympy', 'numpy', 'scipy', 'multiprocessing']
 )
