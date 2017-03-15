@@ -2,6 +2,10 @@
 Revision History
 =============================
 
+**Version 1.2.2 (Mar 15, 2017)**
+
+	- Serialization and pickling: Saving the latest state of the program on break which can be retrieved later and resume.
+
 **Version 1.2.1 (Mar 2, 2017)**
 
 	- Removed dependency on ``joblib`` for multiprocessing.

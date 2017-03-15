@@ -1,3 +1,4 @@
+from __future__ import print_function
 from base import base
 from sdp import sdp
 
@@ -49,6 +50,7 @@ class SDPRelaxations(base):
 
         - `gens` which is a list of ``sympy`` symbols and function symbols,
         - `relations` which is a set of ``sympy`` expressions in terms of `gens` that defines an ideal.
+        - `name` is a given name which is used to save the state of the instant at break.
     """
     GensError = r"""The `gens` must be a list of sympy functions or symbols"""
     RelsError = r"""The `relations` must be a list of relation among generators"""
@@ -65,7 +67,7 @@ class SDPRelaxations(base):
     Probability = True
     Parallel = True
 
-    def __init__(self, gens, relations=[]):
+    def __init__(self, gens, relations=[], name="SDPRlx"):
         assert type(gens) is list, self.GensError
         assert type(gens) is list, self.RelsError
         from sympy import Function, Symbol, QQ, RR, groebner, Poly
@@ -100,6 +102,13 @@ class SDPRelaxations(base):
         self.CnsDegs = []
         self.CnsHalfDegs = []
         self.MmntCnsDeg = 0
+        self.Blck = []
+        self.C_ = []
+        self.InitIdx = 0
+        self.LastIdxVal = 0
+        self.Stage = None
+        self.PrevStage = None
+        self.Name = name
         # check generators
         for f in gens:
             if isinstance(f, Function) or isinstance(f, Symbol):
@@ -111,6 +120,7 @@ class SDPRelaxations(base):
                 self.AuxSyms.append(t_sym)
             else:
                 raise TypeError(self.GensError)
+        self.Objective = Poly(0, *self.Generators)
         self.RedObjective = Poly(0, *self.AuxSyms)
         # check the relations
         # TBI
@@ -490,6 +500,16 @@ class SDPRelaxations(base):
         elapsed = (time() - start)
         self.InitTime = elapsed
 
+    def Commit(self, blk, c, idx):
+        r"""
+        Sets the latest computed values for the final SDP
+        and saves the current state.
+        """
+        from copy import copy
+        self.Blck = copy(blk)
+        self.C_ = copy(c)
+        self.InitIdx = idx
+
     def pInitSDP(self):
         r"""
         Initializes the semidefinite program (SDP), in parallel, whose 
@@ -499,13 +519,14 @@ class SDPRelaxations(base):
         from sympy import zeros, Matrix
         from time import time
         import multiprocessing as mp
+        from copy import copy
         start = time()
         self.SDP = sdp(self.SDPSolver)
         self.RelaxationDeg()
         N = len(self.ReducedMonomialBase(2 * self.MmntOrd))
         self.MatSize = [len(self.ReducedMonomialBase(self.MmntOrd)), N]
-        Blck = [[] for _ in range(N)]
-        C = []
+        if self.Blck == []:
+            self.Blck = [[] for _ in range(N)]
         # Number of constraints
         NumCns = len(self.CnsDegs)
         # Number of moment constraints
@@ -513,73 +534,146 @@ class SDPRelaxations(base):
         # Reduced vector of monomials of the given order
         ExpVec = self.ExponentsVec(2 * self.MmntOrd)
         ## The localized moment matrices should be psd ##
-        for idx in range(NumCns):
-            d = len(self.ReducedMonomialBase(
-                self.MmntOrd - self.CnsHalfDegs[idx]))
-            # Corresponding C block is 0
-            h = zeros(d, d)
-            C.append(array(h.tolist()).astype(float64))
-            Mmnt = self.LocalizedMoment_(self.Constraints[idx])
-            # Run in parallel
-            queue1 = mp.Queue(self.NumCores)
-            procs1 = []
-            results = [None for _ in range(N)]
-            for cnt in range(N):
-                procs1.append(mp.Process(target=Calpha__,
-                                         args=(ExpVec[cnt], Mmnt, cnt, queue1)))
-            for pr in procs1:
-                pr.start()
-            for _ in range(N):
-                tmp = queue1.get()
-                results[tmp[0]] = tmp[1]
-            # done with parallel
-            for i in range(N):
-                Blck[i].append(results[i])
+        if (self.PrevStage is None) or (self.PrevStage == "PSDLocMom"):
+            self.Stage = "PSDLocMom"
+            self.PrevStage = None
+            idx = self.LastIdxVal
+            while idx < NumCns:
+                # for idx in range(self.LastIdxVal, NumCns):
+                d = len(self.ReducedMonomialBase(
+                    self.MmntOrd - self.CnsHalfDegs[idx]))
+                Mmnt = self.LocalizedMoment_(self.Constraints[idx])
+                # Run in parallel
+                queue1 = mp.Queue(self.NumCores)
+                procs1 = []
+                results = [None for _ in range(N)]
+                for cnt in range(N):
+                    procs1.append(mp.Process(target=Calpha__,
+                                             args=(ExpVec[cnt], Mmnt, cnt, queue1)))
+                for pr in procs1:
+                    pr.start()
+                for _ in range(N):
+                    tmp = queue1.get()
+                    results[tmp[0]] = tmp[1]
+                # done with parallel
+                # stash changes
+                tBlck = copy(self.Blck)
+                tC_ = copy(self.C_)
+                for i in range(N):
+                    tBlck[i].append(results[i])
+                # Corresponding self.C_ block is 0
+                h = zeros(d, d)
+                tC_.append(array(h.tolist()).astype(float64))
+                # increase loop counter
+                idx += 1
+                # commit changes
+                try:
+                    self.Commit(tBlck, tC_, idx)
+                except:
+                    # Do we need to save previous step and restore them on
+                    # break?
+                    self.Commit(tBlck, tC_, idx)  # ??
+                    raise KeyboardInterrupt
+                #self.InitIdx = idx
+            self.LastIdxVal = 0
         ## Moment matrix should be psd ##
-        if self.PSDMoment:
-            d = len(self.ReducedMonomialBase(self.MmntOrd))
-            # Corresponding C block is 0
-            h = zeros(d, d)
-            C.append(array(h.tolist()).astype(float64))
-            Mmnt = self.LocalizedMoment_(1.)
-            # Run in parallel
-            queue2 = mp.Queue(self.NumCores)
-            procs2 = []
-            results = [None for _ in range(N)]
-            for cnt in range(N):
-                procs2.append(mp.Process(target=Calpha__,
-                                         args=(ExpVec[cnt], Mmnt, cnt, queue2)))
-            for pr in procs2:
-                pr.start()
-            for _ in range(N):
-                tmp = queue2.get()
-                results[tmp[0]] = tmp[1]
-            # done with parallel
-            for i in range(N):
-                Blck[i].append(results[i])
+        if (self.PrevStage is None) or (self.PrevStage == "PSDMom"):
+            self.Stage = "PSDMom"
+            self.PrevStage = None
+            if self.PSDMoment:
+                d = len(self.ReducedMonomialBase(self.MmntOrd))
+                Mmnt = self.LocalizedMoment_(1.)
+                # Run in parallel
+                queue2 = mp.Queue(self.NumCores)
+                procs2 = []
+                results = [None for _ in range(N)]
+                for cnt in range(N):
+                    procs2.append(mp.Process(target=Calpha__,
+                                             args=(ExpVec[cnt], Mmnt, cnt, queue2)))
+                for pr in procs2:
+                    pr.start()
+                for _ in range(N):
+                    tmp = queue2.get()
+                    results[tmp[0]] = tmp[1]
+                # done with parallel
+                # stash changes
+                tBlck = copy(self.Blck)
+                tC_ = copy(self.C_)
+                for i in range(N):
+                    tBlck[i].append(results[i])
+                # Corresponding self.C_ block is 0
+                h = zeros(d, d)
+                tC_.append(array(h.tolist()).astype(float64))
+                # commit changes
+                try:
+                    self.Commit(tBlck, tC_, 0)
+                except:
+                    # Do we need to save previous step and restore them on
+                    # break?
+                    self.Commit(tBlck, tC_, 0)  # ??
+                    raise KeyboardInterrupt
+                #self.Blck = copy(tBlck)
+                #self.C_ = copy(tC_)
         ## L(1) = 1 ##
-        if self.Probability:
-            for i in range(N):
-                Blck[i].append(array(
-                    zeros(1, 1).tolist()).astype(float64))
-                Blck[i].append(array(
-                    zeros(1, 1).tolist()).astype(float64))
-            #Blck[0][NumCns + 1][0] = 1
-            #Blck[0][NumCns + 2][0] = -1
-            Blck[0][-2][0] = 1
-            Blck[0][-1][0] = -1
-            C.append(array(Matrix([1]).tolist()).astype(float64))
-            C.append(array(Matrix([-1]).tolist()).astype(float64))
+        if (self.PrevStage is None) or (self.PrevStage == "L(1)=1"):
+            self.Stage = "L(1)=1"
+            self.PrevStage = None
+            if self.Probability:
+                # stash changes
+                tBlck = copy(self.Blck)
+                tC_ = copy(self.C_)
+                for i in range(N):
+                    tBlck[i].append(array(
+                        zeros(1, 1).tolist()).astype(float64))
+                    tBlck[i].append(array(
+                        zeros(1, 1).tolist()).astype(float64))
+                #Blck[0][NumCns + 1][0] = 1
+                #Blck[0][NumCns + 2][0] = -1
+                tBlck[0][-2][0] = 1
+                tBlck[0][-1][0] = -1
+                tC_.append(array(Matrix([1]).tolist()).astype(float64))
+                tC_.append(
+                    array(Matrix([-1]).tolist()).astype(float64))
+                # commit changes
+                try:
+                    self.Commit(tBlck, tC_, 0)
+                except:
+                    # Do we need to save previous step and restore them on
+                    # break?
+                    self.Commit(tBlck, tC_, 0)  # ??
+                    raise KeyboardInterrupt
+                #self.Blck = copy(tBlck)
+                #self.C_ = copy(tC_)
         # Moment constraints
-        for idx in range(NumMomCns):
-            MomCns = Matrix([self.MomConst[idx][0]])
-            for i in range(N):
-                Blck[i].append(self.Calpha(ExpVec[i], MomCns))
-            C.append(array(
-                Matrix([self.MomConst[idx][1]]).tolist()).astype(float64))
-        self.SDP.C = C
+        if (self.PrevStage is None) or (self.PrevStage == "MomConst"):
+            self.Stage = "MomConst"
+            self.PrevStage = None
+            idx = self.LastIdxVal
+            while idx < NumMomCns:
+                MomCns = Matrix([self.MomConst[idx][0]])
+                # stash changes
+                tBlck = copy(self.Blck)
+                tC_ = copy(self.C_)
+                for i in range(N):
+                    tBlck[i].append(self.Calpha(ExpVec[i], MomCns))
+                tC_.append(array(
+                    Matrix([self.MomConst[idx][1]]).tolist()).astype(float64))
+                # increase loop counter
+                idx += 1
+                # commit changes
+                try:
+                    self.Commit(tBlck, tC_, idx)
+                except:
+                    # Do we need to save previous step and restore them on
+                    # break?
+                    self.Commit(tBlck, tC_, idx)  # ??
+                    raise KeyboardInterrupt
+                #self.Blck = copy(tBlck)
+                #self.C_ = copy(tC_)
+                #self.InitIdx = idx
+        self.SDP.C = self.C_
         self.SDP.b = self.PolyCoefFullVec()
-        self.SDP.A = Blck
+        self.SDP.A = self.Blck
         elapsed = (time() - start)
         self.InitTime = elapsed
 
@@ -590,7 +684,14 @@ class SDPRelaxations(base):
         in serial.
         """
         if self.Parallel:
-            self.pInitSDP()
+            try:
+                self.pInitSDP()
+            except KeyboardInterrupt:
+                from pickle import dump
+                obj_file = open(self.Name + '.rlx', 'w')
+                dump(self, obj_file)
+                print("\n...::: The program is saved in '" + self.Name + ".rlx' :::...")
+                raise KeyboardInterrupt
         else:
             self.sInitSDP()
 
@@ -690,7 +791,31 @@ class SDPRelaxations(base):
         from sympy import sympify
         return self.MomConst[idx][0].subs(self.RevSymDict) >= sympify(self.MomConst[idx][1]).subs(self.RevSymDict)
 
+    def Resume(self):
+        r"""
+        Resumes the process of a previously saved program.
+        """
+        from pickle import load
+        obj_file = open(self.Name + '.rlx', 'r')
+        self = load(obj_file)
+        obj_file.close()
+        return self
+
+    def State(self):
+        r"""
+        Returns the latest state of the object at last break and save.
+        """
+        from pickle import loads
+        obj_file = open(self.Name + '.rlx', 'r')
+        ser_dict = obj_file.read()
+        ser_inst = loads(ser_dict)
+        obj_file.close()
+        return ser_inst.PrevStage, ser_inst.LastIdxVal
+
     def __str__(self):
+        r"""
+        String output.
+        """
         from sympy import sympify
         out_txt = "=" * 70 + "\n"
         out_txt += "Minimize\t"
@@ -705,6 +830,41 @@ class SDPRelaxations(base):
                     cns[1]).subs(self.RevSymDict)) + "\n"
         out_txt += "=" * 70 + "\n"
         return out_txt
+
+    def __getstate__(self):
+        r"""
+        Pickling process.
+        """
+        from pickle import dumps
+        self.PrevStage = self.Stage
+        self.LastIdxVal = self.InitIdx
+        #self.SDP = None
+        exceptions = ['RevSymDict', 'Generators', 'Objective',
+                      'SymDict', 'Solution', 'OrgConst']
+        cur_inst = self.__dict__
+        ser_inst = {}
+        for kw in cur_inst:
+            if kw in exceptions:
+                ser_inst[kw] = str(cur_inst[kw])
+            else:
+                ser_inst[kw] = dumps(cur_inst[kw])
+        return dumps(ser_inst)
+
+    def __setstate__(self, state):
+        r"""
+        Loading pickles
+        """
+        from pickle import loads
+        from sympy import sympify
+        exceptions = ['RevSymDict', 'Generators', 'Objective',
+                      'SymDict', 'Solution', 'OrgConst']
+        ser_inst = loads(state)
+        for kw in ser_inst:
+            if kw in exceptions:
+                if kw not in ['Solution']:
+                    self.__dict__[kw] = sympify(ser_inst[kw])
+            else:
+                self.__dict__[kw] = loads(ser_inst[kw])
 
     def __latex__(self):
         r"""
@@ -1196,6 +1356,31 @@ class Mom(object):
             strng += " " + symbs[self.TYPE]
             strng += " " + str(self.rhs)
         return strng
+
+    def __getstate__(self):
+        r"""
+        Pickling process.
+        """
+        from pickle import dumps
+        ser_inst = {}
+        ser_inst['NumericTypes'] = dumps(self.NumericTypes)
+        ser_inst['Content'] = str(self.Content)
+        ser_inst['rhs'] = dumps(self.rhs)
+        ser_inst['TYPE'] = dumps(self.TYPE)
+        return dumps(ser_inst)
+
+    def __setstate__(self, state):
+        r"""
+        Loading pickles
+        """
+        from pickle import loads
+        from sympy import sympify
+        ser_inst = loads(state)
+        self.__dict__['NumericTypes'] = loads(ser_inst['NumericTypes'])
+        self.__dict__['Content'] = sympify(ser_inst['Content'])
+        self.__dict__['rhs'] = loads(ser_inst['rhs'])
+        self.__dict__['TYPE'] = loads(ser_inst['TYPE'])
+
 
     def __latex__(self, external=False):
         r"""

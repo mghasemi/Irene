@@ -265,7 +265,6 @@ The following code does the job::
 	y = Symbol('y')
 	# initiate the Relaxation object
 	Rlx = SDPRelaxations([x, y])
-	# set the objective
 	# add support constraints
 	Rlx.AddConstraint(1 - x**2 >= 0)
 	Rlx.AddConstraint(1 - y**2 >= 0)
@@ -785,6 +784,18 @@ The output looks like this::
 	Feasible solution for moments of order 2
 
 	1.0*x**3 + 1.0*x**2*y**2 + 1.0*x*y*z**2 - 1.0*x*z + 27.49741
+
+The ``Resume`` method
+=======================================
+
+It happens from time to time that one needs to stop the process of ``SDPRelaxations`` to look into 
+its progress and/or run the code later. This has been accommodated thanks to python's support for
+serialization and error handling.
+Since the initialization of the final SDP is the most time consuming part of the process, if one 
+breaks this via `Ctrl-c`, the object will save all the computation that has been done so far in 
+a `.rlx` file named with the name of the object. So, if one wants to resume the process later, it
+suffices to call the ``Resume`` method after instantiation and leave the program out and continue 
+the initialization via calling ``InitSDP`` method.
 
 The ``SDRelaxSol``
 =======================================

@@ -490,6 +490,7 @@ class sdp(base):
         out_text += "             # variables:" + str(len(self.C)) + "\n"
         out_text += "           # constraints:" + str(len(self.A)) + "\n"
         out_text += "             with solver:" + self.solver
+        return out_text
 
     def __latex__(self):
         return "SDP(%d, %d, %s)"%(len(self.C), len(self.A), self.solver)
