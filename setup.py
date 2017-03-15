@@ -8,7 +8,7 @@ Description = "Solve a generic optimization problem based on truncated moment\
 
 setup(
     name='Irene',
-    version='1.2.1',
+    version='1.2.2',
     author='Mehdi Ghasemi',
     author_email='mehdi.ghasemi@gmail.com',
     packages=['Irene'],
