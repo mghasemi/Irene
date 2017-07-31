@@ -237,6 +237,8 @@ class sdp(base):
                 if line.find("phase.value") > -1:
                     if (line.find("pdOPT") > -1) or line.find("pdFEAS") > -1:
                         status_string = 'Optimal'
+                    elif line.find("noINFO") > -1:
+                        status_string = 'Optimal'
                     elif line.find("INF") > -1:
                         status_string = 'Infeasible'
                     elif line.find("UNBD") > -1:

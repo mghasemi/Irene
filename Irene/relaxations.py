@@ -690,7 +690,8 @@ class SDPRelaxations(base):
                 from pickle import dump
                 obj_file = open(self.Name + '.rlx', 'w')
                 dump(self, obj_file)
-                print("\n...::: The program is saved in '" + self.Name + ".rlx' :::...")
+                print("\n...::: The program is saved in '" +
+                      self.Name + ".rlx' :::...")
                 raise KeyboardInterrupt
         else:
             self.sInitSDP()
@@ -800,6 +801,14 @@ class SDPRelaxations(base):
         self = load(obj_file)
         obj_file.close()
         return self
+
+    def SaveState(self):
+        r"""
+        Saves the current state of the relaxation object to the file `self.Name+'.rlx'`.
+        """
+        from pickle import dump
+        obj_file = open(self.Name + '.rlx', 'w')
+        dump(self, obj_file)
 
     def State(self):
         r"""
@@ -927,6 +936,9 @@ class SDRelaxSol(object):
         self.X = X
         self.Xij = None
         self.SymDict = symdict
+        self.RevSymDict = {}
+        for v in self.SymDict:
+            self.RevSymDict[self.SymDict[v]] = v
         self.err_tol = err_tol
         self.ScipySolver = 'lm'
         self.Support = None
@@ -1055,7 +1067,7 @@ class SDRelaxSol(object):
         num_rnk = 0
         eignvls = eigvals(self.MomentMatrix)
         for ev in eignvls:
-            if ev >= self.err_tol:
+            if abs(ev) >= self.err_tol:
                 num_rnk += 1
         return num_rnk
 
@@ -1208,7 +1220,7 @@ class SDRelaxSol(object):
         for idx in range(count):
             pnt = []
             for x in sols:
-                pnt.append(sols[x][idx])
+                pnt.append({self.RevSymDict[x]: sols[x][idx]})
             pnt = tuple(pnt)
             if pnt not in self.Support:
                 self.Support.append(pnt)
@@ -1380,7 +1392,6 @@ class Mom(object):
         self.__dict__['Content'] = sympify(ser_inst['Content'])
         self.__dict__['rhs'] = loads(ser_inst['rhs'])
         self.__dict__['TYPE'] = loads(ser_inst['TYPE'])
-
 
     def __latex__(self, external=False):
         r"""
