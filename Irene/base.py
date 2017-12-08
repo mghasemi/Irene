@@ -1,3 +1,11 @@
+r"""
+This is the base module for all other objects of the package.
+
+    + `LaTeX` returns a LaTeX string out of an `Irene` object.
+    + `base` is the parent of all `Irene` objects.
+"""
+
+
 def LaTeX(obj):
     r"""
     Returns LaTeX representation of Irene's objects.
@@ -20,7 +28,14 @@ class base(object):
     """
 
     def __init__(self):
-        pass
+        from sys import platform
+        self.os = platform
+        if self.os == 'win32':
+            import os
+            BASE = os.sep.join(os.path.dirname(os.path.realpath(__file__)).split(os.sep)) + os.sep
+            self.Path = dict(csdp=BASE+"csdp.exe", sdpa=BASE+"sdpa.exe")
+        else:
+            self.Path = dict(csdp="csdp", sdpa="sdpa")
 
     def which(self, program):
         r"""
@@ -56,14 +71,27 @@ class base(object):
             existsing.append('CVXOPT')
         except ImportError:
             pass
-        # DSDP
-        if self.which('dsdp5') is not None:
-            existsing.append('DSDP')
-        # SDPA
-        if self.which('sdpa') is not None:
-            existsing.append('SDPA')
-        # CSDP
-        if self.which('csdp') is not None:
-            existsing.append('CSDP')
-
+        if self.os == 'win32':
+            from os.path import isfile
+            # DSDP
+            if ('dsdp' in self.Path):
+                if isfile(self.Path['dsdp']):
+                    existsing.append('DSDP')
+            # SDPA
+            if ('sdpa' in self.Path):
+                if isfile(self.Path['sdpa']):
+                    existsing.append('SDPA')
+            if ('csdp' in self.Path):
+                if isfile(self.Path['csdp']):
+                    existsing.append('CSDP')
+        else:
+            # DSDP
+            if self.which('dsdp5') is not None:
+                existsing.append('DSDP')
+            # SDPA
+            if self.which('sdpa') is not None:
+                existsing.append('SDPA')
+            # CSDP
+            if self.which('csdp') is not None:
+                existsing.append('CSDP')
         return existsing

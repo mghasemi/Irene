@@ -95,6 +95,11 @@ To initialize and set the solver to one of the above simply use::
 
 	SDP = sdp('cvxopt') # initializes and uses `cvxopt` as solver.
 
+.. note::
+	In windows, one can provide the path to each of the above solvers as the second parameter of the constructor::
+
+		SDP = sdp('csdp', {'csdp':"Path to executable csdp"}) # initializes and uses `csdp` as solver existing at the given path.
+
 Set the :math:`b` vector:
 ----------------------------
 

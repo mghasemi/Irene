@@ -1,3 +1,13 @@
+r"""
+This module is responsible for conversion of a given symbolic optimization problem into semidefinite optimization
+problems.
+The main classes included in this module are:
+
+    + `SDPRelaxations`
+    + `SDRelaxSol`
+    + `Mom`
+"""
+
 from __future__ import print_function
 from base import base
 from sdp import sdp
@@ -9,7 +19,7 @@ def Calpha_(expn, Mmnt):
     :math:`C_{expn}` matrix which can be used for parallel processing.
     """
     from numpy import array, float64
-    from sympy import zeros, Poly
+    from sympy import zeros
     r = Mmnt.shape[0]
     C = zeros(r, r)
     for i in range(r):
@@ -27,7 +37,7 @@ def Calpha__(expn, Mmnt, ii, q):
     :math:`C_{expn}` matrix which can be used for parallel processing.
     """
     from numpy import array, float64
-    from sympy import zeros, Poly
+    from sympy import zeros
     r = Mmnt.shape[0]
     C = zeros(r, r)
     for i in range(r):
@@ -67,13 +77,13 @@ class SDPRelaxations(base):
     Probability = True
     Parallel = True
 
-    def __init__(self, gens, relations=[], name="SDPRlx"):
+    def __init__(self, gens, relations=(), name="SDPRlx"):
         assert type(gens) is list, self.GensError
         assert type(gens) is list, self.RelsError
-        from sympy import Function, Symbol, QQ, RR, groebner, Poly
+        from sympy import Function, Symbol, QQ, groebner, Poly
         from sympy.core.relational import Equality, GreaterThan, LessThan, StrictGreaterThan, StrictLessThan
         import multiprocessing
-
+        super(SDPRelaxations, self).__init__()
         self.NumCores = multiprocessing.cpu_count()
         self.EQ = Equality
         self.GEQ = GreaterThan
@@ -276,6 +286,7 @@ class SDPRelaxations(base):
         r"""
         Returns a reduce monomial basis up to degree `d`.
         """
+        from functools import reduce
         if deg in self.ReducedBases:
             return self.ReducedBases[deg]
         from itertools import product
@@ -400,9 +411,10 @@ class SDPRelaxations(base):
         Returns the numerical moment matrix resulted from solving the SDP.
         """
         assert 'moments' in self.Info, "The sdp has not been (successfully) solved (yet)."
-        from numpy import array, float64, matrix
+        from numpy import array, float64
         from sympy import Poly
         from operator import mul
+        from functools import reduce
         Mmnt = self.LocalizedMoment(1.)
         for i in range(Mmnt.shape[0]):
             for j in range(Mmnt.shape[1]):
@@ -521,7 +533,7 @@ class SDPRelaxations(base):
         import multiprocessing as mp
         from copy import copy
         start = time()
-        self.SDP = sdp(self.SDPSolver)
+        self.SDP = sdp(self.SDPSolver, solver_path=self.Path)
         self.RelaxationDeg()
         N = len(self.ReducedMonomialBase(2 * self.MmntOrd))
         self.MatSize = [len(self.ReducedMonomialBase(self.MmntOrd)), N]
@@ -539,7 +551,6 @@ class SDPRelaxations(base):
             self.PrevStage = None
             idx = self.LastIdxVal
             while idx < NumCns:
-                # for idx in range(self.LastIdxVal, NumCns):
                 d = len(self.ReducedMonomialBase(
                     self.MmntOrd - self.CnsHalfDegs[idx]))
                 Mmnt = self.LocalizedMoment_(self.Constraints[idx])
@@ -1038,10 +1049,10 @@ class SDRelaxSol(object):
 
         # Convert to reduced row echelon form
         nrows, _ = R.shape
-        for i in xrange(nrows - 1, 0, -1):
+        for i in range(nrows - 1, 0, -1):
             k, v = self.Pivot(R[i, :])
             if v > self.err_tol:
-                for j in xrange(i):
+                for j in range(i):
                     R[j, :] -= R[i, :] * R[j, k] / R[i, k]
             else:
                 R[i, :] = 0
@@ -1063,7 +1074,7 @@ class SDRelaxSol(object):
         ``self.err_tol`` to be zero.
         """
         from scipy.linalg import eigvals
-        from numpy import isreal, real, abs
+        from numpy import abs
         num_rnk = 0
         eignvls = eigvals(self.MomentMatrix)
         for ev in eignvls:
@@ -1103,6 +1114,7 @@ class SDRelaxSol(object):
             - ``krylov``,
             - ``df-sane``.
         """
+        from numpy import ndarray
         from scipy import optimize as opt
         from sympy import Symbol, lambdify, Abs
         if card > 0:
@@ -1118,7 +1130,6 @@ class SDRelaxSol(object):
         req = sum(self.weight) - 1
         algeqs = {idx.subs(self.SymDict): self.TruncatedMmntSeq[
             idx] for idx in self.TruncatedMmntSeq}
-        indices = []
         included_sysms = set(self.weight)
         EQS = [req]
         hold = []
@@ -1148,8 +1159,8 @@ class SDRelaxSol(object):
         def f(x):
             z = tuple(float(x.item(i)) for i in range(len(syms)))
             return [fn(*z) for fn in f_]
-        init_point = tuple(0.  # uniform(-self.err_tol, self.err_tol)
-                           for _ in range(len(syms)))
+        init_point = ndarray(tuple(0.  # uniform(-self.err_tol, self.err_tol)
+                           for _ in range(len(syms))))
         sol = opt.root(f, init_point, method=self.ScipySolver)
         if sol['success']:
             self.Support = []

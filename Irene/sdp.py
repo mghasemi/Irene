@@ -24,9 +24,12 @@ class sdp(base):
     SolverOptions = {}
     Info = {}
 
-    def __init__(self, solver='cvxopt'):
+    def __init__(self, solver='cvxopt', solver_path={}):
         assert solver.upper() in self.Solvers, "Currently the\
         following solvers are supported: 'CVXOPT', 'SDPA', 'CSDP', 'DSDP'"
+        super(sdp, self).__init__()
+        if solver_path != []:
+            self.Path = solver_path
         self.solver = solver.upper()
         self.BlockStruct = []
         self.b = None
@@ -182,6 +185,7 @@ class sdp(base):
             sol_mat = None
             in_matrix = False
             i = 0
+            row = None
             for row in iterator:
                 if row.find('}') < 0:
                     continue
@@ -217,6 +221,7 @@ class sdp(base):
         y_mat = None
         xVec = None
         status_string = None
+        total_time = None
 
         with open(filename, 'r') as file_:
             for line in file_:
@@ -326,6 +331,9 @@ class sdp(base):
         required information.
         """
         from numpy import array, zeros
+        primal = None
+        dual = None
+        total_time = None
         Status = 'Unknown'
         progress = txt.split('\n')
         for line in progress:
@@ -457,7 +465,7 @@ class sdp(base):
         if self.BlockStruct == []:
             self.BlockStruct = [len(B) for B in self.C]
         self.write_sdpa_dat(prg_file)
-        call(["sdpa", "-dd", prg_file, "-o", out_file, "-p", par_file])
+        call([self.Path['sdpa'], "-dd", prg_file, "-o", out_file, "-p", par_file])
         self.read_sdpa_out(out_file)
 
     def csdp(self):
@@ -467,11 +475,12 @@ class sdp(base):
         from subprocess import check_output
         prg_file = "prg.dat-s"
         out_file = "out.res"
+        out = ""
         if self.BlockStruct == []:
             self.BlockStruct = [len(B) for B in self.C]
         self.write_sdpa_dat_sparse(prg_file)
         try:
-            out = check_output(["csdp", prg_file, out_file])
+            out = check_output([self.Path['csdp'], prg_file, out_file])
         except Exception as e:
             pass
         self.read_csdp_out(out_file, out)

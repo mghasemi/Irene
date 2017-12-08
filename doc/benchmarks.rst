@@ -227,7 +227,7 @@ multimodal function defined by:
 	\end{array}
 
 
-The following code optimizes :math:`f` when :math:`1-x^2\ge0` and :math:`1-y^2\ge0`::
+The following code optimizes :math:`f` when :math:`1-x_i^2\ge0`::
 
 	from sympy import *
 	from Irene import *

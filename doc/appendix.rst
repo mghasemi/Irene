@@ -15,7 +15,8 @@ basis, interpolation and collocation method as well as some graphics.
 
 For the purpose of this package, we are mainly interested in finding reliable 
 approximations of certain functions. This can be done via ``pyProximation.OrthSystem``.
-The relevant documentation can be found `here <http://pyproximation.readthedocs.io/en/latest/hilbert.html#orthsystem>`_.
+The relevant documentation can be found
+`http://pyproximation.readthedocs.io <http://pyproximation.readthedocs.io/en/latest/hilbert.html#orthsystem>`_.
 
 Suppose that we want to approximate a given function :math:`f(x)` with Chebyshev polynomials of a 
 certain degree :math:`n`. Chebyshev polynomials are elements of the orthonormal basis
