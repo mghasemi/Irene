@@ -18,5 +18,5 @@ setup(
     long_description=open('README.rst').read(),
     keywords=["Optimization", "Semidefinite Programming", "Convex Optimization",
               "Polynomial Optimization", "Non-Convex Optimization"],
-    install_requires=['sympy', 'numpy', 'scipy', 'multiprocessing', 'functools']
+    install_requires=['sympy', 'numpy', 'scipy', 'multiprocess', 'functools']
 )

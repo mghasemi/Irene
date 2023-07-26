@@ -1,4 +1,4 @@
-from base import base
+from .base import base
 
 
 class sdp(base):
@@ -194,7 +194,7 @@ class sdp(base):
                 if row.find('{') != row.rfind('{'):
                     in_matrix = True
                 numbers = row[
-                    row.rfind('{') + 1:row.find('}')].strip().split(',')
+                          row.rfind('{') + 1:row.find('}')].strip().split(',')
                 if sol_mat is None:
                     sol_mat = np.empty((len(numbers), len(numbers)))
                 for j, number in enumerate(numbers):
@@ -383,13 +383,13 @@ class sdp(base):
         r"""
         This calls `CVXOPT` and `DSDP` to solve the initiated semidefinite program.
         """
-        from time import time, clock
+        from time import time
         from numpy import matrix, array, float64
         try:
             from cvxopt import solvers
             from cvxopt.base import matrix as Mtx
             RealNumber = float  # Required for CvxOpt
-            Integer = int       # Required for CvxOpt
+            Integer = int  # Required for CvxOpt
             self.CvxOpt_Available = True
         except Exception as e:
             self.CvxOpt_Available = False
@@ -425,19 +425,17 @@ class sdp(base):
         for param in self.SolverOptions:
             solvers.options[param] = self.SolverOptions[param]
         start1 = time()
-        start2 = clock()
 
         try:
             # if True:
             sol = solvers.sdp(acvxopt, Gs=Acvxopt, hs=Ccvxopt,
                               solver=self.solver.lower())
             elapsed1 = (time() - start1)
-            elapsed2 = (clock() - start2)
             if sol['status'] != 'optimal':
                 self.Info = {'Status': 'Infeasible'}
             else:
                 self.Info = {'Status': 'Optimal', 'DObj': sol['dual objective'],
-                             'PObj': sol['primal objective'], 'Wall': elapsed1, 'CPU': elapsed2}
+                             'PObj': sol['primal objective'], 'Wall': elapsed1, 'CPU': None}
                 self.Info['y'] = array(
                     list(sol['x']))  # .reshape(*sol['x'].size)
                 self.Info['Z'] = []
@@ -504,4 +502,4 @@ class sdp(base):
         return out_text
 
     def __latex__(self):
-        return "SDP(%d, %d, %s)"%(len(self.C), len(self.A), self.solver)
+        return "SDP(%d, %d, %s)" % (len(self.C), len(self.A), self.solver)

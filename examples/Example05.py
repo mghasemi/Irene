@@ -1,10 +1,12 @@
 """
 minimize x sinh y + (e^(y sin x))
 subject to 
-		-pi <= x <= pi
-		-pi <= y <= pi
+        -pi <= x <= pi
+        -pi <= y <= pi
 using Legendre approximation of the transcendental parts `e^(y sin x)` and sinh(y)
 """
+from scipy.optimize import minimize
+from pyswarm import pso
 from sympy import *
 from Irene import *
 from pyProximation import OrthSystem
@@ -51,9 +53,8 @@ Rlx.SetSDPSolver('cvxopt')
 Rlx.InitSDP()
 # solve the SDP
 Rlx.Minimize()
-print Rlx.Solution
+print(Rlx.Solution)
 # using scipy
-from scipy.optimize import minimize
 fun = lambda x: x[0] * sinh(x[1]) + exp(x[1] * sin(x[0]))
 cons = (
     {'type': 'ineq', 'fun': lambda x: pi**2 - x[0]**2},
@@ -61,14 +62,13 @@ cons = (
 )
 sol1 = minimize(fun, (0, 0), method='COBYLA', constraints=cons)
 sol2 = minimize(fun, (0, 0), method='SLSQP', constraints=cons)
-print "solution according to 'COBYLA':"
-print sol1
-print "solution according to 'SLSQP':"
-print sol2
+print("solution according to 'COBYLA':")
+print(sol1)
+print("solution according to 'SLSQP':")
+print(sol2)
 # particle swarm optimization
-from pyswarm import pso
 lb = [-3.3, -3.3]
 ub = [3.3, 3.3]
 cns = [cons[0]['fun'], cons[1]['fun']]
-print "PSO:"
-print pso(fun, lb, ub, ieqcons=cns)
+print("PSO:")
+print(pso(fun, lb, ub, ieqcons=cns))

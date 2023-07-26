@@ -28,7 +28,7 @@ f_app = sum([Orth_f.OrthBase[i] * Coeffs_f[i]
              for i in range(len(Orth_f.OrthBase))])
 # objective function
 obj = f_app.subs({z: x + y}) + (x - y)**2 - 1.5 * x + 2.5 * y + 1
-print obj
+print(obj)
 # definition of 't'
 rels = []  # [t**2 * (x**2 + y**2) - 1]
 # initiate the Relaxation object
@@ -45,26 +45,4 @@ Rlx.InitSDP()
 # solve the SDP
 Rlx.Minimize()
 Rlx.Solution.ExtractSolution('lh', 1)
-print Rlx.Solution
-"""
-# using scipy
-from scipy.optimize import minimize
-fun = lambda x: x[0] * sinh(x[1]) + exp(x[1] * sin(x[0]))
-cons = (
-    {'type': 'ineq', 'fun': lambda x: pi**2 - x[0]**2},
-    {'type': 'ineq', 'fun': lambda x: pi**2 - x[1]**2}
-)
-sol1 = minimize(fun, (0, 0), method='COBYLA', constraints=cons)
-sol2 = minimize(fun, (0, 0), method='SLSQP', constraints=cons)
-print "solution according to 'COBYLA':"
-print sol1
-print "solution according to 'SLSQP':"
-print sol2
-# particle swarm optimization
-from pyswarm import pso
-lb = [-3.3, -3.3]
-ub = [3.3, 3.3]
-cns = [cons[0]['fun'], cons[1]['fun']]
-print "PSO:"
-print pso(fun, lb, ub, ieqcons=cns)
-"""
+print(Rlx.Solution)

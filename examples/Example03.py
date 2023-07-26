@@ -6,6 +6,8 @@ subject to:
         y <= 2.
 """
 
+from scipy.optimize import minimize
+from pyswarm import pso
 from sympy import *
 from Irene import *
 # define the symbolic variables and functions
@@ -31,9 +33,8 @@ Rlx.SetSDPSolver('cvxopt')
 Rlx.InitSDP()
 # solve the SDP
 Rlx.Minimize()
-print Rlx.Solution
+print(Rlx.Solution)
 # solve with scipy
-from scipy.optimize import minimize
 fun = lambda x: x[0]**2 * exp(-x[1]) - exp(x[1])
 cons = (
     {'type': 'ineq', 'fun': lambda x: 1 - x[0]**2},
@@ -41,14 +42,13 @@ cons = (
     {'type': 'ineq', 'fun': lambda x: 2 - x[1]})
 sol1 = minimize(fun, (0, 0), method='COBYLA', constraints=cons)
 sol2 = minimize(fun, (0, 0), method='SLSQP', constraints=cons)
-print "solution according to 'COBYLA':"
-print sol1
-print "solution according to 'SLSQP':"
-print sol2
+print("solution according to 'COBYLA':")
+print(sol1)
+print("solution according to 'SLSQP':")
+print(sol2)
 # solve with pso
-from pyswarm import pso
 lb = [-1, -1]
 ub = [1, 2]
 cns = [cons[0]['fun'], cons[1]['fun']]
-print "PSO:"
-print pso(fun, lb, ub, ieqcons=cns)
+print("PSO:")
+print(pso(fun, lb, ub, ieqcons=cns))

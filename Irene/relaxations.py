@@ -8,9 +8,9 @@ The main classes included in this module are:
     + `Mom`
 """
 
-from __future__ import print_function
-from base import base
-from sdp import sdp
+#  from __future__ import print_function
+from .base import base
+from .sdp import sdp
 
 
 def Calpha_(expn, Mmnt):
@@ -137,21 +137,20 @@ class SDPRelaxations(base):
         for r in relations:
             t_rel = r.subs(self.SymDict)
             self.FreeRelations.append(t_rel)
-        if self.FreeRelations != []:
+        if self.FreeRelations:
             self.Groebner = groebner(
                 self.FreeRelations, domain=self.Field, order=self.MonomialOrder)
         self.AvailableSolvers = self.AvailableSDPSolvers()
 
-    def SetMonoOrd(self, ord):
+    def SetMonoOrd(self, ordr):
         r"""
         Changes the default monomial order to `ord` which mustbe among
         `lex`, `grlex`, `grevlex`, `ilex`, `igrlex`, `igrevlex`.
         """
-        assert ord in ['lex', 'grlex', 'grevlex', 'ilex',
-                       'igrlex', 'igrevlex'], self.MonoOrdError
+        assert ordr in ['lex', 'grlex', 'grevlex', 'ilex', 'igrlex', 'igrevlex'], self.MonoOrdError
         from sympy import groebner
-        self.MonomialOrder = ord
-        if self.FreeRelations != []:
+        self.MonomialOrder = ordr
+        if self.FreeRelations:
             self.Groebner = groebner(
                 self.FreeRelations, domain=self.Field, order=self.MonomialOrder)
 
@@ -194,7 +193,7 @@ class SDPRelaxations(base):
             T = expr.subs(self.SymDict)
         except:
             T = Poly(expr, *self.AuxSyms)
-        if self.Groebner != []:
+        if self.Groebner:
             return reduced(T, self.Groebner)[1]
         else:
             return T
@@ -294,14 +293,14 @@ class SDPRelaxations(base):
         from sympy import Poly
         all_monos = product(range(deg + 1), repeat=self.NumGenerators)
         req_monos = filter(lambda x: sum(x) <= deg, all_monos)
-        monos = [reduce(mul, [self.AuxSyms[i]**expn[i]
+        monos = [reduce(mul, [self.AuxSyms[i] ** expn[i]
                               for i in range(self.NumGenerators)], 1) for expn in req_monos]
         RBase = []
         for expr in monos:
             rexpr = self.ReduceExp(expr)
             expr_monos = Poly(rexpr, *self.AuxSyms).as_dict()
             for mono_exp in expr_monos:
-                t_mono = reduce(mul, [self.AuxSyms[i]**mono_exp[i]
+                t_mono = reduce(mul, [self.AuxSyms[i] ** mono_exp[i]
                                       for i in range(self.NumGenerators)], 1)
                 if t_mono not in RBase:
                     RBase.append(t_mono)
@@ -327,8 +326,9 @@ class SDPRelaxations(base):
         r"""
         Sets the order of moments to be considered.
         """
-        from types import IntType
-        assert (type(ordr) is IntType) and (ordr > 0), self.MmntOrdError
+        # from types import IntType
+        # assert (type(ordr) is IntType) and (ordr > 0), self.MmntOrdError
+        assert (type(ordr) is int) and (ordr > 0), self.MmntOrdError
         self.MmntOrd = ordr
 
     def RelaxationDeg(self):
@@ -336,7 +336,7 @@ class SDPRelaxations(base):
         Finds the minimum required order of moments according to user's
         request, objective function and constraints.
         """
-        if self.CnsHalfDegs == []:
+        if not self.CnsHalfDegs:
             CHD = 0
         else:
             CHD = max(self.CnsHalfDegs)
@@ -421,7 +421,7 @@ class SDPRelaxations(base):
                 t_monos = Poly(Mmnt[i, j], *self.AuxSyms).as_dict()
                 t_mmnt = 0
                 for expn in t_monos:
-                    mono = reduce(mul, [self.AuxSyms[k]**expn[k]
+                    mono = reduce(mul, [self.AuxSyms[k] ** expn[k]
                                         for k in range(self.NumGenerators)], 1)
                     t_mmnt += t_monos[expn] * self.Info['moments'][mono]
                 Mmnt[i, j] = t_mmnt
@@ -493,8 +493,8 @@ class SDPRelaxations(base):
                     zeros(1, 1).tolist()).astype(float64))
                 Blck[i].append(array(
                     zeros(1, 1).tolist()).astype(float64))
-            #Blck[0][NumCns + 1][0] = 1
-            #Blck[0][NumCns + 2][0] = -1
+            # Blck[0][NumCns + 1][0] = 1
+            # Blck[0][NumCns + 2][0] = -1
             Blck[0][-2][0] = 1
             Blck[0][-1][0] = -1
             C.append(array(Matrix([1]).tolist()).astype(float64))
@@ -585,7 +585,7 @@ class SDPRelaxations(base):
                     # break?
                     self.Commit(tBlck, tC_, idx)  # ??
                     raise KeyboardInterrupt
-                #self.InitIdx = idx
+                # self.InitIdx = idx
             self.LastIdxVal = 0
         ## Moment matrix should be psd ##
         if (self.PrevStage is None) or (self.PrevStage == "PSDMom"):
@@ -623,8 +623,8 @@ class SDPRelaxations(base):
                     # break?
                     self.Commit(tBlck, tC_, 0)  # ??
                     raise KeyboardInterrupt
-                #self.Blck = copy(tBlck)
-                #self.C_ = copy(tC_)
+                # self.Blck = copy(tBlck)
+                # self.C_ = copy(tC_)
         ## L(1) = 1 ##
         if (self.PrevStage is None) or (self.PrevStage == "L(1)=1"):
             self.Stage = "L(1)=1"
@@ -638,8 +638,8 @@ class SDPRelaxations(base):
                         zeros(1, 1).tolist()).astype(float64))
                     tBlck[i].append(array(
                         zeros(1, 1).tolist()).astype(float64))
-                #Blck[0][NumCns + 1][0] = 1
-                #Blck[0][NumCns + 2][0] = -1
+                # Blck[0][NumCns + 1][0] = 1
+                # Blck[0][NumCns + 2][0] = -1
                 tBlck[0][-2][0] = 1
                 tBlck[0][-1][0] = -1
                 tC_.append(array(Matrix([1]).tolist()).astype(float64))
@@ -653,8 +653,8 @@ class SDPRelaxations(base):
                     # break?
                     self.Commit(tBlck, tC_, 0)  # ??
                     raise KeyboardInterrupt
-                #self.Blck = copy(tBlck)
-                #self.C_ = copy(tC_)
+                # self.Blck = copy(tBlck)
+                # self.C_ = copy(tC_)
         # Moment constraints
         if (self.PrevStage is None) or (self.PrevStage == "MomConst"):
             self.Stage = "MomConst"
@@ -679,9 +679,9 @@ class SDPRelaxations(base):
                     # break?
                     self.Commit(tBlck, tC_, idx)  # ??
                     raise KeyboardInterrupt
-                #self.Blck = copy(tBlck)
-                #self.C_ = copy(tC_)
-                #self.InitIdx = idx
+                # self.Blck = copy(tBlck)
+                # self.C_ = copy(tC_)
+                # self.InitIdx = idx
         self.SDP.C = self.C_
         self.SDP.b = self.PolyCoefFullVec()
         self.SDP.A = self.Blck
@@ -746,7 +746,7 @@ class SDPRelaxations(base):
             self.Info['min'] = self.f_min
             self.Info['status'] = 'Infeasible'
             self.Info['Message'] = 'No feasible solution for moments of order ' + \
-                str(self.MmntOrd) + ' were found'
+                                   str(self.MmntOrd) + ' were found'
             self.Solution.Status = 'Infeasible'
             self.Solution.Message = self.Info['Message']
             self.Solution.Solver = self.SDP.solver
@@ -846,8 +846,8 @@ class SDPRelaxations(base):
         out_txt += "And\n"
         for cns in self.MomConst:
             out_txt += "\t\tMoment " + \
-                str(cns[0].subs(self.RevSymDict) >= sympify(
-                    cns[1]).subs(self.RevSymDict)) + "\n"
+                       str(cns[0].subs(self.RevSymDict) >= sympify(
+                           cns[1]).subs(self.RevSymDict)) + "\n"
         out_txt += "=" * 70 + "\n"
         return out_txt
 
@@ -858,7 +858,7 @@ class SDPRelaxations(base):
         from pickle import dumps
         self.PrevStage = self.Stage
         self.LastIdxVal = self.InitIdx
-        #self.SDP = None
+        # self.SDP = None
         exceptions = ['RevSymDict', 'Generators', 'Objective',
                       'SymDict', 'Solution', 'OrgConst']
         cur_inst = self.__dict__
@@ -903,6 +903,7 @@ class SDPRelaxations(base):
         latexcode += "\\end{array}"
         latexcode += "\\right."
         return latexcode
+
 
 #######################################################################
 # Solution of the Semidefinite Relaxation
@@ -963,9 +964,9 @@ class SDRelaxSol(object):
         out_str += "                Solver: " + self.Solver + "\n"
         out_str += "                Status: " + self.Status + "\n"
         out_str += "   Initialization Time: " + \
-            str(self.InitTime) + " seconds\n"
+                   str(self.InitTime) + " seconds\n"
         out_str += "              Run Time: " + \
-            str(self.RunTime) + " seconds\n"
+                   str(self.RunTime) + " seconds\n"
         out_str += "Primal Objective Value: " + str(self.Primal) + "\n"
         out_str += "  Dual Objective Value: " + str(self.Dual) + "\n"
         if self.Support is not None:
@@ -999,7 +1000,8 @@ class SDRelaxSol(object):
         r"""
         Sets the ``scipy.optimize.root`` solver to `solver`.
         """
-        assert solver.lower() in ['hybr', 'lm', 'broyden1', 'broyden2', 'anderson', 'linearmixing', 'diagbroyden', 'excitingmixing', 'krylov',
+        assert solver.lower() in ['hybr', 'lm', 'broyden1', 'broyden2', 'anderson', 'linearmixing', 'diagbroyden',
+                                  'excitingmixing', 'krylov',
                                   'df-sane'], "Unrecognized solver. The solver must be among 'hybr', 'lm', 'broyden1', 'broyden2', 'anderson', 'linearmixing', 'diagbroyden', 'excitingmixing', 'krylov', 'df-sane'"
         self.ScipySolver = solver.lower()
 
@@ -1039,7 +1041,7 @@ class SDRelaxSol(object):
             for j, qj in enumerate(Q):
                 R[j, i] = ai.dot(qj)
                 ai -= ai.dot(qj) * qj
-            li = sqrt((ai**2).sum())
+            li = sqrt((ai ** 2).sum())
             if li > self.err_tol:
                 assert len(Q) < min(m, n)
                 # Add a new column to Q
@@ -1059,7 +1061,7 @@ class SDRelaxSol(object):
 
         # row_normalize
         for r in R:
-            li = sqrt((r**2).sum())
+            li = sqrt((r ** 2).sum())
             if li < self.err_tol:
                 r[:] = 0
             else:
@@ -1090,7 +1092,7 @@ class SDRelaxSol(object):
         expr = 0
         for i in range(rnk):
             expr += self.weight[i] * \
-                trm.subs({X[j]: self.Xij[i][j] for j in range(num_vars)})
+                    trm.subs({X[j]: self.Xij[i][j] for j in range(num_vars)})
         return expr
 
     def ExtractSolutionScipy(self, card=0):
@@ -1159,8 +1161,9 @@ class SDRelaxSol(object):
         def f(x):
             z = tuple(float(x.item(i)) for i in range(len(syms)))
             return [fn(*z) for fn in f_]
+
         init_point = ndarray(tuple(0.  # uniform(-self.err_tol, self.err_tol)
-                           for _ in range(len(syms))))
+                                   for _ in range(len(syms))))
         sol = opt.root(f, init_point, method=self.ScipySolver)
         if sol['success']:
             self.Support = []
@@ -1265,6 +1268,7 @@ class SDRelaxSol(object):
         rv += [r'\end{bmatrix}']
         return '\n'.join(rv)
 
+
 #######################################################################
 # A Symbolic object to handle moment constraints
 
@@ -1285,9 +1289,10 @@ class Mom(object):
     """
 
     def __init__(self, expr):
-        from types import IntType, LongType, FloatType
+        # from types import IntType, LongType, FloatType
         from sympy import sympify
-        self.NumericTypes = [IntType, LongType, FloatType]
+        # self.NumericTypes = [IntType, LongType, FloatType]
+        self.NumericTypes = [int, float]
         self.Content = sympify(expr)
         self.rhs = 0
         self.TYPE = None

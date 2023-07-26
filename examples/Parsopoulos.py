@@ -1,6 +1,8 @@
 """
 Minimize the Parsopoulos function
 """
+from scipy.optimize import minimize
+from pyswarm import pso
 from sympy import *
 from Irene import *
 x = Symbol('x')
@@ -19,23 +21,21 @@ Rlx.MomentsOrd(2)
 Rlx.InitSDP()
 # solve the SDP
 Rlx.Minimize()
-print Rlx.Solution
+print(Rlx.Solution)
 # solve with scipy
-from scipy.optimize import minimize
 fun = lambda x: cos(x[0])**2 + sin(x[1])**2
 cons = [
     {'type': 'ineq', 'fun': lambda x: 25 - x[i]**2} for i in range(2)]
 x0 = tuple([0 for _ in range(2)])
 sol1 = minimize(fun, x0, method='COBYLA', constraints=cons)
 sol2 = minimize(fun, x0, method='SLSQP', constraints=cons)
-print "solution according to 'COBYLA':"
-print sol1
-print "solution according to 'SLSQP':"
-print sol2
+print("solution according to 'COBYLA':")
+print(sol1)
+print("solution according to 'SLSQP':")
+print(sol2)
 # solve with pso
-print "PSO:"
-from pyswarm import pso
+print("PSO:")
 lb = [-5 for i in range(2)]
 ub = [5 for i in range(2)]
 cns = [cn['fun'] for cn in cons]
-print pso(fun, lb, ub, ieqcons=cns)
+print(pso(fun, lb, ub, ieqcons=cns))

@@ -1,9 +1,11 @@
 """
 minimize x + e^(x sin x)
 subject to 
-		-pi <= x <= pi
+        -pi <= x <= pi
 using Legendre approximation of the transcendental part `e^(x sin x)`
 """
+from scipy.optimize import minimize
+from pyswarm import pso
 from sympy import *
 from Irene import *
 from pyProximation import OrthSystem
@@ -37,23 +39,21 @@ Rlx.SetSDPSolver('dsdp')
 Rlx.InitSDP()
 # solve the SDP
 Rlx.Minimize()
-print Rlx.Solution
+print(Rlx.Solution)
 # using scipy
-from scipy.optimize import minimize
 fun = lambda x: x[0] + exp(x[0] * sin(x[0]))
 cons = (
     {'type': 'ineq', 'fun': lambda x: pi**2 - x[0]**2},
 )
 sol1 = minimize(fun, (0, 0), method='COBYLA', constraints=cons)
 sol2 = minimize(fun, (0, 0), method='SLSQP', constraints=cons)
-print "solution according to 'COBYLA':"
-print sol1
-print "solution according to 'SLSQP':"
-print sol2
+print("solution according to 'COBYLA':")
+print(sol1)
+print("solution according to 'SLSQP':")
+print(sol2)
 # particle swarm optimization
-from pyswarm import pso
 lb = [-3.3, -3.3]
 ub = [3.3, 3.3]
 cns = [cons[0]['fun']]
-print "PSO:"
-print pso(fun, lb, ub, ieqcons=cns)
+print("PSO:")
+print(pso(fun, lb, ub, ieqcons=cns))

@@ -10,13 +10,13 @@ def LaTeX(obj):
     r"""
     Returns LaTeX representation of Irene's objects.
     """
-    from sympy.core.core import all_classes
+    from sympy.core.core import ordering_of_classes
     from Irene import SDPRelaxations, SDRelaxSol, Mom
     inst = isinstance(obj, SDPRelaxations) or isinstance(
         obj, SDRelaxSol) or isinstance(obj, Mom)
     if inst:
         return obj.__latex__()
-    elif isinstance(obj, tuple(all_classes)):
+    elif isinstance(obj, tuple(ordering_of_classes)):
         from sympy import latex
         return latex(obj)
 
@@ -24,7 +24,7 @@ def LaTeX(obj):
 class base(object):
     r"""
     All the modules in `Irene` extend this class which perform some common
-    tasks such as checking existence of certain softwares.
+    tasks such as checking existence of certain software.
     """
 
     def __init__(self):
@@ -33,11 +33,12 @@ class base(object):
         if self.os == 'win32':
             import os
             BASE = os.sep.join(os.path.dirname(os.path.realpath(__file__)).split(os.sep)) + os.sep
-            self.Path = dict(csdp=BASE+"csdp.exe", sdpa=BASE+"sdpa.exe")
+            self.Path = dict(csdp=BASE + "csdp.exe", sdpa=BASE + "sdpa.exe")
         else:
             self.Path = dict(csdp="csdp", sdpa="sdpa")
 
-    def which(self, program):
+    @staticmethod
+    def which(program):
         r"""
         Check the availability of the `program` system-wide.
         Returns the path of the program if exists and returns 
@@ -45,8 +46,8 @@ class base(object):
         """
         import os
 
-        def is_exe(fpath):
-            return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+        def is_exe(filepath):
+            return os.path.isfile(filepath) and os.access(filepath, os.X_OK)
 
         fpath, fname = os.path.split(program)
         if fpath:
@@ -74,14 +75,14 @@ class base(object):
         if self.os == 'win32':
             from os.path import isfile
             # DSDP
-            if ('dsdp' in self.Path):
+            if 'dsdp' in self.Path:
                 if isfile(self.Path['dsdp']):
                     existsing.append('DSDP')
             # SDPA
-            if ('sdpa' in self.Path):
+            if 'sdpa' in self.Path:
                 if isfile(self.Path['sdpa']):
                     existsing.append('SDPA')
-            if ('csdp' in self.Path):
+            if 'csdp' in self.Path:
                 if isfile(self.Path['csdp']):
                     existsing.append('CSDP')
         else:
