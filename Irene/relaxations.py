@@ -12,14 +12,27 @@ The main classes included in this module are:
 from .base import base
 from .sdp import sdp
 
+from numpy import array, float64, ndarray, sqrt, zeros, abs, linalg, trim_zeros, where, int, random, dot
+from numpy.linalg import cholesky
+from sympy import Function, Symbol, QQ, groebner, Poly, zeros, reduced, sympify, Matrix, expand, latex, lambdify, Abs
+from sympy.core.relational import Equality, GreaterThan, LessThan, StrictGreaterThan, StrictLessThan
+from scipy import optimize as opt
+from scipy.linalg import eigvals
+from scipy import linalg as spla
+from math import ceil
+from functools import reduce
+from itertools import product
+from operator import mul
+from time import time
+import multiprocessing as mp
+from copy import copy
+from pickle import load, loads, dump, dumps
 
 def Calpha_(expn, Mmnt):
     r"""
     Given an exponent `expn`, this function finds the corresponding
     :math:`C_{expn}` matrix which can be used for parallel processing.
     """
-    from numpy import array, float64
-    from sympy import zeros
     r = Mmnt.shape[0]
     C = zeros(r, r)
     for i in range(r):
@@ -36,8 +49,6 @@ def Calpha__(expn, Mmnt, ii, q):
     Given an exponent `expn`, this function finds the corresponding
     :math:`C_{expn}` matrix which can be used for parallel processing.
     """
-    from numpy import array, float64
-    from sympy import zeros
     r = Mmnt.shape[0]
     C = zeros(r, r)
     for i in range(r):
@@ -80,11 +91,8 @@ class SDPRelaxations(base):
     def __init__(self, gens, relations=(), name="SDPRlx"):
         assert type(gens) is list, self.GensError
         assert type(gens) is list, self.RelsError
-        from sympy import Function, Symbol, QQ, groebner, Poly
-        from sympy.core.relational import Equality, GreaterThan, LessThan, StrictGreaterThan, StrictLessThan
-        import multiprocessing
         super(SDPRelaxations, self).__init__()
-        self.NumCores = multiprocessing.cpu_count()
+        self.NumCores = mp.cpu_count()
         self.EQ = Equality
         self.GEQ = GreaterThan
         self.LEQ = LessThan
@@ -148,7 +156,6 @@ class SDPRelaxations(base):
         `lex`, `grlex`, `grevlex`, `ilex`, `igrlex`, `igrevlex`.
         """
         assert ordr in ['lex', 'grlex', 'grevlex', 'ilex', 'igrlex', 'igrevlex'], self.MonoOrdError
-        from sympy import groebner
         self.MonomialOrder = ordr
         if self.FreeRelations:
             self.Groebner = groebner(
@@ -188,7 +195,6 @@ class SDPRelaxations(base):
         is present, otherwise it just substitutes generating functions with
         their corresponding internal symbols.
         """
-        from sympy import reduced, Poly
         try:
             T = expr.subs(self.SymDict)
         except:
@@ -205,8 +211,6 @@ class SDPRelaxations(base):
         functions with corresponding auxiliary symbols and reduce them 
         according to the given relations.
         """
-        from math import ceil
-        from sympy import Poly, sympify
         self.Objective = sympify(obj)
         self.RedObjective = self.ReduceExp(sympify(obj))
         # self.CheckVars(obj)
@@ -221,8 +225,6 @@ class SDPRelaxations(base):
         It reduces the defining (in)equalities according to the
         given relations.
         """
-        from sympy import Poly
-        from math import ceil
         self.OrgConst.append(cnst)
         CnsTyp = type(cnst)
         if CnsTyp in self.ExpTypes:
@@ -257,8 +259,6 @@ class SDPRelaxations(base):
         Takes constraints on the moments. The input must be an instance of
         `Mom` class.
         """
-        from sympy import Poly
-        from math import ceil
         assert isinstance(
             cnst, Mom), "The argument must be of moment type 'Mom'"
         self.OrgMomConst.append(cnst)
@@ -285,12 +285,8 @@ class SDPRelaxations(base):
         r"""
         Returns a reduce monomial basis up to degree `d`.
         """
-        from functools import reduce
         if deg in self.ReducedBases:
             return self.ReducedBases[deg]
-        from itertools import product
-        from operator import mul
-        from sympy import Poly
         all_monos = product(range(deg + 1), repeat=self.NumGenerators)
         req_monos = filter(lambda x: sum(x) <= deg, all_monos)
         monos = [reduce(mul, [self.AuxSyms[i] ** expn[i]
@@ -312,7 +308,6 @@ class SDPRelaxations(base):
         Returns all the exponents that appear in the reduced basis of all
         monomials of the auxiliary symbols of degree at most `deg`.
         """
-        from sympy import Poly
         basis = self.ReducedMonomialBase(deg)
         exponents = []
         for elmnt in basis:
@@ -350,7 +345,6 @@ class SDPRelaxations(base):
         as an element of the vector space of elements of degree up to the
         order of moments.
         """
-        from sympy import Poly
         c = []
         fmono = Poly(self.RedObjective, *self.AuxSyms).as_dict()
         exponents = self.ExponentsVec(2 * self.MmntOrd)
@@ -366,8 +360,6 @@ class SDPRelaxations(base):
         Computes the reduced symbolic moment generating matrix localized
         at `p`.
         """
-        from sympy import Poly, Matrix, expand, zeros
-        from math import ceil
         try:
             tot_deg = Poly(p, *self.AuxSyms).total_degree()
         except Exception as e:
@@ -388,8 +380,6 @@ class SDPRelaxations(base):
         Computes the reduced symbolic moment generating matrix localized
         at `p`.
         """
-        from sympy import Poly, Matrix, expand, zeros
-        from math import ceil
         try:
             tot_deg = Poly(p, *self.AuxSyms).total_degree()
         except Exception as e:
@@ -411,10 +401,6 @@ class SDPRelaxations(base):
         Returns the numerical moment matrix resulted from solving the SDP.
         """
         assert 'moments' in self.Info, "The sdp has not been (successfully) solved (yet)."
-        from numpy import array, float64
-        from sympy import Poly
-        from operator import mul
-        from functools import reduce
         Mmnt = self.LocalizedMoment(1.)
         for i in range(Mmnt.shape[0]):
             for j in range(Mmnt.shape[1]):
@@ -433,8 +419,6 @@ class SDPRelaxations(base):
         Given an exponent `expn`, this method finds the corresponding
         :math:`C_{expn}` matrix.
         """
-        from numpy import array, float64
-        from sympy import zeros, Poly
         r = Mmnt.shape[0]
         C = zeros(r, r)
         for i in range(r):
@@ -451,9 +435,6 @@ class SDPRelaxations(base):
         Initializes the semidefinite program (SDP), in serial mode, whose 
         solution is a lower bound for the minimum of the program.
         """
-        from numpy import array, float64
-        from sympy import zeros, Matrix
-        from time import time
         start = time()
         self.SDP = sdp(self.SDPSolver)
         self.RelaxationDeg()
@@ -517,7 +498,6 @@ class SDPRelaxations(base):
         Sets the latest computed values for the final SDP
         and saves the current state.
         """
-        from copy import copy
         self.Blck = copy(blk)
         self.C_ = copy(c)
         self.InitIdx = idx
@@ -527,11 +507,6 @@ class SDPRelaxations(base):
         Initializes the semidefinite program (SDP), in parallel, whose 
         solution is a lower bound for the minimum of the program.
         """
-        from numpy import array, float64
-        from sympy import zeros, Matrix
-        from time import time
-        import multiprocessing as mp
-        from copy import copy
         start = time()
         self.SDP = sdp(self.SDPSolver, solver_path=self.Path)
         self.RelaxationDeg()
@@ -698,7 +673,6 @@ class SDPRelaxations(base):
             try:
                 self.pInitSDP()
             except KeyboardInterrupt:
-                from pickle import dump
                 obj_file = open(self.Name + '.rlx', 'w')
                 dump(self, obj_file)
                 print("\n...::: The program is saved in '" +
@@ -761,8 +735,6 @@ class SDPRelaxations(base):
         is equal to :math:`\sigma_i` and :math:`f-f_*=\sum_{i=0}^m\sigma_ig_i`.
         Here, :math:`f_*` is the output of the ``SDPRelaxation.Minimize()``.
         """
-        from numpy.linalg import cholesky
-        from sympy import Matrix
         SOSCoefs = {}
         blks = []
         NumCns = len(self.CnsDegs)
@@ -800,14 +772,12 @@ class SDPRelaxations(base):
         Returns the moment constraint number `idx` of the problem after reduction modulo the relations, if given.
         """
         assert idx < len(self.MomConst), "Index out of range."
-        from sympy import sympify
         return self.MomConst[idx][0].subs(self.RevSymDict) >= sympify(self.MomConst[idx][1]).subs(self.RevSymDict)
 
     def Resume(self):
         r"""
         Resumes the process of a previously saved program.
         """
-        from pickle import load
         obj_file = open(self.Name + '.rlx', 'r')
         self = load(obj_file)
         obj_file.close()
@@ -817,7 +787,6 @@ class SDPRelaxations(base):
         r"""
         Saves the current state of the relaxation object to the file `self.Name+'.rlx'`.
         """
-        from pickle import dump
         obj_file = open(self.Name + '.rlx', 'w')
         dump(self, obj_file)
 
@@ -825,7 +794,6 @@ class SDPRelaxations(base):
         r"""
         Returns the latest state of the object at last break and save.
         """
-        from pickle import loads
         obj_file = open(self.Name + '.rlx', 'r')
         ser_dict = obj_file.read()
         ser_inst = loads(ser_dict)
@@ -836,7 +804,6 @@ class SDPRelaxations(base):
         r"""
         String output.
         """
-        from sympy import sympify
         out_txt = "=" * 70 + "\n"
         out_txt += "Minimize\t"
         out_txt += str(self.RedObjective.subs(self.RevSymDict)) + "\n"
@@ -855,7 +822,6 @@ class SDPRelaxations(base):
         r"""
         Pickling process.
         """
-        from pickle import dumps
         self.PrevStage = self.Stage
         self.LastIdxVal = self.InitIdx
         # self.SDP = None
@@ -874,8 +840,6 @@ class SDPRelaxations(base):
         r"""
         Loading pickles
         """
-        from pickle import loads
-        from sympy import sympify
         exceptions = ['RevSymDict', 'Generators', 'Objective',
                       'SymDict', 'Solution', 'OrgConst']
         ser_inst = loads(state)
@@ -890,7 +854,6 @@ class SDPRelaxations(base):
         r"""
         Generates LaTeX code of the optimization problem.
         """
-        from sympy import latex
         latexcode = "\\left\\lbrace\n"
         latexcode += "\\begin{array}{ll}\n"
         latexcode += "\t\\min & " + latex(self.Objective) + "\\\\\n"
@@ -1029,7 +992,6 @@ class SDRelaxSol(object):
         r"""
         Compute the stabilized row reduced echelon form.
         """
-        from numpy import array, sqrt, zeros
         A = array(A)
         m, n = A.shape
 
@@ -1075,8 +1037,6 @@ class SDRelaxSol(object):
         eigenvalues. It considers those with absolute value less than 
         ``self.err_tol`` to be zero.
         """
-        from scipy.linalg import eigvals
-        from numpy import abs
         num_rnk = 0
         eignvls = eigvals(self.MomentMatrix)
         for ev in eignvls:
@@ -1116,9 +1076,6 @@ class SDRelaxSol(object):
             - ``krylov``,
             - ``df-sane``.
         """
-        from numpy import ndarray
-        from scipy import optimize as opt
-        from sympy import Symbol, lambdify, Abs
         if card > 0:
             rnk = min(self.NumericalRank(), card)
         else:
@@ -1183,9 +1140,6 @@ class SDRelaxSol(object):
         r"""
         Extract solutions based on Lasserre--Henrion's method.
         """
-        from numpy import linalg, trim_zeros, zeros, where, int, random, dot, array
-        from scipy import linalg as spla
-
         M = self.MomentMatrix
 
         Us, Sigma, Vs = linalg.svd(M)
@@ -1290,7 +1244,6 @@ class Mom(object):
 
     def __init__(self, expr):
         # from types import IntType, LongType, FloatType
-        from sympy import sympify
         # self.NumericTypes = [IntType, LongType, FloatType]
         self.NumericTypes = [int, float]
         self.Content = sympify(expr)
@@ -1389,7 +1342,6 @@ class Mom(object):
         r"""
         Pickling process.
         """
-        from pickle import dumps
         ser_inst = {}
         ser_inst['NumericTypes'] = dumps(self.NumericTypes)
         ser_inst['Content'] = str(self.Content)
@@ -1401,8 +1353,6 @@ class Mom(object):
         r"""
         Loading pickles
         """
-        from pickle import loads
-        from sympy import sympify
         ser_inst = loads(state)
         self.__dict__['NumericTypes'] = loads(ser_inst['NumericTypes'])
         self.__dict__['Content'] = sympify(ser_inst['Content'])
@@ -1413,7 +1363,6 @@ class Mom(object):
         r"""
         Generates LaTeX code for the moment term.
         """
-        from sympy import latex
         symbs = {'lt': '<', 'le': '\\leq', 'gt': '>', 'ge': '\\geq', 'eq': '='}
         latexcode = "\\textrm{Moment of }"
         if external:

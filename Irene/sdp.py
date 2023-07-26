@@ -1,5 +1,7 @@
 from .base import base
 
+from numpy import array, zeros, matrix, float64
+from time import time
 
 class sdp(base):
     r"""
@@ -214,7 +216,6 @@ class sdp(base):
         Extracts information from `SDPA`'s output file `filename`.
         This was taken from `ncpol2sdpa` and customized for `Irene`.
         """
-        from numpy import array
         primal = None
         dual = None
         x_mat = None
@@ -330,7 +331,6 @@ class sdp(base):
         a file and command line outputs of the solver and extracts the
         required information.
         """
-        from numpy import array, zeros
         primal = None
         dual = None
         total_time = None
@@ -383,8 +383,6 @@ class sdp(base):
         r"""
         This calls `CVXOPT` and `DSDP` to solve the initiated semidefinite program.
         """
-        from time import time
-        from numpy import matrix, array, float64
         try:
             from cvxopt import solvers
             from cvxopt.base import matrix as Mtx
