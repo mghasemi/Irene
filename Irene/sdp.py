@@ -3,6 +3,7 @@ from .base import base
 from numpy import array, zeros, matrix, float64
 from time import time
 
+
 class sdp(base):
     r"""
     This is the class which intends to solve semidefinite programs in 
@@ -30,13 +31,20 @@ class sdp(base):
         assert solver.upper() in self.Solvers, "Currently the\
         following solvers are supported: 'CVXOPT', 'SDPA', 'CSDP', 'DSDP'"
         super(sdp, self).__init__()
-        if solver_path != []:
+        if solver_path:
             self.Path = solver_path
         self.solver = solver.upper()
         self.BlockStruct = []
         self.b = None
         self.A = []
         self.C = []
+        self.CvxOpt_Available = False
+        self.ErrorString = ""
+        self.solver_options = {}
+        self.Info = {}
+        self.num_constraints = 0
+        self.num_blocks = 0
+
         # checks the availability of solver
         if solver.upper() not in self.AvailableSDPSolvers():
             raise ImportError("The solver '%s' is not available" % solver)
@@ -59,7 +67,7 @@ class sdp(base):
             BlkStc.append(blk.shape[0])
         if (self.BlockStruct != []) and (self.BlockStruct == BlkStc):
             self.A.append(A)
-        elif (self.BlockStruct == []):
+        elif not self.BlockStruct:
             self.BlockStruct = BlkStc
             self.A.append(A)
         else:
@@ -76,7 +84,7 @@ class sdp(base):
             BlkStc.append(blk.shape[0])
         if (self.BlockStruct != []) and (self.BlockStruct == BlkStc):
             self.C = C
-        elif (self.BlockStruct == []):
+        elif not self.BlockStruct:
             self.BlockStruct = BlkStc
             self.C = C
         else:
@@ -176,7 +184,8 @@ class sdp(base):
                 blk_no += 1
         f.close()
 
-    def parse_solution_matrix(self, iterator):
+    @staticmethod
+    def parse_solution_matrix(iterator):
         r"""
         Parses and returns the matrices and vectors found by `SDPA` solver.
         This was taken from `ncpol2sdpa` and customized for `Irene`.
@@ -367,7 +376,8 @@ class sdp(base):
         self.Info['Status'] = Status
         self.Info['CPU'] = total_time
 
-    def VEC(self, M):
+    @staticmethod
+    def VEC(M):
         """
         Converts the matrix M into a column vector acceptable by `CVXOPT`.
         """
@@ -404,7 +414,6 @@ class sdp(base):
             Cns.append([])
         Acvxopt = []
         Ccvxopt = []
-        acvxopt = []
         for M in self.C:
             Ccvxopt.append(-Mtx(M, tc='d'))
         for blk_no in range(self.num_blocks):
@@ -432,11 +441,9 @@ class sdp(base):
             if sol['status'] != 'optimal':
                 self.Info = {'Status': 'Infeasible'}
             else:
-                self.Info = {'Status': 'Optimal', 'DObj': sol['dual objective'],
-                             'PObj': sol['primal objective'], 'Wall': elapsed1, 'CPU': None}
-                self.Info['y'] = array(
-                    list(sol['x']))  # .reshape(*sol['x'].size)
-                self.Info['Z'] = []
+                self.Info = {'Status': 'Optimal', 'DObj': sol['dual objective'], 'PObj': sol['primal objective'],
+                             'Wall': elapsed1, 'CPU': None, 'y': array(
+                        list(sol['x'])), 'Z': []}
                 for ds in sol['ss']:
                     self.Info['Z'].append(
                         array(list(ds)).reshape(*ds.size))
@@ -458,7 +465,7 @@ class sdp(base):
         out_file = "out.res"
         self.sdpa_param()
         par_file = "param.sdpa"
-        if self.BlockStruct == []:
+        if not self.BlockStruct:
             self.BlockStruct = [len(B) for B in self.C]
         self.write_sdpa_dat(prg_file)
         call([self.Path['sdpa'], "-dd", prg_file, "-o", out_file, "-p", par_file])
@@ -472,7 +479,7 @@ class sdp(base):
         prg_file = "prg.dat-s"
         out_file = "out.res"
         out = ""
-        if self.BlockStruct == []:
+        if not self.BlockStruct:
             self.BlockStruct = [len(B) for B in self.C]
         self.write_sdpa_dat_sparse(prg_file)
         try:
