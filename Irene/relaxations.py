@@ -28,6 +28,7 @@ import multiprocessing as mp
 from copy import copy
 from pickle import load, loads, dump, dumps
 
+
 def Calpha_(expn, Mmnt):
     r"""
     Given an exponent `expn`, this function finds the corresponding
@@ -127,6 +128,11 @@ class SDPRelaxations(base):
         self.Stage = None
         self.PrevStage = None
         self.Name = name
+        self.SDP = None
+        self.MatSize = []
+        self.InitTime = 0
+        self.Solution = None
+        self.f_min = 0
         # check generators
         for f in gens:
             if isinstance(f, Function) or isinstance(f, Symbol):
@@ -448,7 +454,7 @@ class SDPRelaxations(base):
         NumMomCns = len(self.MomConst)
         # Reduced vector of monomials of the given order
         ExpVec = self.ExponentsVec(2 * self.MmntOrd)
-        ## The localized moment matrices should be psd ##
+        # The localized moment matrices should be psd ##
         for idx in range(NumCns):
             d = len(self.ReducedMonomialBase(
                 self.MmntOrd - self.CnsHalfDegs[idx]))
@@ -458,7 +464,7 @@ class SDPRelaxations(base):
             Mmnt = self.LocalizedMoment(self.Constraints[idx])
             for i in range(N):
                 Blck[i].append(self.Calpha(ExpVec[i], Mmnt))
-        ## Moment matrix should be psd ##
+        # Moment matrix should be psd ##
         if self.PSDMoment:
             d = len(self.ReducedMonomialBase(self.MmntOrd))
             # Corresponding C block is 0
@@ -467,7 +473,7 @@ class SDPRelaxations(base):
             Mmnt = self.LocalizedMoment(1.)
             for i in range(N):
                 Blck[i].append(self.Calpha(ExpVec[i], Mmnt))
-        ## L(1) = 1 ##
+        # L(1) = 1 #
         if self.Probability:
             for i in range(N):
                 Blck[i].append(array(
@@ -512,7 +518,7 @@ class SDPRelaxations(base):
         self.RelaxationDeg()
         N = len(self.ReducedMonomialBase(2 * self.MmntOrd))
         self.MatSize = [len(self.ReducedMonomialBase(self.MmntOrd)), N]
-        if self.Blck == []:
+        if not self.Blck:
             self.Blck = [[] for _ in range(N)]
         # Number of constraints
         NumCns = len(self.CnsDegs)
@@ -520,7 +526,7 @@ class SDPRelaxations(base):
         NumMomCns = len(self.MomConst)
         # Reduced vector of monomials of the given order
         ExpVec = self.ExponentsVec(2 * self.MmntOrd)
-        ## The localized moment matrices should be psd ##
+        # The localized moment matrices should be psd ##
         if (self.PrevStage is None) or (self.PrevStage == "PSDLocMom"):
             self.Stage = "PSDLocMom"
             self.PrevStage = None
@@ -562,7 +568,7 @@ class SDPRelaxations(base):
                     raise KeyboardInterrupt
                 # self.InitIdx = idx
             self.LastIdxVal = 0
-        ## Moment matrix should be psd ##
+        # Moment matrix should be psd ##
         if (self.PrevStage is None) or (self.PrevStage == "PSDMom"):
             self.Stage = "PSDMom"
             self.PrevStage = None
@@ -600,7 +606,7 @@ class SDPRelaxations(base):
                     raise KeyboardInterrupt
                 # self.Blck = copy(tBlck)
                 # self.C_ = copy(tC_)
-        ## L(1) = 1 ##
+        # L(1) = 1 ##
         if (self.PrevStage is None) or (self.PrevStage == "L(1)=1"):
             self.Stage = "L(1)=1"
             self.PrevStage = None
@@ -875,8 +881,8 @@ class SDPRelaxations(base):
 class SDRelaxSol(object):
     r"""
     Instances of this class carry information on the solution of the
-    semidefinite relaxation associated to a optimization problem.
-    It include various pieces of information:
+    semidefinite relaxation associated to an optimization problem.
+    It includes various pieces of information:
 
         - ``SDRelaxSol.TruncatedMmntSeq`` a dictionary of resulted moments
         - ``SDRelaxSol.MomentMatrix`` the resulted moment matrix
@@ -918,6 +924,7 @@ class SDRelaxSol(object):
         self.ScipySolver = 'lm'
         self.Support = None
         self.Weights = None
+        self.weight = []
 
     def __str__(self):
         r"""
@@ -1342,11 +1349,8 @@ class Mom(object):
         r"""
         Pickling process.
         """
-        ser_inst = {}
-        ser_inst['NumericTypes'] = dumps(self.NumericTypes)
-        ser_inst['Content'] = str(self.Content)
-        ser_inst['rhs'] = dumps(self.rhs)
-        ser_inst['TYPE'] = dumps(self.TYPE)
+        ser_inst = {'NumericTypes': dumps(self.NumericTypes), 'Content': str(self.Content), 'rhs': dumps(self.rhs),
+                    'TYPE': dumps(self.TYPE)}
         return dumps(ser_inst)
 
     def __setstate__(self, state):

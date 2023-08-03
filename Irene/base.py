@@ -65,11 +65,11 @@ class base(object):
         r"""
         find the existing sdp solvers.
         """
-        existsing = []
+        existing = []
         # CVXOPT
         try:
             import cvxopt
-            existsing.append('CVXOPT')
+            existing.append('CVXOPT')
         except ImportError:
             pass
         if self.os == 'win32':
@@ -77,22 +77,22 @@ class base(object):
             # DSDP
             if 'dsdp' in self.Path:
                 if isfile(self.Path['dsdp']):
-                    existsing.append('DSDP')
+                    existing.append('DSDP')
             # SDPA
             if 'sdpa' in self.Path:
                 if isfile(self.Path['sdpa']):
-                    existsing.append('SDPA')
+                    existing.append('SDPA')
             if 'csdp' in self.Path:
                 if isfile(self.Path['csdp']):
-                    existsing.append('CSDP')
+                    existing.append('CSDP')
         else:
             # DSDP
             if self.which('dsdp5') is not None:
-                existsing.append('DSDP')
+                existing.append('DSDP')
             # SDPA
             if self.which('sdpa') is not None:
-                existsing.append('SDPA')
+                existing.append('SDPA')
             # CSDP
             if self.which('csdp') is not None:
-                existsing.append('CSDP')
-        return existsing
+                existing.append('CSDP')
+        return existing
