@@ -12,7 +12,7 @@ The main classes included in this module are:
 from .base import base
 from .sdp import sdp
 
-from numpy import array, float64, ndarray, sqrt, zeros, abs, linalg, trim_zeros, where, int, random, dot
+from numpy import array, float64, ndarray, sqrt, zeros, abs, linalg, trim_zeros, where, random, dot
 from numpy.linalg import cholesky
 from sympy import Function, Symbol, QQ, groebner, Poly, zeros, reduced, sympify, Matrix, expand, latex, lambdify, Abs
 from sympy.core.relational import Equality, GreaterThan, LessThan, StrictGreaterThan, StrictLessThan
