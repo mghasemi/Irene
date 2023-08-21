@@ -1,12 +1,13 @@
-from sympy import Symbol, Function, total_degree, Poly
+from sympy import Symbol, Function, total_degree
 from sympy.combinatorics.named_groups import SymmetricGroup
-from sympy.combinatorics.generators import symmetric
+
+
 class InvariantPolynomial:
     """
     A class for computations on polynomials invariant under a finite group of permutations.
     """
     MainPolynomial = 0
-    Ring = []
+    # Ring = []
     NumVars = 1
     vars = []
     Grp = []
@@ -27,7 +28,7 @@ class InvariantPolynomial:
             self.Grp = Prg[1]
         else:
             self.Grp = SymmetricGroup(self.NumVars)
-        self.Omega = list(self.MainPolynomial.as_dict().keys()) #.exponents()
+        self.Omega = list(self.MainPolynomial.as_dict().keys())  # .exponents()
         self.MainPolynomial = self.Reynolds(Prg[0], self.Grp)
 
     def SigmaAlpha(self, sigma, alpha):
@@ -75,7 +76,7 @@ class InvariantPolynomial:
         """
         TmpOmega = [alpha for alpha in self.Omega]
         QO = []
-        while TmpOmega != []:
+        while TmpOmega:
             alpha = TmpOmega[0]
             tmpClass = []
             for p in self.Grp.elements:
