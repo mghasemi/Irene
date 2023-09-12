@@ -344,7 +344,6 @@ class sdp(base):
         dual = None
         total_time = None
         Status = 'Unknown'
-        print(txt)
         progress = txt.split('\n')
         for line in progress:
             if line.find("Success") > -1:
@@ -484,7 +483,7 @@ class sdp(base):
             self.BlockStruct = [len(B) for B in self.C]
         self.write_sdpa_dat_sparse(prg_file)
         try:
-            out = check_output([self.Path['csdp'], prg_file, out_file])
+            out = check_output([self.Path['csdp'], prg_file, out_file], text=True)
         except Exception as e:
             pass
         self.read_csdp_out(out_file, out)

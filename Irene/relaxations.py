@@ -15,7 +15,7 @@ from .sdp import sdp
 from numpy import array, float64, ndarray, sqrt, zeros, abs, linalg, trim_zeros, where, random, dot
 from numpy import zeros as npzeros
 from numpy.random import uniform
-from numpy.linalg import cholesky
+from numpy.linalg import cholesky, LinAlgError
 from sympy import Function, Symbol, QQ, groebner, Poly, zeros, reduced, sympify, Matrix, expand, latex, lambdify, Abs
 from sympy.core.relational import Equality, GreaterThan, LessThan, StrictGreaterThan, StrictLessThan
 from scipy import optimize as opt
@@ -1151,8 +1151,11 @@ class SDRelaxSol(object):
         Extract solutions based on Lasserre--Henrion's method.
         """
         M = self.MomentMatrix
-
-        Us, Sigma, Vs = linalg.svd(M)
+        try:
+            Us, Sigma, Vs = linalg.svd(M)
+        except LinAlgError:
+            print("Failed to find any minimizers.")
+            return
 
         Kmax = self.NumericalRank()
         if card > 0:
