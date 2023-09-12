@@ -344,6 +344,7 @@ class sdp(base):
         dual = None
         total_time = None
         Status = 'Unknown'
+        print(txt)
         progress = txt.split('\n')
         for line in progress:
             if line.find("Success") > -1:

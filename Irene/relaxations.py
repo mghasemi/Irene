@@ -13,6 +13,8 @@ from .base import base
 from .sdp import sdp
 
 from numpy import array, float64, ndarray, sqrt, zeros, abs, linalg, trim_zeros, where, random, dot
+from numpy import zeros as npzeros
+from numpy.random import uniform
 from numpy.linalg import cholesky
 from sympy import Function, Symbol, QQ, groebner, Poly, zeros, reduced, sympify, Matrix, expand, latex, lambdify, Abs
 from sympy.core.relational import Equality, GreaterThan, LessThan, StrictGreaterThan, StrictLessThan
@@ -1003,7 +1005,7 @@ class SDRelaxSol(object):
         m, n = A.shape
 
         Q = []
-        R = zeros((min(m, n), n))  # Rows
+        R = npzeros((min(m, n), n))  # Rows
 
         for i, ai in enumerate(A.T):
             # Remove any contribution from previous rows
@@ -1070,7 +1072,7 @@ class SDRelaxSol(object):
         computed numerically according to the size of its eigenvalues.
         Then the points are extracted as solutions of a system of 
         polynomial equations using a `scipy` solver.
-        The followin solvers are currently acceptable by ``scipy``:
+        The following solvers are currently acceptable by ``scipy``:
 
             - ``hybr``, 
             - ``lm`` (default),
@@ -1100,7 +1102,7 @@ class SDRelaxSol(object):
         EQS = [req]
         hold = []
         for i in range(len(algeqs)):
-            trm = algeqs.keys()[i]
+            trm = list(algeqs.keys())[i]
             if trm != 1:
                 strm = self.Term2Mmnt(trm, rnk, self.X) - algeqs[trm]
                 strm_syms = strm.free_symbols
@@ -1112,7 +1114,7 @@ class SDRelaxSol(object):
                     # hold.append(strm)
                     hold.append(strm.subs({ri: Abs(ri) for ri in self.weight}))
         idx = 0
-        while (len(EQS) < len(syms)):
+        while len(EQS) < len(syms):
             if len(hold) > idx:
                 EQS.append(hold[idx])
                 idx += 1
@@ -1126,8 +1128,8 @@ class SDRelaxSol(object):
             z = tuple(float(x.item(i)) for i in range(len(syms)))
             return [fn(*z) for fn in f_]
 
-        init_point = ndarray(tuple(0.  # uniform(-self.err_tol, self.err_tol)
-                                   for _ in range(len(syms))))
+        init_point = array(tuple(uniform(-2 * self.err_tol, 2 * self.err_tol)
+                                 for _ in range(len(syms))))
         sol = opt.root(f, init_point, method=self.ScipySolver)
         if sol['success']:
             self.Support = []
@@ -1136,7 +1138,8 @@ class SDRelaxSol(object):
             while idx < len(syms) - rnk:
                 minimizer = []
                 for i in range(self.NumGenerators):
-                    minimizer.append(sol['x'][idx])
+                    # minimizer.append(sol['x'][idx])
+                    minimizer.append({self.RevSymDict[self.X[i]]: sol['x'][idx]})
                     idx += 1
                 self.Support.append(tuple(minimizer))
             while idx < len(syms):
@@ -1164,10 +1167,9 @@ class SDRelaxSol(object):
             r /= lead
 
         couldbes = where(Ut > 0.9)
-        ind_leadones = zeros(Ut.shape[0], dtype=int)
+        ind_leadones = npzeros(Ut.shape[0], dtype=int)
         for j in reversed(range(len(couldbes[0]))):
             ind_leadones[couldbes[0][j]] = couldbes[1][j]
-
         basis = [self.MonoBase[i] for i in ind_leadones]
         RowMonos = {}
         for i, mono in enumerate(self.MonoBase):
@@ -1177,13 +1179,13 @@ class SDRelaxSol(object):
         bl = len(basis)
         # create multiplication matrix for each variable
         for x in self.X:
-            Nx = zeros((bl, bl))
+            Nx = npzeros((bl, bl))
             for i, b in enumerate(basis):
                 if x * b in RowMonos:
                     Nx[:, i] = Ut[:, RowMonos[x * b]]
             Ns[x] = Nx
 
-        N = zeros((bl, bl))
+        N = npzeros((bl, bl))
         for x in Ns:
             N += Ns[x] * random.randn()
         T, Q = spla.schur(N)
