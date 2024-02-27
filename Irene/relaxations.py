@@ -18,6 +18,7 @@ from numpy.random import uniform
 from numpy.linalg import cholesky, LinAlgError
 from sympy import Function, Symbol, QQ, groebner, Poly, zeros, reduced, sympify, Matrix, expand, latex, lambdify, Abs
 from sympy.core.relational import Equality, GreaterThan, LessThan, StrictGreaterThan, StrictLessThan
+from sympy.polys.matrices import DomainMatrix
 from scipy import optimize as opt
 from scipy.linalg import eigvals
 from scipy import linalg as spla
@@ -56,7 +57,7 @@ def Calpha__(expn, Mmnt, ii, q):
     C = zeros(r, r)
     for i in range(r):
         for j in range(i, r):
-            entity = Mmnt[i, j]
+            entity = Mmnt[i, j].as_dict()
             if expn in entity:
                 C[i, j] = entity[expn]
                 C[j, i] = C[i, j]
@@ -388,6 +389,7 @@ class SDPRelaxations(base):
         Computes the reduced symbolic moment generating matrix localized
         at `p`.
         """
+        from sympy.polys.polymatrix import PolyMatrix
         try:
             tot_deg = Poly(p, *self.AuxSyms).total_degree()
         except Exception as e:
@@ -396,13 +398,18 @@ class SDPRelaxations(base):
         mmntord = self.MmntOrd - half_deg
         m = Matrix(self.ReducedMonomialBase(mmntord))
         LMmnt = expand(p * m * m.T)
-        LrMmnt = zeros(*LMmnt.shape)
+        # LrMmnt = zeros(*LMmnt.shape)
+        tmp = [[0.*self.AuxSyms[0] for _ in range(LMmnt.shape[1])] for __ in range(LMmnt.shape[0])]
+        LrMmnt = tmp # PolyMatrix(tmp)
         for i in range(LMmnt.shape[0]):
             for j in range(i, LMmnt.shape[1]):
-                LrMmnt[i, j] = Poly(self.ReduceExp(
-                    LMmnt[i, j]), *self.AuxSyms).as_dict()
-                LrMmnt[j, i] = LrMmnt[i, j]
-        return LrMmnt
+                #LrMmnt[i, j] = Poly(self.ReduceExp(
+                    #LMmnt[i, j]), *self.AuxSyms).as_dict()
+                #LrMmnt[j, i] = LrMmnt[i, j]
+                LrMmnt[i][j] = Poly(self.ReduceExp(
+                    LMmnt[i, j]), *self.AuxSyms)
+                LrMmnt[j][i] = LrMmnt[i][j]
+        return PolyMatrix(LrMmnt)
 
     def MomentMat(self):
         r"""
