@@ -147,6 +147,15 @@ class InvariantPolynomial:
         return HG
 
     def ConjugateClosure(self, H):
+        """
+        Computes the conjugate closure of a subgroup.
+
+        Args:
+            H (Subgroup): The subgroup to compute the conjugate closure of.
+
+        Returns:
+            Subgroup: The conjugate closure of the subgroup.
+        """
         G = self.Grp
         NG = G.normal_subgroups()
         Cover = []
@@ -159,7 +168,16 @@ class InvariantPolynomial:
         return K
 
     def RedPart(self, f, P):
+        """
+        Computes the reduced part of a polynomial.
 
+        Args:
+            f (Polynomial): The polynomial to compute the reduced part of.
+            P (list[list[int]]): The partition of the variables.
+
+        Returns:
+            Polynomial: The reduced part of the polynomial.
+        """
         g = 0
         coef = f.coefficients()
         mono = f.monomials()

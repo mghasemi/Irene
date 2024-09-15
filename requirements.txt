@@ -1,5 +1,8 @@
-numpy
-sympy
-scipy
-pyswarm
+numpy~=1.26.0b1
+sympy~=1.12
+scipy~=1.11.2
+pyswarm~=0.6
 cvxopt
+typeguard
+setuptools~=68.1.2
+gpkit~=1.1.1
