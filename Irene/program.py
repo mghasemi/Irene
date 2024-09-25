@@ -1,4 +1,9 @@
+from collections import OrderedDict
 from math import ceil
+
+import numpy as np
+from scipy import optimize
+from scipy.spatial import ConvexHull, Delaunay
 
 from .grouprings import _degree, SemigroupAlgebraElement, SemigroupAlgebra, CommutativeSemigroup
 
@@ -50,6 +55,8 @@ class OptimizationProblem(object):
         self.constraint_terms_with_even_exponent = list()
         self.constraint_terms_with_odd_exponent = list()
         self.total_degree = 2
+        self.newton_polytope = None
+        self.vertices = None
 
     def set_objective(self, obj: SemigroupAlgebraElement):
         """
@@ -121,7 +128,7 @@ class OptimizationProblem(object):
                     self.constraint_terms_with_odd_exponent.append(trm)
 
     @staticmethod
-    def square_exponent(xpnt):
+    def square_exponent(xpnt: SemigroupAlgebraElement):
         """
         Checks if the exponent is a square.
 
@@ -137,7 +144,7 @@ class OptimizationProblem(object):
         return True
 
     @staticmethod
-    def has_symbol(symb, mono):
+    def has_symbol(symb: str, mono: SemigroupAlgebraElement):
         """
         Checks if the monomial contains the given symbol.
 
@@ -156,7 +163,7 @@ class OptimizationProblem(object):
         return False, -1
 
     @staticmethod
-    def omega(xprsn, deg):  # Add the term for 0
+    def omega(xprsn: SemigroupAlgebraElement, deg: int):  # Add the term for 0
         """
         Computes the omega of the expression.
 
@@ -180,7 +187,7 @@ class OptimizationProblem(object):
                 terms.append(trm)
         return terms
 
-    def delta(self, xprsn, deg):
+    def delta(self, xprsn: SemigroupAlgebraElement, deg: int):
         """
         Computes the delta of the expression.
 
@@ -200,3 +207,89 @@ class OptimizationProblem(object):
                 else:
                     terms['<d'].add(trm[1])
         return terms
+
+    def delta_vertex(self, xprsn: SemigroupAlgebraElement, vertices: list):
+        pass
+
+    def mono2ord_tuple(self, mono: SemigroupAlgebraElement):
+        n = len(self.semigroup.generators)
+        if isinstance(mono, (int, float)):
+            return [0] * n
+        od_mono = OrderedDict(mono.content[0][1].array_form)
+        xpnt = []
+        for _ in self.sga.semigroup.generators:
+            xpnt.append(od_mono.get(_.ext_rep[0], 0))
+        return tuple(xpnt)
+
+    def tuple2mono(self, xpnt):
+        idx = 0
+        elm = self.semigroup.identity()
+        for s in self.semigroup.generators:
+            elm = elm * (s**xpnt[idx])
+            idx += 1
+        return elm
+
+    def newton(self):
+        exponents = set([])
+        for _ in self.objective.content:
+            exponents.add(self.mono2ord_tuple(SemigroupAlgebraElement([_], self.semigroup)))
+        for g in self.constraints:
+            for _ in g.content:
+                exponents.add(self.mono2ord_tuple(SemigroupAlgebraElement([_], self.semigroup)))
+        points = np.array([_ for _ in exponents])
+        self.newton_polytope = ConvexHull(points)
+        self.vertices = [list(_) for _ in points[self.newton_polytope.vertices]]
+        self.vertices.sort(reverse=False)
+
+    def in_newton(self, point):
+        tri = Delaunay(self.vertices)
+        return tri.find_simplex(point) >= 0
+
+    def linear_combination(self, point):
+        if self.vertices[0] == [0] * len(self.semigroup.generators):
+            A = np.array(self.vertices[1:]).T
+        else:
+            A = np.array(self.vertices).T
+        coeffs = np.linalg.solve(A, point)
+        return coeffs
+
+    def convex_combination(self, point):
+        """
+        Finds the representation of a point as a convex combination of the given vertices.
+
+        Args:
+            point: A numpy array of shape (dimension,) representing the point.
+            vertices: A numpy array of shape (num_vertices, dimension) containing the vertices.
+
+        Returns:
+            A numpy array of shape (num_vertices,) containing the coefficients of the convex combination,
+            or None if no such combination exists.
+        """
+        np_vertices = np.array(self.vertices)
+        A_eq = np_vertices.T  # Transpose vertices for the equality constraint
+        b_eq = point
+
+        # Inequality constraints: coefficients >= 0
+        A_ub = -np.identity(np_vertices.shape[0])
+        b_ub = np.zeros(np_vertices.shape[0])
+
+        # Equality constraint: sum of coefficients = 1
+        additional_eq_constraint = np.ones((1, np_vertices.shape[0]))
+        A_eq = np.vstack([A_eq, additional_eq_constraint])
+        b_eq = np.append(b_eq, 1)
+
+        # Solve the linear program
+        result = optimize.linprog(
+            c=np.zeros(np_vertices.shape[0]),  # Dummy objective function, we only care about feasibility
+            A_eq=A_eq,
+            b_eq=b_eq,
+            A_ub=A_ub,
+            b_ub=b_ub,
+            bounds=(0, None),  # Coefficients must be non-negative
+            method='highs'
+        )
+
+        if result.success:
+            return result.x
+        else:
+            return None

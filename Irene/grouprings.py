@@ -412,6 +412,10 @@ class AtomicSGElement(object):
     def __sub__(self, other):
         return self.__add__(-other)
 
+    def __rsub__(self, other):
+        content = [(-_[0], _[1]) for _ in self.content]
+        return SemigroupAlgebraElement(content, self.semigroup).__add__(other)
+
     def __mul__(self, other):
         content = []
         if not isinstance(other, (AtomicSGElement, SemigroupAlgebraElement, int, float)):
@@ -737,6 +741,10 @@ class SemigroupAlgebraElement(object):
 
     def __sub__(self, other):
         return self.__add__(-other)
+
+    def __rsub__(self, other):
+        content = [(-_[0], _[1]) for _ in self.content]
+        return SemigroupAlgebraElement(content, self.semigroup).__add__(other)
 
     def __mul__(self, other):
         content = []

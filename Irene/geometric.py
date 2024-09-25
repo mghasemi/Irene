@@ -63,7 +63,47 @@ class GPRelaxations(object):
             idn = self.prog.semigroup.G.identity
         return max(0., xprsn[idn])
 
-    def form_gp(self):
+    @staticmethod
+    def compare_diags(vec):
+        """
+        Compare two vectors by the number of non-zero elements.
+
+        Args:
+            vec: The first vector.
+
+        Returns:
+            The number of non-zero elements in the vector.
+        """
+        nz = sum(1 for _ in vec if _ != 0)
+        return nz, vec
+
+    def auto_transform_matrix(self):
+        """
+        Compute the automatic transformation matrix H.
+
+        Returns:
+            The transformation matrix H.
+        """
+        # Form the sorted diagonal part of the program
+        diag = [[] for _ in range(self.program_size)]
+        n = len(self.prog.sga.gens)
+        for symb in self.prog.sga.gens:
+            mono = self.prog.sga[symb] ** self.Ord
+            for j in range(self.program_size):
+                diag[j].append(self.g[j][mono])
+        cnst_diag = diag[1:]
+        cnst_diag.sort(key=self.compare_diags, reverse=True)
+        sorted_diag = [diag[0]] + cnst_diag
+        a = np.identity(self.program_size)
+        # Check the (*) condition in 4.2
+        for k in range(1, self.program_size):
+            for j in range(k + 1, self.program_size):
+                a[j, k] = min(
+                    [-(sorted_diag[k][i] + sum(a[jp, k] * sorted_diag[jp][i] for jp in range(k, j))) /
+                     sorted_diag[j][i] for i in range(n)] + [0.])
+        return a
+
+    def solve(self):
         """
         Form the geometric program relaxation.
 
@@ -71,7 +111,7 @@ class GPRelaxations(object):
             The optimal value of the relaxation.
         """
         if self.auto_transform:
-            self.auto_transform_matrix()
+            self.H = self.auto_transform_matrix()
         self.transform_program()
         # initialize gp variables
         m = self.program_size
@@ -188,43 +228,3 @@ class GPRelaxations(object):
         print(self.solution['cost'])
         self.f_gp_g = -self.h[0].constant() - self.solution['cost']
         return self.f_gp_g
-
-    @staticmethod
-    def compare_diags(vec):
-        """
-        Compare two vectors by the number of non-zero elements.
-
-        Args:
-            vec: The first vector.
-
-        Returns:
-            The number of non-zero elements in the vector.
-        """
-        nz = sum(1 for _ in vec if _ != 0)
-        return nz, vec
-
-    def auto_transform_matrix(self):
-        """
-        Compute the automatic transformation matrix H.
-
-        Returns:
-            The transformation matrix H.
-        """
-        # Form the sorted diagonal part of the program
-        diag = [[] for _ in range(self.program_size)]
-        n = len(self.prog.sga.gens)
-        for symb in self.prog.sga.gens:
-            mono = self.prog.sga[symb] ** self.Ord
-            for j in range(self.program_size):
-                diag[j].append(self.g[j][mono])
-        cnst_diag = diag[1:]
-        cnst_diag.sort(key=self.compare_diags, reverse=True)
-        sorted_diag = [diag[0]] + cnst_diag
-        a = np.identity(self.program_size)
-        # Check the (*) condition in 4.2
-        for k in range(1, self.program_size):
-            for j in range(k + 1, self.program_size):
-                a[j, k] = min(
-                    [-(sorted_diag[k][i] + sum(a[jp, k] * sorted_diag[jp][i] for jp in range(k, j))) /
-                     sorted_diag[j][i] for i in range(n)] + [0.])
-        return a
