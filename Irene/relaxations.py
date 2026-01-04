@@ -24,6 +24,7 @@ from scipy.linalg import eigvals
 from scipy import linalg as spla
 from math import ceil
 from functools import reduce
+from Irene.program import OptimizationProblem
 from itertools import product
 from operator import mul
 from time import time
@@ -131,7 +132,7 @@ class SDPRelaxations(base):
         self.Stage = None
         self.PrevStage = None
         self.Name = name
-        self.SDP = None
+        self.SDP = sdp()
         self.MatSize = []
         self.InitTime = 0
         self.Solution = None
@@ -169,6 +170,37 @@ class SDPRelaxations(base):
         if self.FreeRelations:
             self.Groebner = groebner(
                 self.FreeRelations, domain=self.Field, order=self.MonomialOrder)
+
+    @classmethod
+    def from_problem(cls, optim_prob: OptimizationProblem, name="SDPRlx"):
+        """
+        Creates an SDPRelaxations instance from an OptimizationProblem.
+
+        This method acts as an alternative constructor to bridge compatibility
+        with problems defined using SemigroupAlgebra.
+
+        Args:
+            optim_prob (OptimizationProblem): The optimization problem defined
+                                              with SemigroupAlgebra.
+            name (str): A name for the relaxation instance.
+
+        Returns:
+            An instance of SDPRelaxations.
+        """
+        sga = optim_prob.sga
+        gen_names = sga.gens
+        sympy_gens = [Symbol(g) for g in gen_names]
+        sym_map = {name: sym for name, sym in zip(gen_names, sympy_gens)}
+
+        # Convert relations if they exist
+        relations = [optim_prob.to_sympy(rel, sym_map) for rel in optim_prob.relations] if optim_prob.relations else []
+
+        rlx = cls(sympy_gens, relations, name)
+
+        rlx.SetObjective(optim_prob.to_sympy(optim_prob.objective, sym_map))
+        for const in optim_prob.constraints:
+            rlx.AddConstraint(optim_prob.to_sympy(const, sym_map) >= 0)
+        return rlx
 
     def SetNumCores(self, num):
         r"""

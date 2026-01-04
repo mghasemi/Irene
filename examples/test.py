@@ -3,7 +3,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # SOS decomposition
 from sympy import *
-from Irene import SDPRelaxations
+from Irene import SDPRelaxations, get_gram_matrix, is_psd_numeric, is_psd_symbolic, find_psd_gram_matrix, numpy_to_latex
 from math import lcm
 
 if __name__ == '__main__':
@@ -67,42 +67,18 @@ if __name__ == '__main__':
     z = Symbol('z')
     w = Symbol('w')
 
-    Rlx = SDPRelaxations([x, y, z, w])
-    f = PsdMean(6, 3, [x, y, z, w], [2, 2, 1, 1])
-    f = PsdMean(4, 1, [x, y, z, w], [1, 1, 1, 1])
-    print(f)
-    Rlx.SetObjective(f)
-    #Rlx.SetObjective(x ** 3 + x ** 2 * y ** 2 + z ** 2 * x * y - x * z)
-    #Rlx.AddConstraint(9 - (x ** 2 + y ** 2 + z ** 2) >= 0)
-    # initiate the SDP
-    Rlx.MomentsOrd(3)
+    Rlx = SDPRelaxations([x, y, z])
     Rlx.Parallel = False
+    f = PsdMean(6, 1, [x, y, z], [2, 2, 2])
+    print(f)
+    Q1, Q2 = get_gram_matrix(f)
+    print(Q1)
+    print(is_psd_numeric(Q1))
+    print(is_psd_symbolic(Q2))
+    Q3 = find_psd_gram_matrix(f)
+    print(numpy_to_latex(Q3))
+    Rlx.SetObjective(f)
     Rlx.InitSDP()
-    # solve the SDP
     Rlx.Minimize()
     print(Rlx.Solution)
-    # extract decomposition
-    V = Rlx.Decompose()
-    #for v in V[0]:
-    #    print(remove_small_coefficient_terms(v))
-    #    print("----"*30)
-    # test the decomposition
-    """sos = 0
-
-    # Test the decomposition
-    sos = 0
-    for v in V:
-        # for g0 = 1
-        if v == 0:
-            sos = expand(Rlx.ReduceExp(sum([p ** 2 for p in V[v]])))
-        # for g1, the constraint
-        else:
-            sos = expand(Rlx.ReduceExp(
-                sos + Rlx.Constraints[v - 1] * sum([p ** 2 for p in V[v]])))
-            if v - 1 < len(Rlx.Constraints):
-                sos = expand(Rlx.ReduceExp(
-                    sos + Rlx.Constraints[v - 1] * sum([p ** 2 for p in V[v]])))
-    sos = sos.subs(Rlx.RevSymDict)
-    pln = Poly(sos).as_dict()
-    pln = {ex: round(pln[ex], 5) for ex in pln}
-    print(Poly(pln, (x, y, z)).as_expr())"""
+ 

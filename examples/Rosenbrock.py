@@ -6,7 +6,7 @@ subject to
 """
 import scipy.optimize
 from pyswarm import pso
-from sage.all import *
+#from sage.all import *
 from sympy import *
 from Irene import SDPRelaxations
 

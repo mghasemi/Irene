@@ -36,6 +36,7 @@ class GPRelaxations(object):
         self.f_gp_g = None
         self.H = kwargs.get('H', np.identity(self.program_size))
         self.auto_transform = kwargs.get('auto_transform', True)
+        self.verbosity = kwargs.get('verbosity', 1)
 
     def transform_program(self):
         """
@@ -144,9 +145,10 @@ class GPRelaxations(object):
                 z_part0 = z_part0 * (_[1] / z[alpha][temp_idx]) ** (_[1] / residual_pow)
                 temp_idx += 1
             obj = obj + residual_pow * w_part0 * z_part0
-        print('obj=', obj)
+        if self.verbosity > 0:
+            print('obj=', obj)
+            print('-' * 30)
         constraints.append(mu[0] == 1.)
-        print('-' * 30)
         # First set of constraints in (3) -- double check
         for symb in self.prog.sga.gens:
             rhs1 = 0.
@@ -164,11 +166,14 @@ class GPRelaxations(object):
                     rhs1 = rhs1 + mu_j_cf * mu[j]
             if not bool(lhs1):
                 lhs1 = lhs1 + self.error_bound
-            print(lhs1, rhs1)
+            if self.verbosity > 0:
+                print(lhs1, rhs1)
             if type(lhs1 <= rhs1) is not bool:
                 constraints.append(lhs1 <= rhs1)
-                print(lhs1 <= rhs1)
-        print('-' * 30)
+                if self.verbosity > 0:
+                    print(lhs1 <= rhs1)
+        if self.verbosity > 0:
+            print('-' * 30)
         # Second set on constraints in (3)
         for alpha in delta['=d']:
             lhs2 = 1.
@@ -179,8 +184,10 @@ class GPRelaxations(object):
             rhs2 = (w[alpha] / self.Ord) ** self.Ord
             if type(lhs2 >= rhs2) is not bool:
                 constraints.append(lhs2 >= rhs2)
-                print(lhs2 >= rhs2)
-        print('-' * 30)
+                if self.verbosity > 0:
+                    print(lhs2 >= rhs2)
+        if self.verbosity > 0:
+            print('-' * 30)
         # Third set of constraints in (3)
         for alpha in all_delta:
             lhs3 = w[alpha]
@@ -198,11 +205,14 @@ class GPRelaxations(object):
                 rhs32 = H_alpha_minus
             if bool(rhs31):
                 constraints.append(lhs3 >= rhs31)
-                print(lhs3 >= rhs31)
+                if self.verbosity > 0:
+                    print(lhs3 >= rhs31)
             if bool(rhs32):
                 constraints.append(lhs3 >= rhs32)
-                print(lhs3 >= rhs32)
-        print('-' * 30)
+                if self.verbosity > 0:
+                    print(lhs3 >= rhs32)
+        if self.verbosity > 0:
+            print('-' * 30)
         # Fourth set of constraints in (3)
         for j in range(self.program_size):
             lhs4 = 0.
@@ -214,17 +224,22 @@ class GPRelaxations(object):
                 else:
                     rhs4 = rhs4 + (-self.H[j][k]) * mu[k]
             if bool(rhs4):
-                print(lhs4 >= rhs4)
+                if self.verbosity > 0:
+                    print(lhs4 >= rhs4)
                 constraints.append(lhs4 >= rhs4)
             else:
-                print(lhs4)  # >= self.error_bound)
+                if self.verbosity > 0:
+                    print(lhs4)  # >= self.error_bound)
                 constraints.append(lhs4 >= self.error_bound)
+        if self.verbosity > 0:
+            print('-' * 30)
+        # Form and solve the GP model
         mdl = Model(obj, Bounded(ConstraintSet(constraints), upper=1 / self.error_bound))
         # mdl = Model(obj, constraints)
-        self.solution = mdl.solve()
-        print(self.h[0])
-        print(self.g[0])
-        print(self.prog.objective)
-        print(self.solution['cost'])
+        self.solution = mdl.solve()#    verbosity=0)
+        #print(self.h[0])
+        #print(self.g[0])
+        #print(self.prog.objective)
+        #print(self.solution['cost'])
         self.f_gp_g = -self.h[0].constant() - self.solution['cost']
         return self.f_gp_g
