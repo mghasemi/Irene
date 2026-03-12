@@ -69,7 +69,7 @@ master_doc = 'index'
 # General information about the project.
 project = u'Irene'
 copyright = u'2016-2026, Mehdi Ghasemi'
-author = u'Bahareh Esfahbod \\& Mehdi Ghasemi'
+author = u'Mehdi Ghasemi'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -282,7 +282,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'Irene.tex', u'Irene Documentation',
-    u'Bahareh Esfahbod \\& Mehdi Ghasemi', 'manual'),
+    u'Mehdi Ghasemi', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
