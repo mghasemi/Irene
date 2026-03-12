@@ -4,7 +4,7 @@ from typing import Any, Optional, Sequence
 
 import numpy as np
 from scipy import optimize
-from scipy.spatial import ConvexHull, Delaunay
+from scipy.spatial import ConvexHull, Delaunay, QhullError
 from sympy import sympify, Symbol
  
 from .grouprings import _degree, SemigroupAlgebraElement, SemigroupAlgebra, CommutativeSemigroup, AtomicSGElement
@@ -430,6 +430,7 @@ class OptimizationProblem(object):
             - Collects all exponent tuples from objective and constraints
             - Computes and stores the convex hull in self.newton_polytope
             - Extracts and stores sorted vertex list in self.vertices
+            - Raises ValueError if polytope is degenerate (insufficient points or dimension mismatch)
         """
         exponents = set([])
         for _ in self.objective.content:
@@ -438,7 +439,23 @@ class OptimizationProblem(object):
             for _ in g.content:
                 exponents.add(self.mono2ord_tuple(SemigroupAlgebraElement([_], self.semigroup)))
         points = np.array([_ for _ in exponents])
-        self.newton_polytope = ConvexHull(points)
+        
+        # Validate sufficient points for full-dimensional polytope
+        dimension = self.semigroup.num_gens
+        num_points = points.shape[0]
+        if num_points < dimension + 1:
+            raise ValueError(
+                f"newton polytope requires at least {dimension + 1} distinct exponents in {dimension}D space, "
+                f"but found {num_points}. The polytope is degenerate and cannot support geometric queries."
+            )
+        
+        try:
+            self.newton_polytope = ConvexHull(points)
+        except QhullError as e:
+            raise ValueError(
+                f"newton polytope construction failed: the exponent set is degenerate (e.g., all points are collinear or coplanar). "
+                f"Details: {str(e)[:100]}"
+            )
         self.vertices = [list(_) for _ in points[self.newton_polytope.vertices]]
         self.vertices.sort(reverse=False)
 
@@ -461,8 +478,27 @@ class OptimizationProblem(object):
         Returns:
             bool: True if the point is inside or on the boundary of the Newton polytope,
                 False otherwise.
+            
+        Raises:
+            ValueError: If vertices are empty or if Delaunay triangulation fails due to degenerate geometry.
         """
-        tri = Delaunay(self.vertices)
+        if self.vertices is None:
+            raise ValueError("in_newton requires non-empty vertices; call newton() first.")
+
+        vertices_arr = np.asarray(self.vertices, dtype=float)
+        if vertices_arr.size == 0:
+            raise ValueError("in_newton requires non-empty vertices; call newton() first.")
+        if vertices_arr.ndim != 2:
+            raise ValueError("in_newton expects vertices as a two-dimensional array.")
+        
+        try:
+            tri = Delaunay(vertices_arr)
+        except QhullError as e:
+            raise ValueError(
+                f"in_newton Delaunay triangulation failed on polytope vertices; "
+                f"the geometry may be degenerate (collinear/coplanar). Details: {str(e)[:100]}"
+            )
+        
         return tri.find_simplex(point) >= 0
 
     def linear_combination(self, point: Sequence[float]) -> np.ndarray:
@@ -488,19 +524,25 @@ class OptimizationProblem(object):
         Note:
             Excludes the origin vertex [0, 0, ...] if present to avoid singularity issues.
         """
-        if not self.vertices:
+        if self.vertices is None:
             raise ValueError("linear_combination requires non-empty vertices; call newton() first.")
 
-        origin = [0] * len(self.semigroup.generators)
-        if self.vertices[0] == origin:
-            active_vertices = self.vertices[1:]
-        else:
-            active_vertices = self.vertices
+        vertices_arr = np.asarray(self.vertices, dtype=float)
+        if vertices_arr.size == 0:
+            raise ValueError("linear_combination requires non-empty vertices; call newton() first.")
+        if vertices_arr.ndim != 2:
+            raise ValueError("linear_combination expects vertices as a two-dimensional array.")
 
-        if not active_vertices:
+        origin = np.zeros(vertices_arr.shape[1], dtype=float)
+        if np.array_equal(vertices_arr[0], origin):
+            active_vertices = vertices_arr[1:]
+        else:
+            active_vertices = vertices_arr
+
+        if active_vertices.size == 0:
             raise ValueError("linear_combination requires at least one non-origin vertex.")
 
-        A = np.array(active_vertices, dtype=float).T
+        A = active_vertices.T
         point_arr = np.asarray(point, dtype=float)
 
         if point_arr.ndim != 1:
@@ -542,9 +584,25 @@ class OptimizationProblem(object):
                 as a convex combination of vertices, or None if no such combination exists
                 (i.e., point is outside the Newton polytope).
         """
-        np_vertices = np.array(self.vertices)
+        if self.vertices is None:
+            raise ValueError("convex_combination requires non-empty vertices; call newton() first.")
+
+        np_vertices = np.asarray(self.vertices, dtype=float)
+        if np_vertices.size == 0:
+            raise ValueError("convex_combination requires non-empty vertices; call newton() first.")
+        point_arr = np.asarray(point, dtype=float)
+
+        if np_vertices.ndim != 2:
+            raise ValueError("convex_combination expects vertices as a two-dimensional array.")
+        if point_arr.ndim != 1:
+            raise ValueError("convex_combination expects a one-dimensional point.")
+        if np_vertices.shape[1] != point_arr.shape[0]:
+            raise ValueError(
+                f"convex_combination point dimension mismatch: expected {np_vertices.shape[1]}, got {point_arr.shape[0]}."
+            )
+
         A_eq = np_vertices.T  # Transpose vertices for the equality constraint
-        b_eq = point
+        b_eq = point_arr
 
         # Inequality constraints: coefficients >= 0
         A_ub = -np.identity(np_vertices.shape[0])

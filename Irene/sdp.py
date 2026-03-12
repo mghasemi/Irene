@@ -168,38 +168,45 @@ class sdp(base):
     def write_sdpa_dat_sparse(self, filename):
         r"""
         Writes the semidefinite program in the file `filename` with sparse SDPA format.
+        Uses sparse iteration over non-zero entries to avoid dense nested loops.
         """
+        import numpy as np
         sparse_zero_tol = 1e-12
-        f = open(filename, 'w')
-        f.write("%d = mDIM\n" % len(self.b))
-        f.write("%d = nBLOCK\n" % len(self.C))
-        f.write(str(self.BlockStruct).replace('[', '').replace(
-            ']', '').replace(',', ' ') + " = bLOCKsTRUCT\n")
-        objective = ' '.join('{:.16g}'.format(value)
-                             for value in self._objective_values_as_floats())
-        f.write(objective + "\n")
-        mat_no = 0
-        blk_no = 1
-        for B in self.C:
-            for i in range(1, B.shape[0] + 1):
-                for j in range(i, B.shape[1] + 1):
-                    val = B[i - 1][j - 1]
-                    if abs(val) > sparse_zero_tol:
-                        f.write("%d %d %d %d %f\n" %
-                                (mat_no, blk_no, i, j, val))
-            blk_no += 1
-        for B in self.A:
-            mat_no += 1
+        with open(filename, 'w') as f:
+            f.write("%d = mDIM\n" % len(self.b))
+            f.write("%d = nBLOCK\n" % len(self.C))
+            f.write(str(self.BlockStruct).replace('[', '').replace(
+                ']', '').replace(',', ' ') + " = bLOCKsTRUCT\n")
+            objective = ' '.join('{:.16g}'.format(value)
+                                 for value in self._objective_values_as_floats())
+            f.write(objective + "\n")
+            mat_no = 0
             blk_no = 1
-            for Bl in B:
-                for i in range(1, Bl.shape[0] + 1):
-                    for j in range(i, Bl.shape[1] + 1):
-                        val = Bl[i - 1][j - 1]
-                        if abs(val) > sparse_zero_tol:
-                            f.write("%d %d %d %d %f\n" %
-                                    (mat_no, blk_no, i, j, val))
+            for B in self.C:
+                # Use argwhere to iterate only over non-zero entries
+                nonzero_idx = np.argwhere(np.abs(B) > sparse_zero_tol)
+                for idx in nonzero_idx:
+                    i, j = idx[0], idx[1]
+                    # Only output upper triangular part (i <= j)
+                    if i <= j:
+                        val = B[i, j]
+                        f.write("%d %d %d %d %f\n" %
+                                (mat_no, blk_no, i + 1, j + 1, val))
                 blk_no += 1
-        f.close()
+            for B in self.A:
+                mat_no += 1
+                blk_no = 1
+                for Bl in B:
+                    # Use argwhere to iterate only over non-zero entries
+                    nonzero_idx = np.argwhere(np.abs(Bl) > sparse_zero_tol)
+                    for idx in nonzero_idx:
+                        i, j = idx[0], idx[1]
+                        # Only output upper triangular part (i <= j)
+                        if i <= j:
+                            val = Bl[i, j]
+                            f.write("%d %d %d %d %f\n" %
+                                    (mat_no, blk_no, i + 1, j + 1, val))
+                    blk_no += 1
 
     @staticmethod
     def parse_solution_matrix(iterator):
@@ -448,25 +455,19 @@ class sdp(base):
         self.num_constraints = len(self.A)
         self.num_blocks = len(self.C)
 
-        Cns = []
-        for idx in range(self.num_constraints):
-            Cns.append([])
+        # Build Ccvxopt: objective matrix blocks
+        Ccvxopt = [-Mtx(M, tc='d') for M in self.C]
+        
+        # Build Acvxopt: constraint matrix blocks
         Acvxopt = []
-        Ccvxopt = []
-        for M in self.C:
-            Ccvxopt.append(-Mtx(M, tc='d'))
         for blk_no in range(self.num_blocks):
-            Ablock = []
-            for Cns in self.A:
-                Ablock.append(self.VEC(Cns[blk_no]))
+            Ablock = [self.VEC(constraint[blk_no]) for constraint in self.A]
             Acvxopt.append(-Mtx(matrix(Ablock).transpose(), tc='d'))
-        aTranspose = []
-        for elmnt in self.b:
-            aTranspose.append([self._coerce_float(elmnt)])
-        n1 = len(aTranspose[0])
-        m1 = len(aTranspose)
-        acvxopt = Mtx(array(aTranspose).reshape(
-            m1 * n1, order='F').astype(float64), size=(m1, n1), tc='d')
+        
+        # Build acvxopt: objective vector using direct numpy approach
+        b_coerced = [self._coerce_float(elmnt) for elmnt in self.b]
+        acvxopt = Mtx(array(b_coerced).reshape(-1, 1), tc='d')
+        
         # CvxOpt options
         for param in self.SolverOptions:
             solvers.options[param] = self.SolverOptions[param]

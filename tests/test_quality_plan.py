@@ -90,6 +90,138 @@ class TestProgramFixes(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'singular vertex matrix'):
             self.problem.linear_combination([1.0, 1.0])
 
+    def test_linear_combination_rejects_only_origin_vertices(self):
+        self.problem.vertices = [[0, 0]]
+
+        with self.assertRaisesRegex(ValueError, 'at least one non-origin vertex'):
+            self.problem.linear_combination([0.0, 0.0])
+
+    def test_linear_combination_rejects_non_one_dimensional_point(self):
+        self.problem.vertices = [[0, 0], [1, 0], [0, 1]]
+
+        with self.assertRaisesRegex(ValueError, 'one-dimensional point'):
+            self.problem.linear_combination([[0.2, 0.3]])
+
+    def test_linear_combination_rejects_dimension_mismatch(self):
+        self.problem.vertices = [[0, 0], [1, 0], [0, 1]]
+
+        with self.assertRaisesRegex(ValueError, 'point dimension mismatch'):
+            self.problem.linear_combination([0.2, 0.3, 0.5])
+
+    def test_linear_combination_rejects_non_square_vertex_matrix(self):
+        self.problem.vertices = [[1, 0], [0, 1], [1, 1]]
+
+        with self.assertRaisesRegex(ValueError, 'square vertex matrix'):
+            self.problem.linear_combination([0.2, 0.3])
+
+    def test_linear_combination_uses_non_origin_vertices(self):
+        self.problem.vertices = [[0, 0], [1, 0], [0, 1]]
+
+        coeffs = self.problem.linear_combination([0.2, 0.3])
+
+        self.assertTrue(np.allclose(coeffs, np.array([0.2, 0.3])))
+
+    def test_linear_combination_accepts_numpy_vertices_array(self):
+        self.problem.vertices = np.array([[0, 0], [1, 0], [0, 1]], dtype=float)
+
+        coeffs = self.problem.linear_combination([0.2, 0.3])
+
+        self.assertTrue(np.allclose(coeffs, np.array([0.2, 0.3])))
+
+    def test_linear_combination_rejects_empty_numpy_vertices_array(self):
+        self.problem.vertices = np.empty((0, 2), dtype=float)
+
+        with self.assertRaisesRegex(ValueError, 'non-empty vertices'):
+            self.problem.linear_combination([0.2, 0.3])
+
+    def test_convex_combination_returns_solver_solution(self):
+        self.problem.vertices = [[0, 0], [1, 0], [0, 1]]
+
+        class DummyResult:
+            def __init__(self):
+                self.success = True
+                self.x = np.array([0.5, 0.2, 0.3])
+
+        with patch('Irene.program.optimize.linprog', return_value=DummyResult()) as linprog:
+            coeffs = self.problem.convex_combination(np.array([0.2, 0.3]))
+
+        self.assertTrue(np.allclose(coeffs, np.array([0.5, 0.2, 0.3])))
+        self.assertAlmostEqual(linprog.call_args.kwargs['b_eq'][-1], 1.0)
+
+    def test_convex_combination_returns_none_when_solver_fails(self):
+        self.problem.vertices = [[0, 0], [1, 0], [0, 1]]
+
+        class DummyResult:
+            def __init__(self):
+                self.success = False
+                self.x = np.array([])
+
+        with patch('Irene.program.optimize.linprog', return_value=DummyResult()):
+            coeffs = self.problem.convex_combination([2.0, 2.0])
+
+        self.assertIsNone(coeffs)
+
+    def test_convex_combination_rejects_missing_vertices(self):
+        self.problem.vertices = []
+
+        with self.assertRaisesRegex(ValueError, 'non-empty vertices'):
+            self.problem.convex_combination([0.2, 0.3])
+
+    def test_convex_combination_rejects_non_one_dimensional_point(self):
+        self.problem.vertices = [[0, 0], [1, 0], [0, 1]]
+
+        with self.assertRaisesRegex(ValueError, 'one-dimensional point'):
+            self.problem.convex_combination([[0.2, 0.3]])
+
+    def test_convex_combination_rejects_dimension_mismatch(self):
+        self.problem.vertices = [[0, 0], [1, 0], [0, 1]]
+
+        with self.assertRaisesRegex(ValueError, 'point dimension mismatch'):
+            self.problem.convex_combination([0.2])
+
+    def test_convex_combination_accepts_numpy_vertices_array(self):
+        self.problem.vertices = np.array([[0, 0], [1, 0], [0, 1]], dtype=float)
+
+        class DummyResult:
+            def __init__(self):
+                self.success = True
+                self.x = np.array([0.5, 0.2, 0.3])
+
+        with patch('Irene.program.optimize.linprog', return_value=DummyResult()):
+            coeffs = self.problem.convex_combination([0.2, 0.3])
+
+        self.assertTrue(np.allclose(coeffs, np.array([0.5, 0.2, 0.3])))
+
+    def test_in_newton_rejects_empty_vertices(self):
+        self.problem.vertices = []
+
+        with self.assertRaisesRegex(ValueError, 'non-empty vertices'):
+            self.problem.in_newton([0.5, 0.5])
+
+    def test_in_newton_rejects_degenerate_vertices(self):
+        # Coplanar points in 3D cannot form a valid Delaunay triangulation
+        self.problem.vertices = [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0]]
+
+        with self.assertRaisesRegex(ValueError, 'Delaunay triangulation failed'):
+            self.problem.in_newton([0.5, 0.5, 0])
+
+    def test_in_newton_accepts_numpy_vertices_array(self):
+        self.problem.vertices = np.array([[0, 0], [1, 0], [0, 1]], dtype=float)
+
+        self.assertTrue(self.problem.in_newton([0.2, 0.2]))
+
+    def test_newton_polytope_insufficient_points_guard(self):
+        # Verify guard works when setting vertices with insufficient dimensional support
+        # 3D problem should reject only 2 points (need at least 4 for 3D polytope)
+        sg = CommutativeSemigroup(['x', 'y', 'z'])
+        self.problem.semigroup = sg
+        # Manually set vertices to just 2 points (bypassing newton() for this test)
+        self.problem.vertices = [[0, 0, 0], [1, 1, 1]]
+        
+        # in_newton should fail on degenerate geometry
+        with self.assertRaisesRegex(ValueError, 'Delaunay triangulation failed'):
+            self.problem.in_newton([0.5, 0.5, 0.5])
+
 
 class TestBaseFixes(unittest.TestCase):
     def test_latex_prefers_duck_typed_latex_method(self):
@@ -264,6 +396,38 @@ class TestRelaxationsFixes(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             relaxation.LocalizedMoment_(localizer)
+
+    def test_save_resume_state_roundtrip_preserves_checkpoint(self):
+        x = symbols('x')
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base_name = os.path.join(tmpdir, 'persist_roundtrip')
+            relaxation = SDPRelaxations([x], name=base_name)
+            relaxation.Stage = 'MomConst'
+            relaxation.InitIdx = 7
+
+            relaxation.SaveState()
+
+            self.assertTrue(os.path.exists(base_name + '.rlx'))
+            resumed = relaxation.Resume()
+            self.assertEqual(resumed.PrevStage, 'MomConst')
+            self.assertEqual(resumed.LastIdxVal, 7)
+            self.assertEqual(relaxation.State(), ('MomConst', 7))
+
+    def test_init_sdp_keyboard_interrupt_persists_latest_checkpoint(self):
+        x = symbols('x')
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base_name = os.path.join(tmpdir, 'persist_interrupt')
+            relaxation = SDPRelaxations([x], name=base_name)
+            relaxation.Stage = 'PSDMom'
+            relaxation.InitIdx = 3
+            relaxation.Parallel = True
+
+            with patch.object(SDPRelaxations, 'pInitSDP', side_effect=KeyboardInterrupt):
+                with self.assertRaises(KeyboardInterrupt):
+                    relaxation.InitSDP()
+
+            self.assertTrue(os.path.exists(base_name + '.rlx'))
+            self.assertEqual(relaxation.State(), ('PSDMom', 3))
 
 
 class TestSdpFixes(unittest.TestCase):
