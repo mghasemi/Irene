@@ -6,10 +6,14 @@ subject to:
         y <= 2.
 """
 
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from scipy.optimize import minimize
 from pyswarm import pso
 from sympy import *
 from Irene import *
+import numpy as np
 # define the symbolic variables and functions
 x = Symbol('x')
 e = Function('e')(x)
@@ -28,14 +32,15 @@ Rlx.AddConstraint(1 - x**2 >= 0)
 Rlx.AddConstraint(e <= exp(2))
 Rlx.AddConstraint(e >= exp(-1))
 # set the sdp solver
-Rlx.SetSDPSolver('cvxopt')
+Rlx.SetSDPSolver('sdpa')
 # initiate the SDP
+Rlx.Parallel = False
 Rlx.InitSDP()
 # solve the SDP
 Rlx.Minimize()
 print(Rlx.Solution)
 # solve with scipy
-fun = lambda x: x[0]**2 * exp(-x[1]) - exp(x[1])
+fun = lambda x: x[0]**2 * np.exp(-x[1]) - np.exp(x[1])
 cons = (
     {'type': 'ineq', 'fun': lambda x: 1 - x[0]**2},
     {'type': 'ineq', 'fun': lambda x: x[1] + 1},

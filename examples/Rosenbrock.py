@@ -4,9 +4,13 @@ subject to
         9 - x^2 >= 0,
         9 - y^2 >= 0,
 """
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import scipy.optimize
 from pyswarm import pso
-from sage.all import *
+#from sage.all import *
 from sympy import *
 from Irene import SDPRelaxations
 

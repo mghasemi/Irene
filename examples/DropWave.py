@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from sympy import *
 from Irene import *
 
@@ -24,7 +27,7 @@ Rlx.SetObjective(top)
 # moment constraint
 Rlx.MomentConstraint(Mom(bot) == 1)
 # set the sdp solver
-Rlx.SetSDPSolver('cvxopt')
+Rlx.SetSDPSolver('sdpa')
 # initialize the SDP
 Rlx.InitSDP()
 # solve the SDP

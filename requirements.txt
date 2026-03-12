@@ -1,0 +1,7 @@
+scipy
+pyswarm
+sympy
+cvxopt
+sphinx
+gpkit
+cvxpy

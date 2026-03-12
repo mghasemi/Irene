@@ -5,6 +5,9 @@ subject to
         -pi <= y <= pi
 using Legendre approximation of the transcendental parts `e^(y sin x)` and sinh(y)
 """
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from scipy.optimize import minimize
 from pyswarm import pso
 from sympy import *

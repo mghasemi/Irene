@@ -1,7 +1,9 @@
 """
 Minimize the Rosenbrock function
 """
-
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import scipy.optimize
 from pyswarm import pso
 from sympy import *
@@ -24,7 +26,7 @@ Rlx.SetObjective(rosen)
 for i in range(NumVars):
     Rlx.AddConstraint(9 - x[i] ** 2 >= 0)
 # set the sdp solver
-Rlx.SetSDPSolver('cvxopt')
+Rlx.SetSDPSolver('csdp')
 # initiate the SDP
 Rlx.InitSDP()
 # solve the SDP

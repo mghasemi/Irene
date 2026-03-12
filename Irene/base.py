@@ -10,14 +10,12 @@ def LaTeX(obj):
     r"""
     Returns LaTeX representation of Irene's objects.
     """
-    from sympy.core.core import ordering_of_classes
-    from Irene import SDPRelaxations, SDRelaxSol, Mom
-    inst = isinstance(obj, SDPRelaxations) or isinstance(
-        obj, SDRelaxSol) or isinstance(obj, Mom)
-    if inst:
+    has_latex = hasattr(obj, '__latex__') and callable(getattr(obj, '__latex__'))
+    if has_latex:
         return obj.__latex__()
-    elif isinstance(obj, tuple(ordering_of_classes)):
-        from sympy import latex
+    else:
+        from sympy import Basic, latex
+    if isinstance(obj, Basic):
         return latex(obj)
 
 
@@ -72,27 +70,27 @@ class base(object):
             existing.append('CVXOPT')
         except ImportError:
             pass
+        for solver_name in ('DSDP', 'SDPA', 'CSDP'):
+            if self._solver_is_available(solver_name):
+                existing.append(solver_name)
+        return existing
+
+    def _solver_is_available(self, solver_name):
+        r"""
+        Return True if ``solver_name`` is available in the current platform setup.
+        """
+        solver_map = {
+            'DSDP': ('dsdp', 'dsdp5'),
+            'SDPA': ('sdpa', 'sdpa'),
+            'CSDP': ('csdp', 'csdp'),
+        }
+        if solver_name not in solver_map:
+            return False
+
+        path_key, binary_name = solver_map[solver_name]
         if self.os == 'win32':
             from os.path import isfile
-            # DSDP
-            if 'dsdp' in self.Path:
-                if isfile(self.Path['dsdp']):
-                    existing.append('DSDP')
-            # SDPA
-            if 'sdpa' in self.Path:
-                if isfile(self.Path['sdpa']):
-                    existing.append('SDPA')
-            if 'csdp' in self.Path:
-                if isfile(self.Path['csdp']):
-                    existing.append('CSDP')
-        else:
-            # DSDP
-            if self.which('dsdp5') is not None:
-                existing.append('DSDP')
-            # SDPA
-            if self.which('sdpa') is not None:
-                existing.append('SDPA')
-            # CSDP
-            if self.which('csdp') is not None:
-                existing.append('CSDP')
-        return existing
+            solver_path = self.Path.get(path_key)
+            return bool(solver_path) and isfile(solver_path)
+
+        return self.which(binary_name) is not None
