@@ -1,6 +1,42 @@
 
 # Documentation: `geometric.py`, `grouprings.py`, `program.py`, and `sonc.py`
 
+## Reviewer Tracking
+
+For review workflow and sign-off tracking, use:
+
+- [reviewer-plan-tracker.md](reviewer-plan-tracker.md)
+- [reviewer-plan-tracker-sonc.md](reviewer-plan-tracker-sonc.md)
+
+## Quality Gates and Build Policy
+
+The repository should treat `Irene/` as the source of truth for Python modules. Files under `build/lib/Irene/` are generated artifacts and should not be edited manually.
+
+### Recommended quality checks
+
+Run these commands from the repository root:
+
+```bash
+/home/mehdi/Code/Irene/.venv/bin/python -m unittest tests/test_quality_plan.py -v
+/home/mehdi/Code/Irene/.venv/bin/python examples/GPExample.py
+```
+
+`examples/GPExample.py` exercises `GPRelaxations.solve()` end-to-end through `Irene/geometric.py`.
+Depending on the matrix structure used in `auto_transform_matrix`, NumPy may emit a runtime warning during intermediate ratio evaluation; this does not necessarily prevent the model from solving when the final transformation is well-defined.
+
+Optional regression checks for package build consistency:
+
+```bash
+/home/mehdi/Code/Irene/.venv/bin/python setup.py build
+```
+
+### Source/build synchronization workflow
+
+1. Make all code changes in `Irene/*.py`.
+2. Run the quality checks listed above.
+3. Regenerate `build/lib/Irene/` via `setup.py build` when a distributable build is needed.
+4. Review generated diffs separately from source edits.
+
 This document outlines the relationship between the files `geometric.py`, `grouprings.py`, and `program.py`, and explains how they can be used to complete the implementation of `sonc.py`. The goal of `sonc.py` is to implement the SONC (Sum of Non-negative Circuit polynomials) relaxation for polynomial optimization problems, as described by the formulation in `prog32.png`.
 
 ## File Descriptions and Relationships
@@ -54,3 +90,22 @@ To complete `sonc.py`, you need to implement the optimization problem (3.2) from
 5.  **Solve the GP**: Once the objective function and constraints are defined, you can create a `gpkit` `Model` and call the `solve()` method to find the solution. The `geometric.py` file provides a good example of how to do this.
 
 By following the structure of `geometric.py` and using the classes and functions from `grouprings.py` and `program.py`, you can complete the implementation of `sonc.py` to solve the SONC relaxation.
+
+## SONC Examples
+
+Two runnable examples are available under `examples/`:
+
+- `SONCExample.py`
+    - A 1D constrained benchmark that reports either a computed SONC bound or an explicit runtime status.
+- `SONCExample33.py`
+    - Uses Section 3, Example 3.3 from the paper:
+        - `f = 1 + 2*x^2*y^4 + (1/2)*x^3*y^2`
+        - `g1 = 1/3 - x^6*y^2`
+    - Prints extracted barycentric coordinates for `beta = (3, 2)` and then solves with `SONCRelaxations`.
+
+Run them with:
+
+```bash
+/home/mehdi/Code/Irene/.venv/bin/python examples/SONCExample.py
+/home/mehdi/Code/Irene/.venv/bin/python examples/SONCExample33.py
+```
