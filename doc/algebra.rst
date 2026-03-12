@@ -4,6 +4,25 @@ Group-Ring Foundations
 
 This chapter introduces the algebraic layer behind the optimization modules.
 
+Algebraic Setting
+=================================
+
+Let :math:`S` be a finitely generated commutative semigroup and let
+:math:`\mathbb{R}[S]` denote its semigroup algebra. In Irene, elements of
+:math:`\mathbb{R}[S]` are represented as finite sums
+
+.. math::
+
+   f = \sum_{\alpha \in \mathrm{supp}(f)} c_\alpha \alpha,
+
+where :math:`\alpha` is a semigroup element and :math:`c_\alpha \in \mathbb{R}`.
+This perspective generalizes classical polynomial notation and keeps support,
+degree, and structural operations explicit for optimization routines.
+
+When relations are present, the algebra is effectively handled modulo those
+relations through reduction in the semigroup representation. This is useful for
+modeling quotient structures that arise naturally in symbolic formulations.
+
 Commutative Semigroup and Semigroup Algebra
 ===========================================
 
@@ -15,6 +34,16 @@ The module ``grouprings.py`` provides:
 
 This representation is used by higher layers to extract supports, exponents,
 and structural information required by geometric and SONC relaxations.
+
+Support and Geometry
+=================================
+
+The support of :math:`f` is central in both geometric and SONC constructions.
+By converting semigroup monomials to exponent tuples, Irene can compute Newton
+polytope information and barycentric relations directly from algebraic input.
+
+This is the key bridge from symbolic algebra to convex-geometric objects used
+in lower-bound certificates.
 
 Differential Operators
 =================================
@@ -39,6 +68,11 @@ In code, the derivative path is organized as:
 
 This method-level design makes differentiation explicit and extensible for
 problem formulations where algebraic structure and operator behavior are coupled.
+
+From a theoretical viewpoint, derivations are linear maps
+:math:`D: \mathbb{R}[S] \to \mathbb{R}[S]` that satisfy Leibniz rules. Irene's
+``add_derivative`` and ``diff`` pipeline implements this behavior directly on
+semigroup-algebra elements.
 
 Why This Matters for POP
 =================================

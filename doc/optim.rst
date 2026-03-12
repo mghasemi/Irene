@@ -122,6 +122,21 @@ all method families documented in this manual.
 This shared notation is intentional and helps compare lower-bound certificates
 across SDP, GP, and SONC formulations on the same POP instance.
 
+Beyond SDP: Alternative Lower-Bound Mechanisms
+------------------------------------------------
+
+The remainder of this documentation extends the same POP template to two
+additional lower-bound mechanisms:
+
+1. Geometric programming relaxations, which use transformed polynomial families
+	and sign/support constraints to produce GP certificates.
+2. SONC relaxations, which use circuit-structured support geometry and
+	barycentric weights.
+
+These alternatives do not replace the SDP hierarchy. Instead, they provide
+complementary certificates that can be more suitable for specific sparse,
+high-degree, or structure-rich instances.
+
 .. [GIKM] M\. Ghasemi, M. Infusino, S. Kuhlmann and M. Marshall, *Truncated Moment Problem for unital commutative real algebras*, to appear.
 .. [JBL] J-B. Lasserre, *Global optimization with polynomials and the problem of moments*, SIAM J. Optim. 11(3) 796-817 (2000).
 

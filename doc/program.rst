@@ -5,12 +5,37 @@ Problem Representation
 The class ``OptimizationProblem`` in ``program.py`` is the bridge between
 algebraic expressions and concrete relaxation models.
 
+Problem Template
+=================================
+
+The optimization model is represented in algebraic form as:
+
+.. math::
+
+   \min f \quad \text{subject to} \quad g_i \ge 0, \; i=1,\dots,m,
+
+where :math:`f` and :math:`g_i` are semigroup-algebra elements. This keeps the
+problem in a symbolic domain until a relaxation method converts it to SDP or GP
+data structures.
+
 Core Responsibilities
 =================================
 
 1. Store objective and constraints as semigroup-algebra expressions.
 2. Track degrees used by relaxation constructors.
 3. Provide support analysis utilities used by geometric and SONC modules.
+
+Degree Conventions
+=================================
+
+``OptimizationProblem`` tracks objective and constraint degrees and uses an even
+program degree for relaxation construction. This convention matches the
+structure needed by polynomial nonnegativity certificates and by the GP/SONC
+term-partitioning routines.
+
+In particular, the effective order used by downstream methods is the smallest
+even degree greater than or equal to the maximum polynomial degree in the
+problem.
 
 Key Methods
 =================================
@@ -46,6 +71,20 @@ equation-level objects used in :doc:`geometric` and :doc:`sonc`.
 
 In practice, these methods are the bridge from symbolic semigroup-algebra input
 to the numeric data structures used by the geometric and SONC solvers.
+
+Delta Sets and Newton Data
+=================================
+
+The ``delta`` and ``newton`` family of methods provide the two core theoretical
+objects for non-SDP relaxations:
+
+1. Delta-style term partitions that identify relevant support terms by sign and
+   exponent structure.
+2. Newton-polytope geometry used to compute support vertices and barycentric
+   combinations.
+
+Together, these objects drive variable construction and inequality families in
+both geometric and SONC chapters.
 
 Minimal Construction Pattern
 =================================
