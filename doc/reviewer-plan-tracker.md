@@ -15,14 +15,14 @@ Purpose: Track review progress, ownership, risks, and approvals for code-quality
 
 ### Review Status Dashboard
 
-| Phase | Description                        | Depends On | Owner   | Reviewer | Status      | Target Date | Evidence                   |
-| ----- | ---------------------------------- | ---------- | ------- | -------- | ----------- | ----------- | -------------------------- |
-| 1     | Baseline + characterization tests  | None       | Copilot | TBD      | Done        | 2026-03-11  | tests/test_quality_plan.py |
-| 2     | Correctness fixes in algebra core  | 1          | Copilot | TBD      | Done        | 2026-03-11  | Irene/grouprings.py        |
-| 3     | Program representation consistency | 2          | Copilot | TBD      | Done        | 2026-03-11  | Irene/program.py           |
-| 4     | Geometric relaxation refactor      | 2          | Copilot | TBD      | Done        | 2026-03-11  | Irene/geometric.py         |
-| 5     | Type hints + API/docs cleanup      | 2          | Copilot | TBD      | Done        | 2026-03-11  | Irene/program.py, Irene/geometric.py, Irene/grouprings.py |
-| 6     | Quality gates + build/lib policy   | 3, 4, 5    | Copilot | TBD      | Done        | 2026-03-11  | doc/documentation.md       |
+| Phase | Description                        | Depends On | Owner   | Reviewer | Status | Target Date | Evidence                                                  |
+| ----- | ---------------------------------- | ---------- | ------- | -------- | ------ | ----------- | --------------------------------------------------------- |
+| 1     | Baseline + characterization tests  | None       | Copilot | Pass     | Done   | 2026-03-11  | tests/test_quality_plan.py                                |
+| 2     | Correctness fixes in algebra core  | 1          | Copilot | Pass     | Done   | 2026-03-11  | Irene/grouprings.py                                       |
+| 3     | Program representation consistency | 2          | Copilot | Pass     | Done   | 2026-03-11  | Irene/program.py                                          |
+| 4     | Geometric relaxation refactor      | 2          | Copilot | Pass     | Done   | 2026-03-11  | Irene/geometric.py                                        |
+| 5     | Type hints + API/docs cleanup      | 2          | Copilot | Pass     | Done   | 2026-03-11  | Irene/program.py, Irene/geometric.py, Irene/grouprings.py |
+| 6     | Quality gates + build/lib policy   | 3, 4, 5    | Copilot | Pass     | Done   | 2026-03-11  | doc/documentation.md                                      |
 
 Allowed status values: Not Started, In Progress, Blocked, In Review, Approved, Done.
 
@@ -63,13 +63,13 @@ Allowed status values: Not Started, In Progress, Blocked, In Review, Approved, D
 
 ### Reviewer Checklist
 
-- [x] Scope unchanged and explicitly documented.
+- [X] Scope unchanged and explicitly documented.
 - [ ] Backward-compatibility impact reviewed for equality semantics.
-- [x] Tests cover all fixed defects and key edge cases.
-- [x] Geometric refactor preserves numerical behavior within tolerance.
+- [X] Tests cover all fixed defects and key edge cases.
+- [X] Geometric refactor preserves numerical behavior within tolerance.
 - [ ] Error messages are actionable and non-ambiguous.
-- [x] Documentation reflects new contracts and caveats.
-- [x] build/lib synchronization policy is documented and followed.
+- [X] Documentation reflects new contracts and caveats.
+- [X] build/lib synchronization policy is documented and followed.
 
 ### Risks and Mitigations
 
@@ -82,23 +82,23 @@ Allowed status values: Not Started, In Progress, Blocked, In Review, Approved, D
 
 ### Decision Log
 
-| Date | Decision                  | Options Considered                                     | Rationale | Approver |
-| ---- | ------------------------- | ------------------------------------------------------ | --------- | -------- |
-| TBD  | Equality semantics policy | A keep legacy, B strict full equality, C staged toggle | TBD       | TBD      |
-| 2026-03-11 | build/lib handling policy | A generated-only, B dual edits, C remove from VCS      | Adopt A: keep `Irene/` as source-of-truth and regenerate `build/lib/` | Copilot |
-| 2026-03-11 | Typing strictness         | A non-strict start, B strict now, C defer              | Adopt A: annotate public contracts first and keep incremental tightening | Copilot |
+| Date       | Decision                  | Options Considered                                     | Rationale                                                                 | Approver |
+| ---------- | ------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------- | -------- |
+| TBD        | Equality semantics policy | A keep legacy, B strict full equality, C staged toggle | TBD                                                                       | TBD      |
+| 2026-03-11 | build/lib handling policy | A generated-only, B dual edits, C remove from VCS      | Adopt A: keep `Irene/` as source-of-truth and regenerate `build/lib/` | Copilot  |
+| 2026-03-11 | Typing strictness         | A non-strict start, B strict now, C defer              | Adopt A: annotate public contracts first and keep incremental tightening  | Copilot  |
 
 ### Verification Log
 
-| Date       | Check                        | Result | Notes                                            | Reviewer |
-| ---------- | ---------------------------- | ------ | ------------------------------------------------ | -------- |
-| 2026-03-11 | Unit test suite              | Pass   | python -m unittest tests/test_quality_plan.py -v | Copilot  |
-| 2026-03-11 | Unit test suite              | Pass   | /home/mehdi/Code/Irene/.venv/bin/python -m unittest tests/test_quality_plan.py -v | Copilot  |
-| 2026-03-11 | Static checks                | Pass   | get_errors clean for Irene/program.py, Irene/geometric.py, and Irene/grouprings.py | Copilot  |
-| 2026-03-11 | Quality gate docs            | Pass   | Added quality commands and build synchronization policy to doc/documentation.md | Copilot  |
+| Date       | Check                        | Result | Notes                                                                                                                               | Reviewer |
+| ---------- | ---------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| 2026-03-11 | Unit test suite              | Pass   | python -m unittest tests/test_quality_plan.py -v                                                                                    | Copilot  |
+| 2026-03-11 | Unit test suite              | Pass   | /home/mehdi/Code/Irene/.venv/bin/python -m unittest tests/test_quality_plan.py -v                                                   | Copilot  |
+| 2026-03-11 | Static checks                | Pass   | get_errors clean for Irene/program.py, Irene/geometric.py, and Irene/grouprings.py                                                  | Copilot  |
+| 2026-03-11 | Quality gate docs            | Pass   | Added quality commands and build synchronization policy to doc/documentation.md                                                     | Copilot  |
 | 2026-03-11 | Example workflow validation  | Pass   | /home/mehdi/Code/Irene/.venv/bin/python examples/GPExample.py (exit code 0; runtime warning observed in auto_transform_matrix path) | Copilot  |
-| 2026-03-11 | Example workflow validation  | Pass   | Re-run confirmed: GPExample solved with cvxopt in about 0.02s and produced gp.solution output | Copilot  |
-| 2026-03-11 | Numeric tolerance comparison | Pass   | GPExample setup solved twice; abs_diff_f_gp_g=0.0 and abs_diff_cost=0.0 (tolerance 1e-8) | Copilot  |
+| 2026-03-11 | Example workflow validation  | Pass   | Re-run confirmed: GPExample solved with cvxopt in about 0.02s and produced gp.solution output                                       | Copilot  |
+| 2026-03-11 | Numeric tolerance comparison | Pass   | GPExample setup solved twice; abs_diff_f_gp_g=0.0 and abs_diff_cost=0.0 (tolerance 1e-8)                                            | Copilot  |
 
 ### Sign-off
 

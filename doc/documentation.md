@@ -6,6 +6,7 @@
 For review workflow and sign-off tracking, use:
 
 - [reviewer-plan-tracker.md](reviewer-plan-tracker.md)
+- [reviewer-plan-tracker-sonc.md](reviewer-plan-tracker-sonc.md)
 
 ## Quality Gates and Build Policy
 
@@ -89,3 +90,22 @@ To complete `sonc.py`, you need to implement the optimization problem (3.2) from
 5.  **Solve the GP**: Once the objective function and constraints are defined, you can create a `gpkit` `Model` and call the `solve()` method to find the solution. The `geometric.py` file provides a good example of how to do this.
 
 By following the structure of `geometric.py` and using the classes and functions from `grouprings.py` and `program.py`, you can complete the implementation of `sonc.py` to solve the SONC relaxation.
+
+## SONC Examples
+
+Two runnable examples are available under `examples/`:
+
+- `SONCExample.py`
+    - A 1D constrained benchmark that reports either a computed SONC bound or an explicit runtime status.
+- `SONCExample33.py`
+    - Uses Section 3, Example 3.3 from the paper:
+        - `f = 1 + 2*x^2*y^4 + (1/2)*x^3*y^2`
+        - `g1 = 1/3 - x^6*y^2`
+    - Prints extracted barycentric coordinates for `beta = (3, 2)` and then solves with `SONCRelaxations`.
+
+Run them with:
+
+```bash
+/home/mehdi/Code/Irene/.venv/bin/python examples/SONCExample.py
+/home/mehdi/Code/Irene/.venv/bin/python examples/SONCExample33.py
+```
