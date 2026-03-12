@@ -1,0 +1,5 @@
+sphinx>=7,<10
+numpy
+scipy
+sympy
+multiprocess

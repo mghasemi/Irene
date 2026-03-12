@@ -40,6 +40,16 @@ extensions = [
     #'sphinx.ext.githubpages',
 ]
 
+# Read the Docs builders may not provide optional optimization backends.
+# Mock them so autodoc can import modules and render API docs.
+autodoc_mock_imports = [
+    'cvxopt',
+    'cvxpy',
+    'gpkit',
+    'gpkit.constraints',
+    'gpkit.constraints.bounded',
+]
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
