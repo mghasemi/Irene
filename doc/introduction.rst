@@ -9,6 +9,22 @@ It implements a modification of Lasserre's SDP Relaxations based
 on generalized truncated moment problem to handle general optimization
 problems algebraically.
 
+Documentation Scope
+===============================
+
+The documentation now covers three complementary pathways for constrained
+polynomial optimization:
+
+1. SDP hierarchy methods (moment/SOS based).
+2. Geometric programming relaxations.
+3. SONC relaxations.
+
+The recommended reading path is:
+
+1. ``architecture`` for conceptual map.
+2. ``algebra`` and ``program`` for representation layer.
+3. ``sdp``, ``geometric``, and ``sonc`` for method-specific formulations.
+
 Requirements and dependencies
 ===============================
 
@@ -25,6 +41,73 @@ Irene relies on the following packages:
 		- `dsdp <http://www.mcs.anl.gov/hs/software/DSDP/>`_,
 		- `sdpa <http://sdpa.sourceforge.net/>`_,
 		- `csdp <https://projects.coin-or.org/Csdp/>`_.
+
+Dependency Matrix by Method Family
+----------------------------------
+
+.. list-table::
+	 :header-rows: 1
+
+	 * - Method family
+		 - Core Python packages
+		 - Optional packages
+		 - External solver requirement
+	 * - SDP relaxations
+		 - numpy, scipy, sympy
+		 - cvxopt
+		 - one of cvxopt, dsdp, sdpa, csdp
+	 * - Geometric relaxations
+		 - numpy, scipy, sympy
+		 - gpkit
+		 - gpkit-supported GP backend
+	 * - SONC relaxations
+		 - numpy, scipy, sympy
+		 - gpkit
+		 - gpkit-supported GP backend
+
+Solver Prerequisites
+--------------------
+
+Before running examples, verify available solvers from Python::
+
+	from Irene.base import base
+	print(base().AvailableSDPSolvers())
+
+Quick Validation Workflow
+-------------------------
+
+After installation, the following commands provide a practical smoke test::
+
+	python examples/Example01.py
+	python examples/GPExample.py
+	python examples/SONCExample.py
+	python -m unittest discover tests/
+
+Solver Troubleshooting
+----------------------
+
+Common runtime signatures and first actions:
+
+1. ``AvailableSDPSolvers()`` returns an empty list.
+
+	This indicates that no configured SDP backend is currently reachable.
+	Install at least one supported solver and verify it is available on ``PATH``
+	(or configured in solver path settings on platforms that require explicit paths).
+
+2. ``RuntimeError: GP solve failed`` or ``RuntimeError: SONC GP solve failed``.
+
+	These messages usually indicate missing GP backend support, an unavailable solver,
+	or an infeasible/numerically unstable relaxation for the selected formulation.
+	Start with the shipped examples, lower verbosity, and simplified instances.
+
+3. ``ModuleNotFoundError: No module named 'gpkit'``.
+
+	Install ``gpkit`` before running geometric or SONC examples.
+
+4. SDP solve runs but returns non-optimal status.
+
+	Try another supported SDP solver, inspect constraints for scaling issues,
+	and compare with a lower relaxation order before increasing model complexity.
 
 
 Download
@@ -60,7 +143,7 @@ License
 MIT License
 ------------------
 
-	Copyright (c) 2016 Mehdi Ghasemi
+	Copyright (c) 2016-2026 Mehdi Ghasemi
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal

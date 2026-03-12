@@ -1,11 +1,23 @@
 Code Documentation
 =================================
 
-.. automodule:: base
+.. automodule:: Irene.base
    :members:
 
-.. automodule:: relaxations
+.. automodule:: Irene.relaxations
    :members:
 
-.. automodule:: sdp
+.. automodule:: Irene.sdp
+   :members:
+
+.. automodule:: Irene.program
+   :members:
+
+.. automodule:: Irene.grouprings
+   :members:
+
+.. automodule:: Irene.geometric
+   :members:
+
+.. automodule:: Irene.sonc
    :members:

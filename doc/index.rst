@@ -12,10 +12,16 @@ Contents:
    :maxdepth: 2
 
    introduction
+   architecture
+   algebra
+   program
    sdp
    optim
+   geometric
+   sonc
    approx
    benchmarks
+   examples
    code
    rev
    todo

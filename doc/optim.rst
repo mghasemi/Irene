@@ -63,7 +63,7 @@ are positive semidefinite. So the optimum value of the following program is stil
 	\right.
 	:label: infsdp
 
-This, still is not a semidefinite program as each constraint is infinite dimensional. One plausible idea is to consider functionals on
+This is still not a semidefinite program, since each constraint is infinite dimensional. One plausible idea is to consider functionals on
 finite dimensional subspaces of :math:`A` containing :math:`f, g_1,\dots,g_m`. This was done by Lasserre for polynomials [JBL]_.
 
 Let :math:`B\subseteq A` be a linear subspace. If :math:`L:A\longrightarrow\mathbb{R}` is :math:`K`-positive, so is its restriction 
@@ -81,17 +81,23 @@ SDP is equal to :math:`\rho` since
 	+ :math:`Q_{\bf g}\cap B\neq Psd_{B}(K)` and,
 	+ there may not exist a decomposition of :math:`f-\rho` as in :eq:`sosdecomp` inside :math:`B` (i.e., the summands may not belong to :math:`B`).
 
-Thus, the optimum value just gives a lower bound for :math:`\rho`. But walking through a :math:`K`-frame, as explained in [GIKM]_ constructs 
-a net of lower bounds for :math:`\rho` which approaches :math:`\rho`, eventually.
+Thus, the optimum value gives only a lower bound for :math:`\rho`. However,
+walking through a :math:`K`-frame, as explained in [GIKM]_, constructs a net
+of lower bounds for :math:`\rho` that eventually approaches :math:`\rho`.
 
-I practice, one only needs to find a sufficiently big finite dimensional linear space which contains :math:`f, g_1,\dots,g_m` and a :eq:`sosdecomp`
-decomposition of :math:`f-\rho` can be found within that space. Therefore, the convergence happens in finitely many steps, subject to finding a 
-suitable :math:`K`-frame for the problem.  
+In practice, one needs a sufficiently large finite-dimensional linear space
+that contains :math:`f, g_1,\dots,g_m` and admits a :eq:`sosdecomp`
+decomposition of :math:`f-\rho` within that space. Therefore, convergence
+happens in finitely many steps, subject to finding a suitable :math:`K`-frame
+for the problem.
 
-The significance of this method is that it converts any optimization problem into finitely many semidefinite programs whose optimum values approaches 
-the optimum value of the original program and semidefinite programs can be solved in polynomial time. Although, this suggests that the NP-complete 
-problem of optimization can be solved in P-time, but since the number of SDPs that is required to reach the optimum is unknown and such a bound does
-not exists when dealing with Archimedean modules.
+The significance of this method is that it converts an optimization problem into
+finitely many semidefinite programs whose optimum values approach the optimum
+value of the original program, while each semidefinite program can be solved in
+polynomial time. This does not imply a polynomial-time algorithm for the full
+NP-complete optimization problem, because the number of SDP levels needed to
+reach the optimum is unknown, and no general bound is available in the
+Archimedean setting.
 
 .. note::
 	
@@ -103,22 +109,35 @@ not exists when dealing with Archimedean modules.
 	2. The SDP relaxation method relies on symbolic computations which could be quite costly and slow. Therefore, dealing with rather large
 	problems -although `Irene` takes advantage from multiple cores- can be rather slow.
 
+Notation Bridge to Geometric and SONC Chapters
+------------------------------------------------
+
+The same constrained problem data :math:`(f, g_1, \dots, g_m, K)` is reused across
+all method families documented in this manual.
+
+1. In the SDP hierarchy chapter, the central object is the moment functional :math:`L`.
+2. In the geometric chapter, transformed families :math:`h_j` are built from :math:`f` and :math:`g_i`.
+3. In the SONC chapter, the central transformed expression is :math:`G(\mu)=f-\sum_i \mu_i g_i`.
+
+This shared notation is intentional and helps compare lower-bound certificates
+across SDP, GP, and SONC formulations on the same POP instance.
+
 .. [GIKM] M\. Ghasemi, M. Infusino, S. Kuhlmann and M. Marshall, *Truncated Moment Problem for unital commutative real algebras*, to appear.
 .. [JBL] J-B. Lasserre, *Global optimization with polynomials and the problem of moments*, SIAM J. Optim. 11(3) 796-817 (2000).
 
 Polynomial Optimization
 =============================
 
-The SDP relaxation method was originally introduced by Lasserre [JBL]_ for polynomial optimization problem and excellent software packages such
+The SDP relaxation method was originally introduced by Lasserre [JBL]_ for polynomial optimization problems and excellent software packages such
 as `GloptiPoly <http://homepages.laas.fr/henrion/software/gloptipoly/>`_ and `ncpol2sdpa <https://github.com/peterwittek/ncpol2sdpa>`_
 exist to handle constraint polynomial optimization problems. 
 
-`Irene` uses `sympy <http://www.sympy.org/>`_ for symbolic computations, so, it always need to be imported and the symbolic variables must be
+`Irene` uses `sympy <http://www.sympy.org/>`_ for symbolic computations, so it always needs to be imported and the symbolic variables must be
 introduced. Once these steps are done, the objective and constraints should be entered using ``SetObjective`` and `AddConstraint` methods.
-the method ``MomentsOrd`` takes the relaxation degree upon user's request, otherwise the minimum relaxation degree will be used.
+The method ``MomentsOrd`` takes the relaxation degree upon user's request, otherwise the minimum relaxation degree will be used.
 The default SDP solver is ``CVXOPT`` which can be modified via ``SetSDPSolver`` method. Currently ``CVXOPT``, ``DSDP``, ``SDPA`` and ``CSDP`` are supported.
-Next step is initialization of the SDP by ``InitSDP`` and finally solving the SDP via ``Minimize`` and the output will be stored in the ``Solution``
-variable as a python dictionary.
+The next step is initialization of the SDP by ``InitSDP`` and finally solving the SDP via ``Minimize``. The output is stored in the ``Solution``
+variable as a Python dictionary.
 
 **Example** Solve the following polynomial optimization problem:
 
