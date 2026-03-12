@@ -13,9 +13,9 @@ Expand the documentation from an SDP-focused hierarchy to a unified constrained 
 
 - [x] Planning complete.
 - [x] Initial implementation started in Sphinx docs.
-- [ ] Theoretical expansion finalized.
-- [ ] Examples and validation workflow finalized.
-- [ ] Full editorial and build verification complete.
+- [x] Theoretical expansion finalized.
+- [x] Examples and validation workflow finalized.
+- [x] Full editorial and build verification complete.
 
 ## Scope
 
@@ -122,3 +122,9 @@ Acceptance checks:
 
 - 2026-03-12: Added markdown plan and started Sphinx implementation by introducing new chapter skeletons and extending navigation/API coverage.
 - 2026-03-12: Expanded theory chapters with method-selection/dependency matrices, SONC and GP equation-level mapping, and runnable examples documentation.
+- 2026-03-12: Finalized theoretical expansion in algebra/program/geometric/sonc/optim chapters and verified warning-free Sphinx builds.
+- 2026-03-12: Validation run completed with the following commands:
+	- ``/home/mehdi/Code/Irene/.venv/bin/python examples/Example01.py`` (SDP path: success, optimal solver output observed).
+	- ``/home/mehdi/Code/Irene/.venv/bin/python examples/GPExample.py`` (GP path: solved; runtime warning observed in transform ratio step).
+	- ``/home/mehdi/Code/Irene/.venv/bin/python examples/SONCExample.py`` (SONC path: runtime infeasibility reported by GP model for this benchmark instance in current environment).
+	- ``/home/mehdi/Code/Irene/.venv/bin/python -m unittest discover tests/`` (56 tests, all passed).
