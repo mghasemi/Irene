@@ -488,11 +488,36 @@ class OptimizationProblem(object):
         Note:
             Excludes the origin vertex [0, 0, ...] if present to avoid singularity issues.
         """
-        if self.vertices[0] == [0] * len(self.semigroup.generators):
-            A = np.array(self.vertices[1:]).T
+        if not self.vertices:
+            raise ValueError("linear_combination requires non-empty vertices; call newton() first.")
+
+        origin = [0] * len(self.semigroup.generators)
+        if self.vertices[0] == origin:
+            active_vertices = self.vertices[1:]
         else:
-            A = np.array(self.vertices).T
-        coeffs = np.linalg.solve(A, point)
+            active_vertices = self.vertices
+
+        if not active_vertices:
+            raise ValueError("linear_combination requires at least one non-origin vertex.")
+
+        A = np.array(active_vertices, dtype=float).T
+        point_arr = np.asarray(point, dtype=float)
+
+        if point_arr.ndim != 1:
+            raise ValueError("linear_combination expects a one-dimensional point.")
+        if A.shape[0] != point_arr.shape[0]:
+            raise ValueError(
+                f"linear_combination point dimension mismatch: expected {A.shape[0]}, got {point_arr.shape[0]}."
+            )
+        if A.shape[0] != A.shape[1]:
+            raise ValueError(
+                f"linear_combination requires a square vertex matrix; got shape {A.shape}."
+            )
+
+        try:
+            coeffs = np.linalg.solve(A, point_arr)
+        except np.linalg.LinAlgError as exc:
+            raise ValueError("linear_combination failed due to singular vertex matrix.") from exc
         return coeffs
 
     def convex_combination(self, point: Sequence[float]) -> Optional[np.ndarray]:

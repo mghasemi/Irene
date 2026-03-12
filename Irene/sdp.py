@@ -27,13 +27,14 @@ class sdp(base):
     SolverOptions = {}
     Info = {}
 
-    def __init__(self, solver='cvxopt', solver_path={}):
-        assert solver.upper() in self.Solvers, "Currently the\
-        following solvers are supported: 'CVXOPT', 'SDPA', 'CSDP', 'DSDP'"
+    def __init__(self, solver='cvxopt', solver_path=None):
+        solver_upper = solver.upper() if isinstance(solver, str) else None
+        if solver_upper not in self.Solvers:
+            raise ValueError("Currently the following solvers are supported: 'CVXOPT', 'SDPA', 'CSDP', 'DSDP'")
         super(sdp, self).__init__()
         if solver_path:
-            self.Path = solver_path
-        self.solver = solver.upper()
+            self.Path = dict(solver_path)
+        self.solver = solver_upper
         self.BlockStruct = []
         self.b = None
         self.A = []
@@ -46,7 +47,7 @@ class sdp(base):
         self.num_blocks = 0
 
         # checks the availability of solver
-        if solver.upper() not in self.AvailableSDPSolvers():
+        if self.solver not in self.AvailableSDPSolvers():
             raise ImportError("The solver '%s' is not available" % solver)
 
     def SetObjective(self, b):
@@ -131,6 +132,16 @@ class sdp(base):
         """
         self.SolverOptions[param] = val
 
+    @staticmethod
+    def _coerce_float(value):
+        try:
+            return float(value)
+        except (TypeError, ValueError) as exc:
+            raise TypeError("SDP data must be numeric") from exc
+
+    def _objective_values_as_floats(self):
+        return [self._coerce_float(value) for value in self.b]
+
     def write_sdpa_dat(self, filename):
         r"""
         Writes the semidefinite program in the file `filename` with dense SDPA format.
@@ -140,7 +151,9 @@ class sdp(base):
         f.write("%d=nBLOCK\n" % len(self.C))
         f.write(str(self.BlockStruct).replace(
             '[', '{').replace(']', '}') + "=bLOCKsTRUCT\n")
-        f.write(str(self.b).replace('[', '{').replace(']', '}') + "\n")
+        objective = ', '.join('{:.16g}'.format(value)
+                              for value in self._objective_values_as_floats())
+        f.write('{' + objective + "}\n")
         f.write('{\n')
         for B in self.C:
             f.write(str(B).replace('[', '{').replace(']', '}') + '\n')
@@ -156,21 +169,24 @@ class sdp(base):
         r"""
         Writes the semidefinite program in the file `filename` with sparse SDPA format.
         """
+        sparse_zero_tol = 1e-12
         f = open(filename, 'w')
         f.write("%d = mDIM\n" % len(self.b))
         f.write("%d = nBLOCK\n" % len(self.C))
         f.write(str(self.BlockStruct).replace('[', '').replace(
             ']', '').replace(',', ' ') + " = bLOCKsTRUCT\n")
-        f.write(str(self.b).replace(
-            '[', '').replace(']', '').replace(',', ' ') + "\n")
+        objective = ' '.join('{:.16g}'.format(value)
+                             for value in self._objective_values_as_floats())
+        f.write(objective + "\n")
         mat_no = 0
         blk_no = 1
         for B in self.C:
             for i in range(1, B.shape[0] + 1):
                 for j in range(i, B.shape[1] + 1):
-                    if B[i - 1][j - 1] != 0.:
+                    val = B[i - 1][j - 1]
+                    if abs(val) > sparse_zero_tol:
                         f.write("%d %d %d %d %f\n" %
-                                (mat_no, blk_no, i, j, B[i - 1][j - 1]))
+                                (mat_no, blk_no, i, j, val))
             blk_no += 1
         for B in self.A:
             mat_no += 1
@@ -178,9 +194,10 @@ class sdp(base):
             for Bl in B:
                 for i in range(1, Bl.shape[0] + 1):
                     for j in range(i, Bl.shape[1] + 1):
-                        if Bl[i - 1][j - 1] != 0.:
+                        val = Bl[i - 1][j - 1]
+                        if abs(val) > sparse_zero_tol:
                             f.write("%d %d %d %d %f\n" %
-                                    (mat_no, blk_no, i, j, Bl[i - 1][j - 1]))
+                                    (mat_no, blk_no, i, j, val))
                 blk_no += 1
         f.close()
 
@@ -198,26 +215,39 @@ class sdp(base):
             i = 0
             row = None
             for row in iterator:
-                if row.find('}') < 0:
+                stripped = row.strip()
+                if stripped.find('}') < 0:
                     continue
-                if row.startswith('}'):
+                if stripped.startswith('}'):
+                    if sol_mat is None:
+                        return solution_matrix
                     break
-                if row.find('{') != row.rfind('{'):
+                if stripped.find('{') < 0:
+                    raise ValueError("Malformed solution matrix row")
+                if stripped.find('{') != stripped.rfind('{'):
                     in_matrix = True
-                numbers = row[
-                          row.rfind('{') + 1:row.find('}')].strip().split(',')
+                numbers = stripped[
+                          stripped.rfind('{') + 1:stripped.find('}')].strip().split(',')
+                if len(numbers) == 1 and numbers[0] == '':
+                    raise ValueError("Empty solution matrix row")
                 if sol_mat is None:
                     sol_mat = np.empty((len(numbers), len(numbers)))
+                elif len(numbers) != sol_mat.shape[1]:
+                    raise ValueError("Inconsistent solution matrix row width")
+                if i >= sol_mat.shape[0]:
+                    raise ValueError("Too many rows in solution matrix")
                 for j, number in enumerate(numbers):
                     sol_mat[i, j] = float(number)
-                if row.find('}') != row.rfind('}') or not in_matrix:
-                    break
                 i += 1
+                if stripped.find('}') != stripped.rfind('}') or not in_matrix:
+                    break
+            if sol_mat is None:
+                return solution_matrix
+            if i != sol_mat.shape[0]:
+                raise ValueError("Incomplete solution matrix")
             solution_matrix.append(sol_mat)
-            if row.startswith('}'):
+            if row is not None and row.strip().startswith('}'):
                 break
-        if len(solution_matrix) > 0 and solution_matrix[-1] is None:
-            solution_matrix = solution_matrix[:-1]
         return solution_matrix
 
     def read_sdpa_out(self, filename):
@@ -354,19 +384,28 @@ class sdp(base):
                 dual = float(line.split(':')[1])
             elif line.find("Total time") > -1:
                 total_time = float(line.split(':')[1])
-        file_ = open(filename, 'r')
-        line = file_.readline()
-        xVec = array([float(m) for m in line.split(' ')[:-1]])
-        X = [zeros((d, d)) for d in self.BlockStruct]
-        Z = [zeros((d, d)) for d in self.BlockStruct]
-        for line in file_:
-            entity = line.split(' ')
-            if int(entity[0]) == 1:
-                Z[int(entity[1]) - 1][int(entity[2]) -
-                                      1][int(entity[3]) - 1] = float(entity[4])
-            elif int(entity[0]) == 2:
-                X[int(entity[1]) - 1][int(entity[2]) -
-                                      1][int(entity[3]) - 1] = float(entity[4])
+        with open(filename, 'r') as file_:
+            line = file_.readline()
+            x_tokens = line.split()
+            if not x_tokens:
+                raise ValueError("Malformed CSDP solution vector")
+            xVec = array([float(token) for token in x_tokens])
+            X = [zeros((d, d)) for d in self.BlockStruct]
+            Z = [zeros((d, d)) for d in self.BlockStruct]
+            for line in file_:
+                entity = line.split()
+                if not entity:
+                    continue
+                if len(entity) != 5:
+                    raise ValueError("Malformed CSDP solution row")
+                mat_type, block_idx, row_idx, col_idx, value = entity
+                block_no = int(block_idx) - 1
+                row_no = int(row_idx) - 1
+                col_no = int(col_idx) - 1
+                if int(mat_type) == 1:
+                    Z[block_no][row_no][col_no] = float(value)
+                elif int(mat_type) == 2:
+                    X[block_no][row_no][col_no] = float(value)
         # self.BlockStruct
         self.Info['PObj'] = primal
         self.Info['DObj'] = dual
@@ -423,7 +462,7 @@ class sdp(base):
             Acvxopt.append(-Mtx(matrix(Ablock).transpose(), tc='d'))
         aTranspose = []
         for elmnt in self.b:
-            aTranspose.append([elmnt])
+            aTranspose.append([self._coerce_float(elmnt)])
         n1 = len(aTranspose[0])
         m1 = len(aTranspose)
         acvxopt = Mtx(array(aTranspose).reshape(
@@ -460,7 +499,7 @@ class sdp(base):
         r"""
         Calls `SDPA` to solve the initiated semidefinite program.
         """
-        from subprocess import call
+        import subprocess
         prg_file = "prg.dat"
         out_file = "out.res"
         self.sdpa_param()
@@ -468,24 +507,37 @@ class sdp(base):
         if not self.BlockStruct:
             self.BlockStruct = [len(B) for B in self.C]
         self.write_sdpa_dat(prg_file)
-        call([self.Path['sdpa'], "-dd", prg_file, "-o", out_file, "-p", par_file])
+        try:
+            subprocess.run(
+                [self.Path['sdpa'], "-dd", prg_file, "-o", out_file, "-p", par_file],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            raise RuntimeError("SDPA execution failed") from exc
         self.read_sdpa_out(out_file)
 
     def csdp(self):
         r"""
         Calls `SDPA` to solve the initiated semidefinite program.
         """
-        from subprocess import check_output
+        import subprocess
         prg_file = "prg.dat-s"
         out_file = "out.res"
-        out = ""
         if not self.BlockStruct:
             self.BlockStruct = [len(B) for B in self.C]
         self.write_sdpa_dat_sparse(prg_file)
         try:
-            out = check_output([self.Path['csdp'], prg_file, out_file], text=True)
-        except Exception as e:
-            pass
+            completed = subprocess.run(
+                [self.Path['csdp'], prg_file, out_file],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            raise RuntimeError("CSDP execution failed") from exc
+        out = completed.stdout
         self.read_csdp_out(out_file, out)
 
     def solve(self):

@@ -27,7 +27,7 @@ Rlx.SetObjective(top)
 # moment constraint
 Rlx.MomentConstraint(Mom(bot) == 1)
 # set the sdp solver
-Rlx.SetSDPSolver('cvxopt')
+Rlx.SetSDPSolver('sdpa')
 # initialize the SDP
 Rlx.InitSDP()
 # solve the SDP

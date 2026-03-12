@@ -38,7 +38,7 @@ if __name__ == '__main__':
     Rlx.MomentConstraint(Mom(f + g) >= .9)
     Rlx.MomentConstraint(Mom(g ** 2 - .25 * k) - .6 >= 0)
     # set the sdp solver
-    Rlx.SetSDPSolver('cvxopt')
+    Rlx.SetSDPSolver('sdpa')
     # initiate the SDP
     Rlx.Parallel = False
     Rlx.InitSDP()

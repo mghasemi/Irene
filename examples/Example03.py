@@ -32,7 +32,7 @@ Rlx.AddConstraint(1 - x**2 >= 0)
 Rlx.AddConstraint(e <= exp(2))
 Rlx.AddConstraint(e >= exp(-1))
 # set the sdp solver
-Rlx.SetSDPSolver('cvxopt')
+Rlx.SetSDPSolver('sdpa')
 # initiate the SDP
 Rlx.Parallel = False
 Rlx.InitSDP()

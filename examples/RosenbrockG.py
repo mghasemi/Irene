@@ -26,7 +26,7 @@ Rlx.SetObjective(rosen)
 for i in range(NumVars):
     Rlx.AddConstraint(9 - x[i] ** 2 >= 0)
 # set the sdp solver
-Rlx.SetSDPSolver('cvxopt')
+Rlx.SetSDPSolver('csdp')
 # initiate the SDP
 Rlx.InitSDP()
 # solve the SDP

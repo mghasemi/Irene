@@ -37,7 +37,7 @@ if __name__ == '__main__':
     Rlx.AddConstraint(10 - (f - k)**2 >= 0)
     Rlx.AddConstraint(10 - (k - 3)**2 >= 0)
     # set the sdp solver
-    Rlx.SetSDPSolver('cvxopt')
+    Rlx.SetSDPSolver('csdp')
     # initiate the SDP
     Rlx.Parallel = False
     Rlx.InitSDP()

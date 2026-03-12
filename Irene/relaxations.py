@@ -18,6 +18,7 @@ from numpy.random import uniform
 from numpy.linalg import cholesky, LinAlgError
 from sympy import Function, Symbol, QQ, groebner, Poly, zeros, reduced, sympify, Matrix, expand, latex, lambdify, Abs
 from sympy.core.relational import Equality, GreaterThan, LessThan, StrictGreaterThan, StrictLessThan
+from sympy.polys.polyerrors import PolynomialError
 from sympy.polys.matrices import DomainMatrix
 from scipy import optimize as opt
 from scipy.linalg import eigvals
@@ -267,33 +268,31 @@ class SDPRelaxations(base):
         given relations.
         """
         self.OrgConst.append(cnst)
-        CnsTyp = type(cnst)
-        if CnsTyp in self.ExpTypes:
-            if CnsTyp in [self.GEQ, self.GT]:
-                non_red_exp = cnst.lhs - cnst.rhs
-                expr = self.ReduceExp(non_red_exp)
-                self.Constraints.append(expr)
-                tot_deg = Poly(expr, *self.AuxSyms).total_degree()
-                self.CnsDegs.append(tot_deg)
-                self.CnsHalfDegs.append(int(ceil(tot_deg / 2.)))
-            elif CnsTyp in [self.LEQ, self.LT]:
-                non_red_exp = cnst.rhs - cnst.lhs
-                expr = self.ReduceExp(non_red_exp)
-                self.Constraints.append(expr)
-                tot_deg = Poly(expr, *self.AuxSyms).total_degree()
-                self.CnsDegs.append(tot_deg)
-                self.CnsHalfDegs.append(int(ceil(tot_deg / 2.)))
-            elif CnsTyp is self.EQ:
-                non_red_exp = cnst.lhs - cnst.rhs
-                expr = self.ReduceExp(non_red_exp)
-                self.Constraints.append(self.ErrorTolerance + expr)
-                self.Constraints.append(self.ErrorTolerance - expr)
-                tot_deg = Poly(expr, *self.AuxSyms).total_degree()
-                # add twice
-                self.CnsDegs.append(tot_deg)
-                self.CnsDegs.append(tot_deg)
-                self.CnsHalfDegs.append(int(ceil(tot_deg / 2.)))
-                self.CnsHalfDegs.append(int(ceil(tot_deg / 2.)))
+        if isinstance(cnst, (self.GEQ, self.GT)):
+            non_red_exp = cnst.lhs - cnst.rhs
+            expr = self.ReduceExp(non_red_exp)
+            self.Constraints.append(expr)
+            tot_deg = Poly(expr, *self.AuxSyms).total_degree()
+            self.CnsDegs.append(tot_deg)
+            self.CnsHalfDegs.append(int(ceil(tot_deg / 2.)))
+        elif isinstance(cnst, (self.LEQ, self.LT)):
+            non_red_exp = cnst.rhs - cnst.lhs
+            expr = self.ReduceExp(non_red_exp)
+            self.Constraints.append(expr)
+            tot_deg = Poly(expr, *self.AuxSyms).total_degree()
+            self.CnsDegs.append(tot_deg)
+            self.CnsHalfDegs.append(int(ceil(tot_deg / 2.)))
+        elif isinstance(cnst, self.EQ):
+            non_red_exp = cnst.lhs - cnst.rhs
+            expr = self.ReduceExp(non_red_exp)
+            self.Constraints.append(self.ErrorTolerance + expr)
+            self.Constraints.append(self.ErrorTolerance - expr)
+            tot_deg = Poly(expr, *self.AuxSyms).total_degree()
+            # add twice
+            self.CnsDegs.append(tot_deg)
+            self.CnsDegs.append(tot_deg)
+            self.CnsHalfDegs.append(int(ceil(tot_deg / 2.)))
+            self.CnsHalfDegs.append(int(ceil(tot_deg / 2.)))
 
     def MomentConstraint(self, cnst):
         r"""
@@ -396,15 +395,18 @@ class SDPRelaxations(base):
                 c.append(0)
         return c
 
+    def _poly_total_degree_or_raise(self, expr, context):
+        try:
+            return Poly(expr, *self.AuxSyms).total_degree()
+        except PolynomialError as exc:
+            raise ValueError("Unable to determine polynomial degree for %s" % context) from exc
+
     def LocalizedMoment(self, p):
         r"""
         Computes the reduced symbolic moment generating matrix localized
         at `p`.
         """
-        try:
-            tot_deg = Poly(p, *self.AuxSyms).total_degree()
-        except Exception as e:
-            tot_deg = 0
+        tot_deg = self._poly_total_degree_or_raise(p, 'localized moment')
         half_deg = int(ceil(tot_deg / 2.))
         mmntord = self.MmntOrd - half_deg
         m = Matrix(self.ReducedMonomialBase(mmntord))
@@ -422,10 +424,7 @@ class SDPRelaxations(base):
         at `p`.
         """
         from sympy.polys.polymatrix import PolyMatrix
-        try:
-            tot_deg = Poly(p, *self.AuxSyms).total_degree()
-        except Exception as e:
-            tot_deg = 0
+        tot_deg = self._poly_total_degree_or_raise(p, 'localized moment')
         half_deg = int(ceil(tot_deg / 2.))
         mmntord = self.MmntOrd - half_deg
         m = Matrix(self.ReducedMonomialBase(mmntord))
@@ -549,6 +548,47 @@ class SDPRelaxations(base):
         self.C_ = copy(c)
         self.InitIdx = idx
 
+    def _commit_stage_state(self, blk, c, idx):
+        r"""
+        Commit stage state, preserving current interrupt semantics.
+        """
+        try:
+            self.Commit(blk, c, idx)
+        except:
+            self.Commit(blk, c, idx)
+            raise KeyboardInterrupt
+
+    def _parallel_calpha_results(self, expvec, mmnt):
+        r"""
+        Computes ``Calpha__`` results in parallel and cleans up worker
+        processes deterministically.
+        """
+        queue = mp.Queue(self.NumCores)
+        started_procs = []
+        results = [None for _ in range(len(expvec))]
+        try:
+            for idx, expn in enumerate(expvec):
+                proc = mp.Process(target=Calpha__,
+                                  args=(expn, mmnt, idx, queue))
+                proc.start()
+                started_procs.append(proc)
+            for _ in range(len(expvec)):
+                tmp = queue.get()
+                results[tmp[0]] = tmp[1]
+            return results
+        except BaseException:
+            for proc in started_procs:
+                if proc.is_alive():
+                    proc.terminate()
+            raise
+        finally:
+            for proc in started_procs:
+                proc.join()
+            if hasattr(queue, 'close'):
+                queue.close()
+            if hasattr(queue, 'join_thread'):
+                queue.join_thread()
+
     def pInitSDP(self):
         r"""
         Initializes the semidefinite program (SDP), in parallel, whose 
@@ -576,19 +616,7 @@ class SDPRelaxations(base):
                 d = len(self.ReducedMonomialBase(
                     self.MmntOrd - self.CnsHalfDegs[idx]))
                 Mmnt = self.LocalizedMoment_(self.Constraints[idx])
-                # Run in parallel
-                queue1 = mp.Queue(self.NumCores)
-                procs1 = []
-                results = [None for _ in range(N)]
-                for cnt in range(N):
-                    procs1.append(mp.Process(target=Calpha__,
-                                             args=(ExpVec[cnt], Mmnt, cnt, queue1)))
-                for pr in procs1:
-                    pr.start()
-                for _ in range(N):
-                    tmp = queue1.get()
-                    results[tmp[0]] = tmp[1]
-                # done with parallel
+                results = self._parallel_calpha_results(ExpVec, Mmnt)
                 # stash changes
                 tBlck = copy(self.Blck)
                 tC_ = copy(self.C_)
@@ -600,13 +628,7 @@ class SDPRelaxations(base):
                 # increase loop counter
                 idx += 1
                 # commit changes
-                try:
-                    self.Commit(tBlck, tC_, idx)
-                except:
-                    # Do we need to save previous step and restore them on
-                    # break?
-                    self.Commit(tBlck, tC_, idx)  # ??
-                    raise KeyboardInterrupt
+                self._commit_stage_state(tBlck, tC_, idx)
                 # self.InitIdx = idx
             self.LastIdxVal = 0
         # Moment matrix should be psd ##
@@ -616,19 +638,7 @@ class SDPRelaxations(base):
             if self.PSDMoment:
                 d = len(self.ReducedMonomialBase(self.MmntOrd))
                 Mmnt = self.LocalizedMoment_(1.)
-                # Run in parallel
-                queue2 = mp.Queue(self.NumCores)
-                procs2 = []
-                results = [None for _ in range(N)]
-                for cnt in range(N):
-                    procs2.append(mp.Process(target=Calpha__,
-                                             args=(ExpVec[cnt], Mmnt, cnt, queue2)))
-                for pr in procs2:
-                    pr.start()
-                for _ in range(N):
-                    tmp = queue2.get()
-                    results[tmp[0]] = tmp[1]
-                # done with parallel
+                results = self._parallel_calpha_results(ExpVec, Mmnt)
                 # stash changes
                 tBlck = copy(self.Blck)
                 tC_ = copy(self.C_)
@@ -638,13 +648,7 @@ class SDPRelaxations(base):
                 h = zeros(d, d)
                 tC_.append(array(h.tolist()).astype(float64))
                 # commit changes
-                try:
-                    self.Commit(tBlck, tC_, 0)
-                except:
-                    # Do we need to save previous step and restore them on
-                    # break?
-                    self.Commit(tBlck, tC_, 0)  # ??
-                    raise KeyboardInterrupt
+                self._commit_stage_state(tBlck, tC_, 0)
                 # self.Blck = copy(tBlck)
                 # self.C_ = copy(tC_)
         # L(1) = 1 ##
@@ -668,13 +672,7 @@ class SDPRelaxations(base):
                 tC_.append(
                     array(Matrix([-1]).tolist()).astype(float64))
                 # commit changes
-                try:
-                    self.Commit(tBlck, tC_, 0)
-                except:
-                    # Do we need to save previous step and restore them on
-                    # break?
-                    self.Commit(tBlck, tC_, 0)  # ??
-                    raise KeyboardInterrupt
+                self._commit_stage_state(tBlck, tC_, 0)
                 # self.Blck = copy(tBlck)
                 # self.C_ = copy(tC_)
         # Moment constraints
@@ -694,13 +692,7 @@ class SDPRelaxations(base):
                 # increase loop counter
                 idx += 1
                 # commit changes
-                try:
-                    self.Commit(tBlck, tC_, idx)
-                except:
-                    # Do we need to save previous step and restore them on
-                    # break?
-                    self.Commit(tBlck, tC_, idx)  # ??
-                    raise KeyboardInterrupt
+                self._commit_stage_state(tBlck, tC_, idx)
                 # self.Blck = copy(tBlck)
                 # self.C_ = copy(tC_)
                 # self.InitIdx = idx
@@ -720,8 +712,8 @@ class SDPRelaxations(base):
             try:
                 self.pInitSDP()
             except KeyboardInterrupt:
-                obj_file = open(self.Name + '.rlx', 'w')
-                dump(self, obj_file)
+                with open(self.Name + '.rlx', 'wb') as obj_file:
+                    dump(self, obj_file)
                 print("\n...::: The program is saved in '" +
                       self.Name + ".rlx' :::...")
                 raise KeyboardInterrupt
@@ -825,26 +817,22 @@ class SDPRelaxations(base):
         r"""
         Resumes the process of a previously saved program.
         """
-        obj_file = open(self.Name + '.rlx', 'r')
-        self = load(obj_file)
-        obj_file.close()
-        return self
+        with open(self.Name + '.rlx', 'rb') as obj_file:
+            return load(obj_file)
 
     def SaveState(self):
         r"""
         Saves the current state of the relaxation object to the file `self.Name+'.rlx'`.
         """
-        obj_file = open(self.Name + '.rlx', 'w')
-        dump(self, obj_file)
+        with open(self.Name + '.rlx', 'wb') as obj_file:
+            dump(self, obj_file)
 
     def State(self):
         r"""
         Returns the latest state of the object at last break and save.
         """
-        obj_file = open(self.Name + '.rlx', 'r')
-        ser_dict = obj_file.read()
-        ser_inst = loads(ser_dict)
-        obj_file.close()
+        with open(self.Name + '.rlx', 'rb') as obj_file:
+            ser_inst = load(obj_file)
         return ser_inst.PrevStage, ser_inst.LastIdxVal
 
     def __str__(self):
