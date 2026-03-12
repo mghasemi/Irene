@@ -1,12 +1,13 @@
 from collections import OrderedDict
 from math import ceil
+from typing import Any, Optional, Sequence
 
 import numpy as np
 from scipy import optimize
 from scipy.spatial import ConvexHull, Delaunay
 from sympy import sympify, Symbol
  
-from .grouprings import _degree, SemigroupAlgebraElement, SemigroupAlgebra, CommutativeSemigroup
+from .grouprings import _degree, SemigroupAlgebraElement, SemigroupAlgebra, CommutativeSemigroup, AtomicSGElement
 
 
 class OptimizationProblem(object):
@@ -34,8 +35,8 @@ class OptimizationProblem(object):
         total_degree (int): The total degree of the optimization problem.
     """
 
-    def __init__(self, sga: SemigroupAlgebra = None,
-                 relations: list[SemigroupAlgebraElement] = None):
+    def __init__(self, sga: Optional[SemigroupAlgebra] = None,
+                 relations: Optional[list[SemigroupAlgebraElement]] = None) -> None:
         self.sga: SemigroupAlgebra = sga
         self.relations = relations
         self.semigroup: CommutativeSemigroup = CommutativeSemigroup([])
@@ -59,7 +60,7 @@ class OptimizationProblem(object):
         self.newton_polytope = None
         self.vertices = None
 
-    def set_objective(self, obj: SemigroupAlgebraElement):
+    def set_objective(self, obj: SemigroupAlgebraElement) -> None:
         """
         Sets the objective function for the optimization problem.
         
@@ -89,7 +90,7 @@ class OptimizationProblem(object):
         self.objective_degree = _degree(obj.LM())
         self.objective_half_degree = int(ceil(self.objective_degree / 2.))
 
-    def add_constraints(self, const: list[SemigroupAlgebraElement]):
+    def add_constraints(self, const: list[SemigroupAlgebraElement]) -> None:
         """
         Adds polynomial inequality or equality constraints to the optimization problem.
         
@@ -121,7 +122,7 @@ class OptimizationProblem(object):
             self.constraints_degree.append(exp_deg)
             self.constraints_half_degree.append(exp_half_deg)
 
-    def program_degree(self):
+    def program_degree(self) -> int:
         """
         Computes the overall degree of the optimization problem.
         
@@ -142,7 +143,7 @@ class OptimizationProblem(object):
             return dg
         return dg + 1
 
-    def analyse_program(self):
+    def analyse_program(self) -> None:
         """
         Performs structural analysis of the optimization problem's polynomial terms.
         
@@ -165,8 +166,18 @@ class OptimizationProblem(object):
             - objective_terms_with_even/odd_exponent: Objective terms by exponent parity
             - constraint_terms_with_even/odd_exponent: Constraint terms by exponent parity
         """
+        # Reset analysis buckets so repeated calls do not accumulate stale state.
+        self.objective_trms_with_positive_coefficient = []
+        self.objective_trms_with_negative_coefficient = []
+        self.objective_terms_with_even_exponent = []
+        self.objective_terms_with_odd_exponent = []
+        self.constraint_trms_with_positive_coefficient = []
+        self.constraint_trms_with_negative_coefficient = []
+        self.constraint_terms_with_even_exponent = []
+        self.constraint_terms_with_odd_exponent = []
+
         # Separate terms of objective and constraints based on the sign of their coefficients
-        for trm in self.objective:
+        for trm in self.objective.content:
             if trm[0] > 0:
                 self.objective_trms_with_positive_coefficient.append(trm)
             else:
@@ -188,7 +199,7 @@ class OptimizationProblem(object):
                     self.constraint_terms_with_odd_exponent.append(trm)
 
     @staticmethod
-    def square_exponent(xpnt: SemigroupAlgebraElement):
+    def square_exponent(xpnt: Any) -> bool:
         """
         Determines if a monomial has only even exponents (is a perfect square).
         
@@ -214,7 +225,7 @@ class OptimizationProblem(object):
         return True
 
     @staticmethod
-    def has_symbol(symb: str, mono: SemigroupAlgebraElement):
+    def has_symbol(symb: str, mono: SemigroupAlgebraElement) -> tuple[bool, int]:
         """
         Searches for a specific variable (symbol) in a monomial and returns its position.
         
@@ -243,7 +254,7 @@ class OptimizationProblem(object):
         return False, -1
 
     @staticmethod
-    def omega(xprsn: SemigroupAlgebraElement, deg: int):  # Add the term for 0
+    def omega(xprsn: SemigroupAlgebraElement, deg: int) -> list[tuple[float, Any]]:  # Add the term for 0
         """
         Extracts terms from a polynomial that don't match a specific univariate degree pattern.
         
@@ -277,7 +288,7 @@ class OptimizationProblem(object):
                 terms.append(trm)
         return terms
 
-    def delta(self, xprsn: SemigroupAlgebraElement, deg: int):
+    def delta(self, xprsn: SemigroupAlgebraElement, deg: int) -> dict[str, set]:
         """
         Identifies problematic terms in polynomial expressions for relaxation construction.
         
@@ -310,7 +321,7 @@ class OptimizationProblem(object):
                     terms['<d'].add(trm[1])
         return terms
 
-    def delta_vertex(self, xprsn: SemigroupAlgebraElement, vertices: list):
+    def delta_vertex(self, xprsn: SemigroupAlgebraElement, vertices: list) -> None:
         """
         Computes delta relative to Newton polytope vertices (currently unimplemented).
         
@@ -327,9 +338,9 @@ class OptimizationProblem(object):
         Returns:
             None (not yet implemented)
         """
-        pass
+        raise NotImplementedError("delta_vertex is not implemented yet")
 
-    def mono2ord_tuple(self, mono: SemigroupAlgebraElement):
+    def mono2ord_tuple(self, mono: Any) -> tuple[int, ...]:
         """
         Converts a monomial from semigroup representation to a tuple of exponents.
         
@@ -352,14 +363,28 @@ class OptimizationProblem(object):
         """
         n = len(self.semigroup.generators)
         if isinstance(mono, (int, float)):
-            return [0] * n
-        od_mono = OrderedDict(mono.content[0][1].array_form)
+            return tuple([0] * n)
+
+        if isinstance(mono, AtomicSGElement):
+            array_form = mono.content[0][1].array_form
+        elif isinstance(mono, SemigroupAlgebraElement):
+            if not mono.content:
+                return tuple([0] * n)
+            if len(mono.content) > 1:
+                raise ValueError("mono2ord_tuple expects a monomial (single-term expression)")
+            array_form = mono.content[0][1].array_form
+        elif hasattr(mono, 'array_form'):
+            array_form = mono.array_form
+        else:
+            raise TypeError("mono2ord_tuple expects a scalar, monomial, or semigroup expression")
+
+        od_mono = OrderedDict(array_form)
         xpnt = []
-        for _ in self.sga.semigroup.generators:
-            xpnt.append(od_mono.get(_.ext_rep[0], 0))
+        for gen in self.semigroup.generators:
+            xpnt.append(od_mono.get(gen.ext_rep[0], 0))
         return tuple(xpnt)
 
-    def tuple2mono(self, xpnt):
+    def tuple2mono(self, xpnt: Sequence[int]):
         """
         Converts a tuple of exponents back to a monomial in semigroup representation.
         
@@ -386,7 +411,7 @@ class OptimizationProblem(object):
             idx += 1
         return elm
 
-    def newton(self):
+    def newton(self) -> None:
         """
         Computes the Newton polytope of the optimization problem.
         
@@ -417,7 +442,7 @@ class OptimizationProblem(object):
         self.vertices = [list(_) for _ in points[self.newton_polytope.vertices]]
         self.vertices.sort(reverse=False)
 
-    def in_newton(self, point):
+    def in_newton(self, point: Sequence[float]) -> bool:
         """
         Tests whether a point lies inside the Newton polytope.
         
@@ -440,7 +465,7 @@ class OptimizationProblem(object):
         tri = Delaunay(self.vertices)
         return tri.find_simplex(point) >= 0
 
-    def linear_combination(self, point):
+    def linear_combination(self, point: Sequence[float]) -> np.ndarray:
         """
         Expresses a point as a linear combination of Newton polytope vertices.
         
@@ -470,7 +495,7 @@ class OptimizationProblem(object):
         coeffs = np.linalg.solve(A, point)
         return coeffs
 
-    def convex_combination(self, point):
+    def convex_combination(self, point: Sequence[float]) -> Optional[np.ndarray]:
         """
         Finds the representation of a point as a convex combination of Newton polytope vertices.
         
@@ -521,7 +546,7 @@ class OptimizationProblem(object):
         else:
             return None
 
-    def to_sympy(self, expr: SemigroupAlgebraElement, sym_map: dict):
+    def to_sympy(self, expr: SemigroupAlgebraElement, sym_map: dict[str, Symbol]):
         """
         Converts a SemigroupAlgebraElement polynomial to a SymPy symbolic expression.
         
@@ -546,11 +571,13 @@ class OptimizationProblem(object):
         sympy_expr = sympify(0)
         for coeff, mono in expr.content:
             term = sympify(coeff)
-            if not mono.array_form: # constant term
+            if not mono.array_form:  # constant term
                 sympy_expr += term
                 continue
             for gen, exp in mono.array_form:
                 sym = sym_map.get(gen.name)
+                if sym is None:
+                    raise KeyError(f"Missing symbol mapping for '{gen.name}'")
                 term *= (sym ** exp)
             sympy_expr += term
         return sympy_expr

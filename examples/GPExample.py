@@ -38,7 +38,7 @@ if __name__ == '__main__':
     gp.H = np.array([[1, 0], [-1, 1]])
     
     print(gp.H)
-    
-    gp.solve()
-    
+    print("================================")
+    print(gp.solve())
+    print("================================")
     print(gp.solution)
