@@ -2,6 +2,15 @@
 Revision History
 =============================
 
+**Version 1.2.5 (Mar 12, 2026)**
+
+	- Expanded documentation from SDP-only emphasis to a unified POP guide covering SDP, geometric programming, and SONC relaxations.
+	- Added new chapters for architecture, group-ring foundations, optimization problem representation, geometric relaxations, SONC relaxations, and runnable examples.
+	- Added method-selection guidance, dependency matrix, and solver troubleshooting notes.
+	- Added explicit theory-to-code mapping for constrained SONC families (Section 3 style equations) and geometric lower-bound construction (Section 4 equation mapping).
+	- Expanded API documentation coverage in Sphinx for ``program``, ``grouprings``, ``geometric``, and ``sonc`` modules.
+	- Updated Sphinx configuration for modern toolchain compatibility and warning-free documentation builds.
+
 **Version 1.2.2 (Mar 15, 2017)**
 
 	- Serialization and pickling: Saving the latest state of the program on break which can be retrieved later and resume.
