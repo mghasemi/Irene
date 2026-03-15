@@ -7,57 +7,9 @@ Appendix
 pyProximation
 ===================
 
-`pyProximation <https://github.com/mghasemi/pyProximation>`_ is a python package
-that was originally developed to solve integro-differential equations based on
-approximation on Hilbert function spaces. Thus, it has basic functionalities for
-computations via measures, generating orthonormal systems of functions from a given
-basis, interpolation and collocation method as well as some graphics.
-
-For the purpose of this package, we are mainly interested in finding reliable 
-approximations of certain functions. This can be done via ``pyProximation.OrthSystem``.
-The relevant documentation can be found
-`http://pyproximation.readthedocs.io <http://pyproximation.readthedocs.io/en/latest/hilbert.html#orthsystem>`_.
-
-Suppose that we want to approximate a given function :math:`f(x)` with Chebyshev polynomials of a 
-certain degree :math:`n`. Chebyshev polynomials are elements of the orthonormal basis
-obtained from Gram-Schmidt process applied to a monomial basis where the inner product 
-is defined by 
-
-.. math::
-	\langle p, q\rangle = \int_{-1}^1 p\cdot q~d\mu.
-
-In this case :math:`d\mu=\frac{dx}{\sqrt{1-x^2}}`.
-The following code, first generate such an orthonormal basis and then extracts 
-coefficients of the approximation and then the Chebyshev approximation::
-
-	from sympy import *
-	from numpy import sqrt
-	from pyProximation import Measure, OrthSystem
-	# the symbolic variable
-	x = Symbol('x')
-	# set a limit to the order
-	n = 6
-	# define the measure
-	D = [(-1, 1)]
-	w = lambda x: 1./sqrt(1. - x**2)
-	M = Measure(D, w)
-	S = OrthSystem([x], D, 'sympy')
-	# link the measure to S
-	S.SetMeasure(M)
-	# set B = {1, x, x^2, ..., x^n}
-	B = S.PolyBasis(n)
-	# link B to S
-	S.Basis(B)
-	# generate the orthonormal basis
-	S.FormBasis()
-	m = len(S.OrthBase)
-	# set f(x) = sin(x)e^x
-	f = sin(x)*exp(x)
-	# extract the coefficients
-	Coeffs = S.Series(f)
-	# form the approximation
-	f_aprx = sum([S.OrthBase[i]*Coeffs[i] for i in range(m)])
-	print f_aprx
+`pyProximation <https://github.com/mghasemi/pyProximation>`_ is a companion library
+for function approximation in Hilbert spaces. Full documentation is included in this
+manual — see the :doc:`pyProximation <pyprox_intro>` section.
 
 .. _pyOptRef:
 

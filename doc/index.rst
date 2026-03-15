@@ -23,6 +23,21 @@ Contents:
    benchmarks
    examples
    code
+
+.. toctree::
+   :maxdepth: 2
+   :caption: pyProximation
+
+   pyprox_intro
+   pyprox_measures
+   pyprox_hilbert
+   pyprox_interpolation
+   pyprox_code
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Reference
+
    rev
    todo
    appendix

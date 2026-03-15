@@ -8,10 +8,10 @@ constructing a series of semidefinite relaxations."""
 
 setup(
     name='Irene',
-    version='1.2.3',
+    version='1.2.5',
     author='Mehdi Ghasemi',
     author_email='mehdi.ghasemi@gmail.com',
-    packages=['Irene'],
+    packages=['Irene', 'pyProximation'],
     url='https://github.com/mghasemi/Irene.git',
     license='MIT License',
     description=Description,
