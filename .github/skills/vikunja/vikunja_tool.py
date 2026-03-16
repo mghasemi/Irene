@@ -1,6 +1,8 @@
 import argparse
+from datetime import datetime, timezone
 import json
 import os
+import re
 import sys
 
 import requests
@@ -12,6 +14,9 @@ TOKEN = os.getenv("VIKUNJA_TOKEN", "tk_6118b79f059dc5374f4819aa7e4bd3b1ee6ad190"
 
 class VikunjaError(RuntimeError):
     pass
+
+
+ZERO_TIME_PREFIX = "0001-01-01T00:00:00"
 
 
 def _parse_response(response):
@@ -161,17 +166,207 @@ def get_task(task_id):
     return _request("GET", f"/api/v1/tasks/{task_id}")
 
 
-def create_task(project_id, title, description=None, due_date=None, dry_run=False):
+def list_labels():
+    return _request("GET", "/api/v1/labels")
+
+
+def create_label(title, description=None, hex_color=None, dry_run=False):
+    payload = {"title": title}
+    if description:
+        payload["description"] = description
+    if hex_color:
+        payload["hex_color"] = hex_color
+    return _request("PUT", "/api/v1/labels", payload=payload, dry_run=dry_run)
+
+
+def attach_label(task_id, label_id, dry_run=False):
+    return _request(
+        "PUT",
+        f"/api/v1/tasks/{task_id}/labels",
+        payload={"label_id": label_id},
+        dry_run=dry_run,
+    )
+
+
+def create_task_relation(task_id, other_task_id, relation_kind, dry_run=False):
+    return _request(
+        "PUT",
+        f"/api/v1/tasks/{task_id}/relations",
+        payload={
+            "task_id": task_id,
+            "other_task_id": other_task_id,
+            "relation_kind": relation_kind,
+        },
+        dry_run=dry_run,
+    )
+
+
+def _normalize_due_date(due_date):
+    if due_date is None:
+        return None
+
+    value = due_date.strip()
+    if not value:
+        return None
+
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        return f"{value}T23:59:00Z"
+
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise VikunjaError(
+            "Invalid due date. Use YYYY-MM-DD or an ISO-8601 datetime, "
+            "for example 2026-03-22 or 2026-03-22T23:59:00Z."
+        ) from exc
+
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    else:
+        parsed = parsed.astimezone(timezone.utc)
+
+    return parsed.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _normalize_existing_due_date(due_date):
+    if not due_date or str(due_date).startswith(ZERO_TIME_PREFIX):
+        return None
+    return _normalize_due_date(str(due_date))
+
+
+def _find_label_by_title(title):
+    labels = list_labels()
+    if not isinstance(labels, list):
+        raise VikunjaError("Unexpected response while listing labels.")
+
+    title_norm = title.strip().lower()
+    for label in labels:
+        if str(label.get("title", "")).strip().lower() == title_norm:
+            return label
+    return None
+
+
+def _ensure_task_labels(task_id, labels, dry_run=False):
+    if not labels:
+        return []
+
+    existing_titles = set()
+    if not dry_run:
+        task = get_task(task_id)
+        if not isinstance(task, dict):
+            raise VikunjaError("Unexpected response while reading task labels.")
+        existing_titles = {
+            str(label.get("title", "")).strip().lower()
+            for label in (task.get("labels") or [])
+        }
+
+    created_or_found = []
+    for raw_label in labels:
+        title = raw_label.strip()
+        if not title:
+            continue
+        title_norm = title.lower()
+
+        if title_norm in existing_titles:
+            continue
+
+        label = _find_label_by_title(title)
+        if label is None:
+            label = create_label(title, dry_run=dry_run)
+
+        attach_label(task_id, int(label["id"]), dry_run=dry_run)
+        created_or_found.append(label)
+        existing_titles.add(title_norm)
+
+    return created_or_found
+
+
+def create_task(
+    project_id,
+    title,
+    description=None,
+    due_date=None,
+    priority=None,
+    labels=None,
+    parent_task_id=None,
+    dry_run=False,
+):
     payload = {"title": title}
     if description:
         payload["description"] = description
     if due_date:
-        payload["due_date"] = due_date
-    return _request("PUT", f"/api/v1/projects/{project_id}/tasks", payload=payload, dry_run=dry_run)
+        payload["due_date"] = _normalize_due_date(due_date)
+    if priority is not None:
+        payload["priority"] = priority
+
+    created = _request(
+        "PUT",
+        f"/api/v1/projects/{project_id}/tasks",
+        payload=payload,
+        dry_run=dry_run,
+    )
+
+    dry_run_result = {"task_request": created} if dry_run else None
+
+    if parent_task_id is not None:
+        if dry_run:
+            dry_run_result["relation_request"] = create_task_relation(
+                int(parent_task_id),
+                0,
+                "subtask",
+                dry_run=True,
+            )
+        else:
+            task_id = created.get("id") if isinstance(created, dict) else None
+            if task_id is None:
+                raise VikunjaError("Task was created but no task id was returned for relation attachment.")
+            create_task_relation(int(parent_task_id), int(task_id), "subtask", dry_run=False)
+
+    if labels:
+        if dry_run:
+            dry_run_result["label_requests"] = _ensure_task_labels(0, labels, dry_run=True)
+            return dry_run_result
+
+        task_id = created.get("id") if isinstance(created, dict) else None
+        if task_id is None:
+            raise VikunjaError("Task was created but no task id was returned for label attachment.")
+        _ensure_task_labels(task_id, labels, dry_run=dry_run)
+        if not dry_run:
+            created = get_task(task_id)
+
+    if dry_run:
+        return dry_run_result
+
+    return created
 
 
-def update_task(task_id, title=None, description=None, done=None, due_date=None, project_id=None, dry_run=False):
-    payload = {}
+def update_task(
+    task_id,
+    title=None,
+    description=None,
+    done=None,
+    due_date=None,
+    project_id=None,
+    priority=None,
+    labels=None,
+    dry_run=False,
+):
+    current = get_task(task_id)
+    if not isinstance(current, dict):
+        raise VikunjaError("Unexpected response while reading task before update.")
+
+    payload = {
+        "title": current.get("title", ""),
+        "description": current.get("description") or "",
+        "done": current.get("done", False),
+        "project_id": current.get("project_id"),
+        "priority": current.get("priority", 0),
+    }
+
+    current_due_date = _normalize_existing_due_date(current.get("due_date"))
+    if current_due_date is not None:
+        payload["due_date"] = current_due_date
+
     if title is not None:
         payload["title"] = title
     if description is not None:
@@ -179,14 +374,25 @@ def update_task(task_id, title=None, description=None, done=None, due_date=None,
     if done is not None:
         payload["done"] = done
     if due_date is not None:
-        payload["due_date"] = due_date
+        normalized_due_date = _normalize_due_date(due_date)
+        if normalized_due_date is None:
+            payload.pop("due_date", None)
+        else:
+            payload["due_date"] = normalized_due_date
     if project_id is not None:
         payload["project_id"] = project_id
+    if priority is not None:
+        payload["priority"] = priority
 
     if not payload:
         raise VikunjaError("No fields provided for task update.")
 
-    return _request("POST", f"/api/v1/tasks/{task_id}", payload=payload, dry_run=dry_run)
+    updated = _request("POST", f"/api/v1/tasks/{task_id}", payload=payload, dry_run=dry_run)
+    if labels:
+        _ensure_task_labels(task_id, labels, dry_run=dry_run)
+        if not dry_run:
+            updated = get_task(task_id)
+    return updated
 
 
 def search_tasks(query, project_id=None):
@@ -217,6 +423,24 @@ def _parse_bool(value):
     if normalized in {"0", "false", "no", "n", "off"}:
         return False
     raise argparse.ArgumentTypeError("Boolean value expected: true/false")
+
+
+def _parse_priority(value):
+    try:
+        priority = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("Priority must be an integer between 0 and 5.") from exc
+
+    if priority < 0 or priority > 5:
+        raise argparse.ArgumentTypeError("Priority must be an integer between 0 and 5.")
+    return priority
+
+
+def _parse_labels(value):
+    labels = [label.strip() for label in value.split(",") if label.strip()]
+    if not labels:
+        raise argparse.ArgumentTypeError("Labels must be a comma-separated list like theory,review.")
+    return labels
 
 
 def _build_parser():
@@ -276,12 +500,18 @@ def _build_parser():
     task_create.add_argument("--title", required=True)
     task_create.add_argument("--description")
     task_create.add_argument("--due-date")
+    task_create.add_argument("--priority", type=_parse_priority)
+    task_create.add_argument("--labels", type=_parse_labels)
+    task_create.add_argument("--parent-task-id", type=int)
 
     task_log = task_sub.add_parser("log", help="Log a task (alias of create)")
     task_log.add_argument("--project-id", type=int, required=True)
     task_log.add_argument("--title", required=True)
     task_log.add_argument("--description")
     task_log.add_argument("--due-date")
+    task_log.add_argument("--priority", type=_parse_priority)
+    task_log.add_argument("--labels", type=_parse_labels)
+    task_log.add_argument("--parent-task-id", type=int)
 
     task_update = task_sub.add_parser("update", help="Update a task")
     task_update.add_argument("task_id", type=int)
@@ -290,6 +520,8 @@ def _build_parser():
     task_update.add_argument("--done", type=_parse_bool)
     task_update.add_argument("--due-date")
     task_update.add_argument("--project-id", type=int)
+    task_update.add_argument("--priority", type=_parse_priority)
+    task_update.add_argument("--labels", type=_parse_labels)
 
     task_complete = task_sub.add_parser("complete", help="Mark a task as done")
     task_complete.add_argument("task_id", type=int)
@@ -325,6 +557,9 @@ def _dispatch(args):
                 args.title,
                 args.description,
                 args.due_date,
+                args.priority,
+                args.labels,
+                args.parent_task_id,
                 dry_run=args.dry_run,
             )
         if args.action == "update":
@@ -335,6 +570,8 @@ def _dispatch(args):
                 done=args.done,
                 due_date=args.due_date,
                 project_id=args.project_id,
+                priority=args.priority,
+                labels=args.labels,
                 dry_run=args.dry_run,
             )
         if args.action == "complete":

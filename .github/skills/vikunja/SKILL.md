@@ -54,6 +54,24 @@ python3 {baseDir}/vikunja_tool.py tasks list --project-id 12
 python3 {baseDir}/vikunja_tool.py tasks create --project-id 12 --title "Write summary"
 ```
 
+Date-only due dates are accepted and normalized automatically:
+
+```bash
+python3 {baseDir}/vikunja_tool.py tasks create --project-id 12 --title "Write summary" --due-date 2026-03-22
+```
+
+Priority and labels are supported directly:
+
+```bash
+python3 {baseDir}/vikunja_tool.py tasks create --project-id 12 --title "Write summary" --priority 4 --labels "writing,review"
+```
+
+Subtasks can be created under an existing parent task:
+
+```bash
+python3 {baseDir}/vikunja_tool.py tasks create --project-id 12 --title "Extract theorem list" --parent-task-id 45
+```
+
 ### Log a task (alias for create)
 ```bash
 python3 {baseDir}/vikunja_tool.py tasks log --project-id 12 --title "Capture meeting notes"
@@ -62,6 +80,13 @@ python3 {baseDir}/vikunja_tool.py tasks log --project-id 12 --title "Capture mee
 ### Update a task
 ```bash
 python3 {baseDir}/vikunja_tool.py tasks update 45 --done true
+```
+
+Task updates preserve existing title, description, due date, project, and priority unless you explicitly override them:
+
+```bash
+python3 {baseDir}/vikunja_tool.py tasks update 45 --priority 5
+python3 {baseDir}/vikunja_tool.py tasks update 45 --labels "theory,review"
 ```
 
 ### Complete a task
