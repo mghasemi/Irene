@@ -7,3 +7,16 @@ Irene.egg-info/top_level.txt
 Irene.egg-info/requires.txt
 AN APPROACH TO CONSTRAINED POLYNOMIAL OPTIMIZATION.pdf
 Lower bounds for Polynomials on a basic semialgebraic set.pdf
+.vscode/*.*
+__pycache__/*.*
+*.pyc
+*.pyo
+*.pyd
+*.egg-info
+*.egg
+dist
+build
+*.log
+*.bak
+*.swp
+*.dist-info
