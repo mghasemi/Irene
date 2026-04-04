@@ -25,7 +25,7 @@ Status vocabulary:
 | ID | Statement (short) | Current status | Dependencies | Primary source | Next action |
 |---|---|---|---|---|---|
 | L-T4 | M_{2d,0}(X,\alpha) is PSD D-T and SOBS | proved | L-T2, known SOBS result in GM01 | mean_polynomials_main.tex (Prop. prop:M_2d_0_SOBS) | Add compact proof bridge sentence from D-T to SOBS citation context. |
-| L-T5 | M_{2d,p} is SOS for d in {1,2,3} and allowed p | draft proof | L-T4, Hilbert cases, computational confirmations | mean_polynomials_main.tex (Thm. thm:M_2d_p_SOS) | Split theorem proof into case lemmas and mark computationally-assisted steps explicitly. |
+| L-T5 | M_{2d,p} is SOS for d in {1,2,3} and allowed p | proved | L-T4, Hilbert cases, computational confirmations | mean_polynomials_main.tex (Thm. thm:M_2d_p_SOS) | Keep computationally-assisted steps explicitly labeled with Irene citation provenance. |
 | L-T7 | Choi-Lam/Robinson transformed forms as separating examples beyond SOSONC | proved | Transformation identity, SONC non-invariance under linear maps, supporting citations | mean_polynomials_main.tex (Prop. prop:ChoiLamRobinson and post-proof paragraph in Section s05) | No further action required; PSD_Mean removed. |
 
 ## GMP Linkage and Extended Objectives
