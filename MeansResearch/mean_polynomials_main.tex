@@ -1,3 +1,5 @@
+% !TeX root = mean_polynomials_main.tex
+% !TeX program = pdflatex
 \documentclass{article}
 \usepackage{amsmath}
 \usepackage{amsfonts}
@@ -240,15 +242,17 @@ Thus, if $|f_\beta| \le \prod (\frac{f_{\alpha(j)}}{\lambda_j})^{\lambda_j}$, it
 \end{proof}
 
 \begin{definition}\label{def:SONC}
+A polynomial whose coefficients satisfy the condition in Theorem~\ref{thm:Circuit_PSD} is called a 
+\textbf{nonnegative circuit polynomial}.
 The \textbf{SONC cone} $\mathcal{C}_{n,2d}$ is the conic hull of all nonnegative circuit polynomials of 
-degree $2d$ in $n$ variables:
-\[
-   \mathcal{C}_{n,2d} := \mathrm{cone}\bigl\{\,f \mid f \text{ is a nonnegative circuit polynomial of degree } 
-   2d \text{ in } \mathbb{R}[X_1,\dots,X_n]\,\bigr\}.
-\]
-A polynomial $p \in \mathcal{C}_{n,2d}$ if and only if $p$ can be written as a finite sum of nonnegative 
-circuit polynomials satisfying the criteria of Theorem~\ref{thm:Circuit_PSD}.
+degree $2d$ in $n$ variables.
 \end{definition}
+
+\begin{remark}\label{rem:SONCinMEANS}
+From the proof of the theorem \ref{thm:Circuit_PSD}, it is evident that every nonnegative circuit polynomial 
+can be expressed as a mean polynomial of the form $M_{1,0}(Y,w)$, where 
+$Y_j = \frac{f_{\alpha(j)}}{\lambda_j} X^{\alpha(j)}$ and $w_j = \lambda_j$.
+\end{remark}
 
 \subsection{Relation between Diagonal-minus-Tail and Circuit Forms}
 
@@ -448,7 +452,7 @@ form in $\mathcal{P}_{4,4} \setminus \Sigma_{4,4}$.
 
 We now establish the representation of these forms as instances of mean polynomials $M_{q,p}$.
 
-\begin{proposition}
+\begin{proposition}\label{prop:ChoiLamRobinson}
 The Choi-Lam form $Q$ and the Robinson form $\hat{R}$ can be expressed as mean polynomials of order $1$ and $0$ 
 (arithmetic minus geometric means).
 \end{proposition}
@@ -469,7 +473,7 @@ we derive:
 \]
 where 
 \[
-    (\hat{X}, \hat{Y}, \hat{Z}, \hat{W}) = \frac{1}{2}(X+W-Y-Z, \; Y+W-X-Z, \; Z+W-X-Y, \; W-(X+Y+Z))
+    (\hat{X}, \hat{Y}, \hat{Z}, \hat{W}) = \frac{1}{2}(X+W-Y-Z, \; Y+W-X-Z, \; Z+W-X-Y, \; W-(X+Y+Z)).
 \]
 \end{proof}
 

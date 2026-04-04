@@ -1,7 +1,7 @@
 # Theorem Ledger (Phase 2 Start)
 
 Date initialized: 2026-04-03
-Base draft: means02.tex
+Base draft: mean_polynomials_main.tex
 
 Status vocabulary:
 - proved
@@ -14,19 +14,19 @@ Status vocabulary:
 
 | ID | Statement (short) | Current status | Dependencies | Primary source | Next action |
 |---|---|---|---|---|---|
-| L-T1 | Power-mean monotonicity for p < q and induced nonnegativity route | proved | Jensen inequality setup | means02.tex (Prop. prop:Monotonicity) | Normalize notation and tighten proof wording for final version. |
-| L-T2 | D-T PSD criterion via AM-GM coefficient inequality | proved | L-T3 (as special case), weighted AM-GM | means02.tex (Thm. thm:DT_PSD) | Keep as corollary-style presentation under circuit framework. |
-| L-T3 | Circuit PSD criterion via convex-combination structure | proved | Weighted AM-GM, convex combination assumptions | means02.tex (Thm. thm:Circuit_PSD) | Add explicit corollary pointer to L-T2 in final manuscript numbering. |
-| L-D1 | SONC cone definition \mathcal{C}_{n,2d} used in the manuscript | proved | L-T3 | means02.tex (Def. def:SONC) | Keep as canonical definition and align phrasing with SONC literature citations. |
-| L-T6 | SONC generation claim via M_{1,0}(Y,\lambda) family | draft proof | L-T3, L-D1, exact theorem statement scope | source-of-truth T6 marker | Write explicit theorem body or downgrade to roadmap statement if not proved in full. |
+| L-T1 | Power-mean monotonicity for p < q and induced nonnegativity route | proved | Jensen inequality setup | mean_polynomials_main.tex (Prop. prop:Monotonicity) | Normalize notation and tighten proof wording for final version. |
+| L-T2 | D-T PSD criterion via AM-GM coefficient inequality | proved | L-T3 (as special case), weighted AM-GM | mean_polynomials_main.tex (Thm. thm:DT_PSD) | Keep as corollary-style presentation under circuit framework. |
+| L-T3 | Circuit PSD criterion via convex-combination structure | proved | Weighted AM-GM, convex combination assumptions | mean_polynomials_main.tex (Thm. thm:Circuit_PSD) | Add explicit corollary pointer to L-T2 in final manuscript numbering. |
+| L-D1 | SONC cone definition \mathcal{C}_{n,2d} used in the manuscript | proved | L-T3 | mean_polynomials_main.tex (Def. def:SONC) | Keep as canonical definition and align phrasing with SONC literature citations. |
+| L-T6 | SONC generation claim via M_{1,0}(Y,\lambda) family | proved | L-T3, L-D1, Remark \ref{rem:SONCinMEANS} in base draft | mean_polynomials_main.tex (Def. def:SONC and Rem. rem:SONCinMEANS) | Synchronize the same wording into PSD_Mean and reconciliation notes. |
 
 ## SOS/SONC/Mean Inclusion-Separation Thread
 
 | ID | Statement (short) | Current status | Dependencies | Primary source | Next action |
 |---|---|---|---|---|---|
-| L-T4 | M_{2d,0}(X,\alpha) is PSD D-T and SOBS | proved | L-T2, known SOBS result in GM01 | means02.tex (Prop. prop:M_2d_0_SOBS) | Add compact proof bridge sentence from D-T to SOBS citation context. |
-| L-T5 | M_{2d,p} is SOS for d in {1,2,3} and allowed p | draft proof | L-T4, Hilbert cases, computational confirmations | means02.tex (Thm. thm:M_2d_p_SOS) | Split theorem proof into case lemmas and mark computationally-assisted steps explicitly. |
-| L-T7 | Choi-Lam/Robinson transformed forms as separating examples beyond SOSONC | draft proof | Transformation identity, SONC non-invariance under linear maps | means02.tex (Section s05) | Convert current narrative proof into theorem-proposition-corollary chain with explicit assumptions. |
+| L-T4 | M_{2d,0}(X,\alpha) is PSD D-T and SOBS | proved | L-T2, known SOBS result in GM01 | mean_polynomials_main.tex (Prop. prop:M_2d_0_SOBS) | Add compact proof bridge sentence from D-T to SOBS citation context. |
+| L-T5 | M_{2d,p} is SOS for d in {1,2,3} and allowed p | draft proof | L-T4, Hilbert cases, computational confirmations | mean_polynomials_main.tex (Thm. thm:M_2d_p_SOS) | Split theorem proof into case lemmas and mark computationally-assisted steps explicitly. |
+| L-T7 | Choi-Lam/Robinson transformed forms as separating examples beyond SOSONC | proved | Transformation identity, SONC non-invariance under linear maps, supporting citations | mean_polynomials_main.tex (Prop. prop:ChoiLamRobinson and post-proof paragraph in Section s05) | Synchronize the same wording into PSD_Mean and reconciliation notes. |
 
 ## GMP Linkage and Extended Objectives
 
