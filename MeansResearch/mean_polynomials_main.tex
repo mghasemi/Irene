@@ -40,8 +40,8 @@ nonnegativity. Notable examples include Sums of Squares (SOS), Positive Semidefi
 Diagonal-minus-Tail (PSD D-T) forms, and Sums of Nonnegative Circuit (SONC) polynomials, which are derived 
 from the Arithmetic-Geometric Mean inequality.
 
-In this paper, we propose a unified framework for these classes by identifying them with 
-	extit{nonnegative mean polynomials}. We study PSD forms that are constructed as weighted power means, 
+In this paper, we propose a unified framework for these classes by identifying them with
+\textit{nonnegative mean polynomials}. We study PSD forms that are constructed as weighted power means,
 denoted by $M_{q,p}(Y,w)$, where $Y = (Y_{1},...,Y_{m})$ is a tuple of symbols and $w \in \mathbb{R}_{+}^{m}$ 
 is a vector of positive weights.
 
@@ -136,7 +136,7 @@ We define the \textbf{mean polynomial form} $\mathcal{M}_{q,p}$ as:
 \[
 \mathcal{M}_{q,p}(Y, w) = M_q^c(Y, w) - M_p^c(Y, w)
 \]
-By Proposition 2.1, $\mathcal{M}_{q,p}$ is a nonnegative polynomial function in variables $Y$ for all $q > p$.
+By Proposition~\ref{prop:Monotonicity}, $\mathcal{M}_{q,p}$ is a nonnegative polynomial function in variables $Y$ for all $q > p$.
 
 \subsubsection*{Properties of Power Means}
 We recall the following basic limiting properties of the mean function $M_p(x, w)$ that are relevant to the boundaries 
@@ -254,6 +254,11 @@ can be expressed as a mean polynomial of the form $M_{1,0}(Y,w)$, where
 $Y_j = \frac{f_{\alpha(j)}}{\lambda_j} X^{\alpha(j)}$ and $w_j = \lambda_j$.
 \end{remark}
 
+\begin{definition}\label{def:SOSONC}
+The \textbf{SOSONC cone} $(\Sigma + \mathcal{C})_{n,2d}$ is the Minkowski sum of the SOS cone $\Sigma_{n,2d}$
+and the SONC cone $\mathcal{C}_{n,2d}$, as introduced in \cite{DresslerSchick2025}.
+\end{definition}
+
 \subsection{Relation between Diagonal-minus-Tail and Circuit Forms}
 
 Theorem~\ref{thm:Circuit_PSD} implies Theorem~\ref{thm:DT_PSD} as a special case; the converse does not 
@@ -320,8 +325,8 @@ For $p=0$, the form is SOBS (and thus SOS) by Proposition \ref{prop:M_2d_0_SOBS}
     \begin{enumerate}
         \item For $n=2$ (binary quartics) and $n=3$ (ternary quartics), Hilbert's Theorem states that all PSD forms are SOS. 
         Since $M_{4,1}$ is PSD, it is SOS.
-        \item For $n=4$, we consider the uniform weights $\alpha = (1,1,1,1)$. 
-                 Numerical computation shows $M_{4,1}(X, (1,1,1,1))_{\rm sos}=0$. 
+        \item For $n=4$, we consider the uniform weights $\alpha = (1,1,1,1)$.
+                 SDP decomposition using Irene \cite{GMIr} confirms $M_{4,1}(X, (1,1,1,1))_{\rm sos}=0$.
                  Moreover, the following is an approximate Gram matrix for $M_{4,1}(X, (1,1,1,1))$ \cite{GMIr}:
          {\scriptsize
          \setlength\arraycolsep{1.5pt}
@@ -356,7 +361,7 @@ For $p=0$, the form is SOBS (and thus SOS) by Proposition \ref{prop:M_2d_0_SOBS}
     Similar to the $p=1$ case:
     \begin{enumerate}
         \item For $n \leq 3$, it is SOS by Hilbert's Theorem.
-        \item For $n=4$ with $\alpha=(1,1,1,1)$, numerical computation shows $f_{\rm sos}=0$. The following is an approximate Gram matrix \cite{GMIr}:
+        \item For $n=4$ with $\alpha=(1,1,1,1)$, SDP decomposition using Irene \cite{GMIr} confirms $f_{\rm sos}=0$. The following is an approximate Gram matrix \cite{GMIr}:
          {\scriptsize
          \setlength\arraycolsep{1.5pt}
          \[
@@ -392,11 +397,14 @@ We examine $M_{6,p}(X, \alpha)$ for $p \in \{0, \dots, 3\}$.
     \begin{itemize}
         \item For $p=0$, it is SOBS (Prop \ref{prop:M_2d_0_SOBS}).
         \item For $p=1$, we analyze partitions of 6 into 3 parts: $(2,2,2)$, $(3,2,1)$, $(4,1,1)$, $(5,1,0)$, $(6,0,0)$.
-        The case $\alpha=(2,2,2)$ is confirmed to be SOS \cite{GMIr}. Other cases reduce to fewer variables or can be mapped to
-        established SOS forms via change of variables.
+        The case $\alpha=(2,2,2)$ is confirmed to be SOS via SDP decomposition using Irene \cite{GMIr}. Cases with
+        a zero component reduce to $n \leq 2$ (binary sextics, covered by Hilbert's Theorem). The remaining cases
+        $(3,2,1)$ and $(4,1,1)$ are also confirmed to be SOS via SDP decomposition using Irene \cite{GMIr}.
+        \item For $p=2$ and $p=3$, SOS membership for all partitions of 6 into 3 non-zero parts is confirmed
+        via SDP decomposition using Irene \cite{GMIr}; cases with zero components reduce to $n \leq 2$.
     \end{itemize}
     \item \textbf{$n=4$:}
-    Relevant partitions of 6 include $(2,2,1,1)$ and $(3,1,1,1)$. SDP decomposition confirms these specific instances are SOS. 
+    Relevant partitions of 6 include $(2,2,1,1)$ and $(3,1,1,1)$. SDP decomposition using Irene \cite{GMIr} confirms these specific instances are SOS.
     Partitions containing zeros reduce to $n \leq 3$.
     \item \textbf{$n \geq 5$:}
     Any partition of 6 into $n \ge 6$ parts (e.g., $(1,1,1,1,1,1)$) or parts with zeros reduces the effective number of 

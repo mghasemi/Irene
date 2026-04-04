@@ -18,7 +18,7 @@ Status vocabulary:
 | L-T2 | D-T PSD criterion via AM-GM coefficient inequality | proved | L-T3 (as special case), weighted AM-GM | mean_polynomials_main.tex (Thm. thm:DT_PSD) | Keep as corollary-style presentation under circuit framework. |
 | L-T3 | Circuit PSD criterion via convex-combination structure | proved | Weighted AM-GM, convex combination assumptions | mean_polynomials_main.tex (Thm. thm:Circuit_PSD) | Add explicit corollary pointer to L-T2 in final manuscript numbering. |
 | L-D1 | SONC cone definition \mathcal{C}_{n,2d} used in the manuscript | proved | L-T3 | mean_polynomials_main.tex (Def. def:SONC) | Keep as canonical definition and align phrasing with SONC literature citations. |
-| L-T6 | SONC generation claim via M_{1,0}(Y,\lambda) family | proved | L-T3, L-D1, Remark \ref{rem:SONCinMEANS} in base draft | mean_polynomials_main.tex (Def. def:SONC and Rem. rem:SONCinMEANS) | Synchronize the same wording into PSD_Mean and reconciliation notes. |
+| L-T6 | SONC generation claim via M_{1,0}(Y,\lambda) family | proved | L-T3, L-D1, Remark \ref{rem:SONCinMEANS} in base draft | mean_polynomials_main.tex (Def. def:SONC and Rem. rem:SONCinMEANS) | No further action required; PSD_Mean removed. |
 
 ## SOS/SONC/Mean Inclusion-Separation Thread
 
@@ -26,13 +26,13 @@ Status vocabulary:
 |---|---|---|---|---|---|
 | L-T4 | M_{2d,0}(X,\alpha) is PSD D-T and SOBS | proved | L-T2, known SOBS result in GM01 | mean_polynomials_main.tex (Prop. prop:M_2d_0_SOBS) | Add compact proof bridge sentence from D-T to SOBS citation context. |
 | L-T5 | M_{2d,p} is SOS for d in {1,2,3} and allowed p | draft proof | L-T4, Hilbert cases, computational confirmations | mean_polynomials_main.tex (Thm. thm:M_2d_p_SOS) | Split theorem proof into case lemmas and mark computationally-assisted steps explicitly. |
-| L-T7 | Choi-Lam/Robinson transformed forms as separating examples beyond SOSONC | proved | Transformation identity, SONC non-invariance under linear maps, supporting citations | mean_polynomials_main.tex (Prop. prop:ChoiLamRobinson and post-proof paragraph in Section s05) | Synchronize the same wording into PSD_Mean and reconciliation notes. |
+| L-T7 | Choi-Lam/Robinson transformed forms as separating examples beyond SOSONC | proved | Transformation identity, SONC non-invariance under linear maps, supporting citations | mean_polynomials_main.tex (Prop. prop:ChoiLamRobinson and post-proof paragraph in Section s05) | No further action required; PSD_Mean removed. |
 
 ## GMP Linkage and Extended Objectives
 
 | ID | Statement (short) | Current status | Dependencies | Primary source | Next action |
 |---|---|---|---|---|---|
-| L-G1 | Generalized moment/semigroup bridge integrated into mean-cone framework | conjecture | Proposal objective O1, final section architecture | Proposal PDF + source-of-truth O1 | Draft formal statement in new GMP section before claiming theorem status. |
+| L-G1 | Generalized moment/semigroup bridge integrated into mean-cone framework | deferred | Proposal objective O1, final section architecture | Proposal PDF + source-of-truth O1 | Explicitly deferred to follow-up paper; no content in current manuscript. |
 | L-G2 | Differential-algebra/KKT dependency handling integrated with mean framework | deferred | Follow-up paper scope decision | source-of-truth decision 6 | Keep explicitly out of current manuscript; seed follow-up theorem list. |
 
 ## Computationally Testable Conjectures

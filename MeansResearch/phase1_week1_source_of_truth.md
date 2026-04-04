@@ -33,15 +33,15 @@ Evidence quality note:
 | Symbol / Term | Working Meaning | Appears In | Normalization Proposal | Review Needed |
 |---|---|---|---|---|
 | M(q,p)(Y,w) / M_{q,p}(Y,w) | Weighted power-mean-derived form; core generator of nonnegative mean polynomials | Proposal, mean_polynomials_main TeX, PSD_Mean TeX, Cone07 PDF | Keep canonical form as M_{q,p}(Y,w) in manuscript text and tables | No |
-| M_{n,2d}(X,alpha) or calM_{n,2d}(X,alpha) | Cone/family of nonnegative mean n-variate forms of degree 2d | mean_polynomials_main TeX, PSD_Mean TeX, Cone07 PDF | Use calM_{n,2d} for cone object; reserve M_{2d,p} for specific family elements | Yes |
+| M_{n,2d}(X,alpha) or calM_{n,2d}(X,alpha) | Cone/family of nonnegative mean n-variate forms of degree 2d | mean_polynomials_main TeX, PSD_Mean TeX, Cone07 PDF | Use calM_{n,2d} for cone object; reserve M_{2d,p} for specific family elements | Resolved |
 | P_{n,2d} | Cone of PSD forms | mean_polynomials_main TeX, PSD_Mean TeX | Keep as calP_{n,2d} in final draft for consistency with cone notation | Low |
 | Sigma_{n,2d} | SOS cone | mean_polynomials_main TeX, PSD_Mean TeX | Keep as Sigma_{n,2d} | No |
 | C_{n,2d} | SONC cone | mean_polynomials_main TeX, PSD_Mean TeX | Keep as calC_{n,2d} | No |
-| SOSONC | Sum cone (Sigma + C)_{n,2d} | mean_polynomials_main TeX, PSD_Mean TeX, Cone07 PDF | Define once and freeze exact formatting in preliminaries | Yes |
+| SOSONC | Sum cone (Sigma + C)_{n,2d} | mean_polynomials_main TeX, PSD_Mean TeX, Cone07 PDF | Define once and freeze exact formatting in preliminaries | Resolved |
 | D-T form | Diagonal-minus-tail polynomial class | mean_polynomials_main TeX, PSD_Mean TeX, Cone07 PDF | Keep abbreviation D-T after first explicit definition | No |
 | SOBS | Sum of binomial squares | mean_polynomials_main TeX, PSD_Mean TeX | Keep SOBS as subclass marker in SOS section | No |
 | beta as convex combination of alpha(j) with lambdas | Circuit polynomial structural condition | mean_polynomials_main TeX, PSD_Mean TeX, Cone07 PDF | Keep this as common template theorem preamble | No |
-| Q (Choi-Lam), Rhat (Robinson transform) | Separating examples beyond SOSONC | mean_polynomials_main TeX, PSD_Mean TeX, Cone07 PDF | Keep both in one dedicated subsection with shared notation glossary | Yes |
+| Q (Choi-Lam), Rhat (Robinson transform) | Separating examples beyond SOSONC | mean_polynomials_main TeX, PSD_Mean TeX, Cone07 PDF | Keep both in one dedicated subsection with shared notation glossary | Resolved |
 
 ## 3) Theorem Overlap and Diff Map
 
