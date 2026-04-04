@@ -39,6 +39,17 @@ python3 {baseDir}/vikunja_tool.py projects update 12 --title "Research Roadmap"
 python3 {baseDir}/vikunja_tool.py tasks list
 ```
 
+### List all overdue tasks
+```bash
+python3 {baseDir}/vikunja_tool.py tasks overdue
+```
+
+To scope overdue tasks to one project:
+
+```bash
+python3 {baseDir}/vikunja_tool.py tasks overdue --project-id 12
+```
+
 ### Search tasks
 ```bash
 python3 {baseDir}/vikunja_tool.py tasks search --query "summary"

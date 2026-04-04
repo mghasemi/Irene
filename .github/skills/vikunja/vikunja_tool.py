@@ -162,6 +162,40 @@ def list_tasks(project_id=None):
     return _request("GET", "/api/v1/tasks/all")
 
 
+def _parse_due_date_value(value):
+    if not value or str(value).startswith(ZERO_TIME_PREFIX):
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def list_overdue_tasks(project_id=None):
+    tasks = list_tasks(project_id)
+    if not isinstance(tasks, list):
+        raise VikunjaError("Unexpected response while listing tasks.")
+
+    now = datetime.now(timezone.utc)
+    overdue = []
+    for task in tasks:
+        if task.get("done", False):
+            continue
+
+        due_at = _parse_due_date_value(task.get("due_date"))
+        if due_at is None:
+            continue
+
+        if due_at < now:
+            overdue.append(task)
+
+    return overdue
+
+
 def get_task(task_id):
     return _request("GET", f"/api/v1/tasks/{task_id}")
 
@@ -488,6 +522,9 @@ def _build_parser():
     task_list = task_sub.add_parser("list", help="List tasks")
     task_list.add_argument("--project-id", type=int)
 
+    task_overdue = task_sub.add_parser("overdue", help="List all overdue open tasks")
+    task_overdue.add_argument("--project-id", type=int)
+
     task_search = task_sub.add_parser("search", help="Search tasks")
     task_search.add_argument("--query", required=True)
     task_search.add_argument("--project-id", type=int)
@@ -547,6 +584,8 @@ def _dispatch(args):
     if args.resource == "tasks":
         if args.action == "list":
             return list_tasks(args.project_id)
+        if args.action == "overdue":
+            return list_overdue_tasks(args.project_id)
         if args.action == "search":
             return search_tasks(args.query, args.project_id)
         if args.action == "get":
