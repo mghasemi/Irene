@@ -77,6 +77,12 @@ When the input contains LaTeX:
 - Keep `~` (non-breaking spaces) before `\cite` and `\ref`
 - Preserve `%` comments
 - Do not add or remove `\paragraph{}`, `\subsubsection{}` etc. unless the user asks for structural changes
+- **Verify mathematical claims before flagging**: When an equation, identity, or numerical result looks questionable, check it with Wolfram|Alpha before listing it as a concern:
+  ```
+  python3 .github/skills/wolfram-alpha/wolfram_alpha_tool.py verify "<equation or claim>" --profile symbolic
+  python3 .github/skills/wolfram-alpha/wolfram_alpha_tool.py answer "<expression>"
+  ```
+  Report the verification result alongside the flag so the author has a concrete reference.
 
 ### 5. What NOT to Do
 
