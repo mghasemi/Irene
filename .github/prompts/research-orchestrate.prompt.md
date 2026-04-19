@@ -1,5 +1,5 @@
 ---
-description: "Run a multi-source research workflow by orchestrating local skills (LightRAG, ZIMI, Wolfram|Alpha, NotebookLM, SearXNG) and return a grounded synthesis."
+description: "Run a multi-source research workflow by orchestrating local skills (LightRAG, ZIMI, Wolfram|Alpha, Lean4, NotebookLM, SearXNG) and return a grounded synthesis."
 agent: "Research Orchestrator"
 argument-hint: "Research question or topic"
 ---
@@ -16,12 +16,16 @@ Workflow:
    - Parse check: `python3 .github/skills/wolfram-alpha/wolfram_alpha_tool.py validate "{{question}}" --format json`
    - Symbolic verification: `python3 .github/skills/wolfram-alpha/wolfram_alpha_tool.py verify "{{question}}" --profile symbolic --format json`
    - Theorem or statement verification: `python3 .github/skills/wolfram-alpha/wolfram_alpha_tool.py verify "{{question}}" --profile theorem --format json`
-3. If project-context grounding is needed, query NotebookLM wrapper:
+3. If machine-checked formalization or proof-strategy search is requested, route through Lean4:
+   - Candidate search: `python3 .github/skills/lean4/lean4_tool.py search "{{question}}" --format json`
+   - Proof attempt: `python3 .github/skills/lean4/lean4_tool.py prove "{{question}}" --format json`
+   - Compilation check: `python3 .github/skills/lean4/lean4_tool.py check --format json`
+4. If project-context grounding is needed, query NotebookLM wrapper:
    - `bash scripts/notebooklm_py.sh status`
    - `bash scripts/notebooklm_py.sh ask "{{question}}"`
-4. If recency or web corroboration is needed, run SearXNG:
+5. If recency or web corroboration is needed, run SearXNG:
    - `uv run .github/skills/searxng/scripts/searxng.py search "{{question}}" -n 8 --format json`
-5. Return:
+6. Return:
    - Direct answer summary
    - 3 to 6 key points
    - Evidence table with source and locator (file/path/url)
