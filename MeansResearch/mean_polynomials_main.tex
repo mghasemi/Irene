@@ -10,6 +10,7 @@
 \author{Mehdi Ghasemi, Salma Kuhlmann}
 \date{\today}
 \usepackage{amsthm}
+\usepackage{graphicx}
 \newtheorem{theorem}{Theorem}
 \newtheorem{proposition}{Proposition}
 \newtheorem{definition}{Definition}
@@ -162,8 +163,15 @@ Let $f(x)$ be a Diagonal-minus-Tail form defined as:
 \[
    f(x) = \sum_{i=1}^n \beta_i x_i^{2d} - \mu x^{\alpha}
 \]
-where $x = (x_1, \dots, x_n) \in \mathbb{R}^n$, coefficients $\beta_i, \mu > 0$, and exponents 
-$\alpha = (\alpha_1, \dots, \alpha_n) \in \mathbb{N}_0^n$ satisfy $\sum_{i=1}^n \alpha_i = 2d$.
+where:
+\begin{itemize}
+     \item $x = (x_1, \dots, x_n) \in \mathbb{R}^n$;
+     \item coefficients satisfy $\beta_i, \mu > 0$;
+     \item exponents satisfy $\alpha = (\alpha_1, \dots, \alpha_n) \in \mathbb{N}_0^n$ and
+     \[
+         \sum_{i=1}^n \alpha_i = 2d.
+     \]
+\end{itemize}
 The function $f(x)$ is positive semidefinite (PSD) on $\mathbb{R}_+^n$ if and only if:
 \[
    \mu^{2d} \prod_{i=1}^n \alpha_i^{\alpha_i} \leq (2d)^{2d} \prod_{i=1}^n \beta_i^{\alpha_i}
@@ -259,7 +267,7 @@ The \textbf{SOSONC cone} $(\Sigma + \mathcal{C})_{n,2d}$ is the Minkowski sum of
 and the SONC cone $\mathcal{C}_{n,2d}$, as introduced in \cite{DresslerSchick2025}.
 \end{definition}
 
-\subsection{Relation between Diagonal-minus-Tail and Circuit Forms}
+\subsection{Diagonal-minus-Tail vs Circuit Forms}
 
 Theorem~\ref{thm:Circuit_PSD} implies Theorem~\ref{thm:DT_PSD} as a special case; the converse does not 
 hold in general, so the two results are \emph{not} equivalent. Every D-T form is a circuit polynomial 
@@ -271,7 +279,10 @@ To see the implication, map the D-T form $f(x) = \sum \beta_i x_i^{2d} - \mu x^{
     \item The diagonal terms correspond to $\alpha(i) = 2d e_i$ with coefficients $f_{\alpha(i)} = \beta_i$.
     \item The tail term exponent is $\beta = \alpha$.
     \item The convex combination weights are $\lambda_i = \frac{\alpha_i}{2d}$. 
-    Note that $\sum \lambda_i = \frac{1}{2d} \sum \alpha_i = 1$.
+    Hence
+    \[
+        \sum \lambda_i = \frac{1}{2d} \sum \alpha_i = 1.
+    \]
 \end{itemize}
 Applying the condition from Theorem \ref{thm:Circuit_PSD}:
 \[
@@ -280,7 +291,7 @@ Applying the condition from Theorem \ref{thm:Circuit_PSD}:
 Raising both sides to the power $2d$ yields $\mu^{2d} \leq (2d)^{2d} \prod (\frac{\beta_i}{\alpha_i})^{\alpha_i}$, 
 recovering the condition in Theorem \ref{thm:DT_PSD}.
 
-\section{Investigation of $M_{2d, p}(X, \alpha)$ and Connection to SOBS and SOS}
+\section{\texorpdfstring{Investigation of $M_{2d,p}(X,\alpha)$ and Connection to SOBS and SOS}{Investigation of M2d,p(X,alpha) and Connection to SOBS and SOS}}
 \label{s04}
 
 In this section, we investigate the containment of the mean polynomial forms $M_{2d,p}(X, \alpha)$ within the 
@@ -327,7 +338,7 @@ For $p=0$, the form is SOBS (and thus SOS) by Proposition \ref{prop:M_2d_0_SOBS}
         Since $M_{4,1}$ is PSD, it is SOS.
         \item For $n=4$, we consider the uniform weights $\alpha = (1,1,1,1)$.
                  SDP decomposition using Irene \cite{GMIr} confirms $M_{4,1}(X, (1,1,1,1))_{\rm sos}=0$.
-                 Moreover, the following is an approximate Gram matrix for $M_{4,1}(X, (1,1,1,1))$ \cite{GMIr}:
+               Moreover, an approximate Gram matrix for this instance is given in \cite{GMIr}:
          {\scriptsize
          \setlength\arraycolsep{1.5pt}
          \[
@@ -419,7 +430,53 @@ Two open questions remain regarding these forms:
     \item Does Theorem \ref{thm:M_2d_p_SOS} generalize to any degree $d$?
     \item Are these forms contained within the SONC cone for all parameters?
 \end{enumerate}
+A clean degree-$8$ pilot computed with Irene \cite{GMIr} for $d=4$, $n \in \{3,4\}$,
+$p \in \{0,1,2,4\}$, and representative nondegenerate template families yields a
+consistent pattern: every tested nondegenerate instance admitted an SDP-based SOS
+decomposition, while SONC feasibility held only for the $p \in \{0,4\}$ slices.
+For the same families with $p \in \{1,2\}$, the SONC signomial constraints remained
+infeasible under local and global solves and under error bounds $10^{-6}$, $10^{-8}$,
+and $10^{-10}$. This provides positive evidence for a degree-$8$ extension of
+Theorem \ref{thm:M_2d_p_SOS} and negative evidence against a broad SONC
+containment statement, while still leaving a theorem-level explanation open.
 \end{remark}
+
+\subsection*{Computational Evidence Snapshot (Degrees $8$ and $10$)}
+We summarize the clean Irene-based pilot runs for $d \in \{4,5\}$, $n \in \{3,4\}$,
+$p \in \{0,1,2,4,5\}$ with template families generated from balanced, mixed, and boundary
+weight patterns (one-hot degeneracies tracked separately as inconclusive). The clean records are
+reported in:
+\begin{itemize}
+    \item \path{phase3_runs_clean.jsonl}
+    \item \path{phase3_runs_clean_d5.jsonl}
+    \item \path{phase3_classification_table.csv}
+\end{itemize}
+
+For both $d=4$ and $d=5$, every nondegenerate tested instance admitted an SDP-based SOS
+decomposition in our current grid. In contrast, SONC feasibility is support-sensitive: the
+nondegenerate families with $p \in \{1,2\}$ that fail at degree $8$ remain infeasible under
+local/global SONC solves and tighter tolerance settings, while GP relaxations remain feasible on
+all tested nondegenerate families in the same grid. This pattern supports a refined view in which
+SOS positivity extends robustly on the tested families, whereas SONC membership requires stronger
+structural conditions than the broad conjectural form. Tables~\ref{tab:phase3-classification-d4}
+and~\ref{tab:phase3-classification-d5} summarize the refreshed classification output using the
+corrected support labels. We postpone the $d=6$ slice for a later update and retain only a
+placeholder row for $d \geq 6$ in the manuscript tables.
+
+\input{results/phase3_classification_tables.tex}
+
+\paragraph{Reproducibility note.}
+The tables above are derived from the frozen $d=4,d=5$ artifacts:
+\begin{itemize}
+    \item \path{phase3_runs_clean.jsonl}
+    \item \path{phase3_runs_clean_d5.jsonl}
+    \item \path{phase3_classification_table.csv}
+    \item \path{phase3_classification_table.md}
+\end{itemize}
+The manuscript snippet \path{results/phase3_classification_tables.tex} is generated
+from the refreshed CSV by the table-builder script in \path{scripts/}.
+This keeps updates to the frozen $d=4,d=5$ slice and any future $d \geq 6$
+extension reproducible without manual table editing.
 
 \section{Beyond the SOSONC Cone}
 \label{s05}
@@ -437,11 +494,18 @@ We consider the following forms in $\mathbb{R}[X,Y,Z,W]$:
     \]
     \item The Robinson form $R$:
     \[
-        R(X,Y,Z) = X^6 + Y^6 + Z^6 - (X^4 Y^2 + X^4 Z^2 + X^2 Y^4 + X^2 Z^4 + Y^4 Z^2 + Y^2 Z^4) + 3X^2 Y^2 Z^2
+        \begin{aligned}
+            R(X,Y,Z) ={}& X^6 + Y^6 + Z^6 \\
+            &- (X^4 Y^2 + X^4 Z^2 + X^2 Y^4 + X^2 Z^4 + Y^4 Z^2 + Y^2 Z^4) \\
+            &+ 3X^2 Y^2 Z^2
+        \end{aligned}
     \]
     \item The second Robinson form $\hat{R}$:
     \[
-        \hat{R}(X,Y,Z,W) = X^2(X-W)^2 + Y^2(Y-W)^2 + Z^2(Z-W)^2 + 2XYZ(X+Y+Z-2W)
+        \begin{aligned}
+            \hat{R}(X,Y,Z,W) ={}& X^2(X-W)^2 + Y^2(Y-W)^2 + Z^2(Z-W)^2 \\
+            &+ 2XYZ(X+Y+Z-2W)
+        \end{aligned}
     \]
 \end{itemize}
 
@@ -456,7 +520,7 @@ Since the PSD and SOS cones are closed under linear transformations, the identit
 (respectively SOS) if and only if $Q$ is PSD (respectively SOS). Consequently, $\hat{R}$ also serves as an example of a 
 form in $\mathcal{P}_{4,4} \setminus \Sigma_{4,4}$.
 
-\subsection{Mean Polynomial Representations and Separating Forms}
+\subsection{Mean Polynomial Representations}
 
 We now establish the representation of these forms as instances of mean polynomials $M_{q,p}$.
 
@@ -481,7 +545,10 @@ we derive:
 \]
 where 
 \[
-    (\hat{X}, \hat{Y}, \hat{Z}, \hat{W}) = \frac{1}{2}(X+W-Y-Z, \; Y+W-X-Z, \; Z+W-X-Y, \; W-(X+Y+Z)).
+    \begin{aligned}
+        (\hat{X}, \hat{Y}, \hat{Z}, \hat{W}) = \frac{1}{2}(&X+W-Y-Z, \; Y+W-X-Z, \\
+        &Z+W-X-Y, \; W-(X+Y+Z)).
+    \end{aligned}
 \]
 \end{proof}
 
@@ -492,7 +559,7 @@ serves as a separating form: it belongs to the cone generated by generalized mea
 but lies outside the standard SOSONC cone (see \cite[page 31 and Lemma 4.2.5, page 107]{MSc01}).
 
 
-\section{Positivestellensatz and relation to the cone of $2d$ powers}
+\section{\texorpdfstring{Positivestellensatz and relation to the cone of $2d$ powers}{Positivestellensatz and relation to the cone of 2d powers}}
 \label{s06}
 
 \emph{This section is reserved for a follow-up paper.}
@@ -516,7 +583,10 @@ but lies outside the standard SOSONC cone (see \cite[page 31 and Lemma 4.2.5, pa
 
 \bibitem{GM02} M. Ghasemi and M. Marshall, \emph{Lower bounds for a polynomial on a basic closed semialgebraic set using geometric programming}, 2013, Preprint, arxiv:1311.3726.
 
-\bibitem{GM03} M. Ghasemi, M. Marshall, \emph{Lower Bound for a Polynomial on a product of hyperellipsoids using geometric programming} 2015, Preprint, arxiv:2510.03105.
+\bibitem{GM03} M. Ghasemi, M. Marshall,
+\emph{Lower bound for a polynomial on a product of hyper\-ellipsoids using geometric programming},
+\newblock Preprint, 2015.
+\newblock arXiv:2510.03105.
 
 \bibitem{GMIr} M. Ghasemi, \emph{Irene: A Python package for global optimization problems}, 2025, \url{https://github.com/mghasemi/Irene}.
 
@@ -524,7 +594,10 @@ but lies outside the standard SOSONC cone (see \cite[page 31 and Lemma 4.2.5, pa
 
 \bibitem{JBL01} J. B. Lasserre. \emph{Global optimization with polynomials and the problem of moments.} SIAM J. Optim., 11(3):796--817, 2001.
 
-\bibitem{Rez07} B. Reznick. \emph{On Hilbert's construction of positive polynomials}, 2007. Preprint, arXiv:0707.2156.
+\bibitem{Rez07} B. Reznick.
+\emph{On Hilbert's construction of positive poly\-nomials}.
+\newblock Preprint, 2007.
+\newblock arXiv:0707.2156.
 
 \bibitem{MSc01} Moritz Schick \emph{Sums of Squares plus Sums of Nonnegative Circuit Polynomials}, PhD. Dissertation. 2025.
 

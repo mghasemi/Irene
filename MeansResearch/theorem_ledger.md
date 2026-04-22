@@ -39,8 +39,14 @@ Status vocabulary:
 
 | ID | Statement (short) | Current status | Dependencies | Planned computational hook | Next action |
 |---|---|---|---|---|---|
-| L-C1 | Extension of L-T5 to higher d beyond 3 | conjecture | L-T5 patterns, sparse structure assumptions | SDPRelaxations.Decompose, SONCRelaxations.solve | Design benchmark families by degree and support to test SOS/SONC behavior. |
-| L-C2 | Broad SONC membership behavior for M_{2d,p}(X,\alpha) families | conjecture | L-T3, Newton polytope structure | SONCRelaxations.solve, GPRelaxations.solve | Define falsification criteria and classify outcomes by support geometry. |
+| L-C1 | Extension of L-T5 to higher d beyond 3 | conjecture | L-T5 patterns, sparse structure assumptions | SDPRelaxations.Decompose, SONCRelaxations.solve | Extend the clean $d=4$ pilot to $d=5$ and extract a proof mechanism from the observed all-successful nondegenerate SOS pattern. |
+| L-C2 | Broad SONC membership behavior for M_{2d,p}(X,\alpha) families | conjecture | L-T3, Newton polytope structure | SONCRelaxations.solve, GPRelaxations.solve | Replace the broad containment expectation with support-sensitive subcases; the clean $d=4$ pilot shows robust SONC failure on six nondegenerate families for $p \in \{1,2\}$. |
+
+## 2026-04-20 Computational Update
+
+- L-C1 evidence pointer: `phase3_runs_clean.jsonl`, `phase3_runs_clean_d5.jsonl`, `phase3_pilot_summary_clean.md`, and `phase3_pilot_summary_clean_d5.md` record 48/48 successful SDP SOS decompositions on the nondegenerate $d=4$ grid and 48/48 successful SDP SOS decompositions on the nondegenerate $d=5$ grid (both with $n \in \{3,4\}$); one-hot $\alpha$ cases are tracked as structurally degenerate and therefore inconclusive rather than failed.
+- L-C2 evidence pointer: `phase3_pilot_summary_clean.md` and `phase3_pilot_summary_clean_d5.md` show the same pattern at both $d=4$ and $d=5$: GP success on all 48 nondegenerate pilot cases but SONC success on only 24 of them.
+- SONC diagnostic pointer: `phase3_sonc_diagnostics.jsonl`, `phase3_sonc_diagnostics_summary.md`, `phase3_sonc_diagnostics_d5.jsonl`, and `phase3_sonc_diagnostics_summary_d5.md` show the same robustness pattern at both $d=4$ and $d=5$: all 24 nondegenerate SONC failures persist under local/global solves and under tighter error bound $10^{-10}$, so they should be treated as structural negatives for the current formulation rather than tuning artifacts.
 
 ## Counterexample Tracking
 

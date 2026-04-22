@@ -1,0 +1,65 @@
+d,n,p,alpha,alpha_template,support_class,sdp_status,sonc_status,gp_status,gp_minus_sonc_range
+4,3,0,"(7, 1, 0)",boundary,simplex-like,success,success,success,"[-3.45e-09, -2.85e-09]"
+4,3,0,"(4, 2, 2)",mixed,simplex-like,success,success,success,"[-1.83e-09, 3.15e-11]"
+4,3,0,"(8, 0, 0)",sparse,degenerate,inconclusive,inconclusive,inconclusive,n/a
+4,3,0,"(3, 3, 2)",uniform,simplex-like,success,success,success,"[-8.10e-10, 5.85e-10]"
+4,3,1,"(7, 1, 0)",boundary,simplex-like,success,fail,success,n/a
+4,3,1,"(4, 2, 2)",mixed,simplex-like,success,fail,success,n/a
+4,3,1,"(8, 0, 0)",sparse,degenerate,inconclusive,inconclusive,inconclusive,n/a
+4,3,1,"(3, 3, 2)",uniform,simplex-like,success,fail,success,n/a
+4,3,2,"(7, 1, 0)",boundary,simplex-like,success,fail,success,n/a
+4,3,2,"(4, 2, 2)",mixed,simplex-like,success,fail,success,n/a
+4,3,2,"(8, 0, 0)",sparse,degenerate,inconclusive,inconclusive,inconclusive,n/a
+4,3,2,"(3, 3, 2)",uniform,simplex-like,success,fail,success,n/a
+4,3,4,"(7, 1, 0)",boundary,simplex-like,success,success,success,"[-2.28e-10, 2.09e-09]"
+4,3,4,"(4, 2, 2)",mixed,simplex-like,success,success,success,"[-5.26e-10, -5.25e-10]"
+4,3,4,"(8, 0, 0)",sparse,degenerate,inconclusive,inconclusive,inconclusive,n/a
+4,3,4,"(3, 3, 2)",uniform,simplex-like,success,success,success,"[-1.01e-09, -1.00e-09]"
+4,4,0,"(7, 1, 0, 0)",boundary,simplex-like,success,success,success,"[-3.45e-09, -2.85e-09]"
+4,4,0,"(4, 2, 2, 0)",mixed,simplex-like,success,success,success,"[-1.83e-09, 3.15e-11]"
+4,4,0,"(8, 0, 0, 0)",sparse,degenerate,inconclusive,inconclusive,inconclusive,n/a
+4,4,0,"(2, 2, 2, 2)",uniform,simplex-like,success,success,success,"[1.44e-10, 2.10e-09]"
+4,4,1,"(7, 1, 0, 0)",boundary,simplex-like,success,fail,success,n/a
+4,4,1,"(4, 2, 2, 0)",mixed,simplex-like,success,fail,success,n/a
+4,4,1,"(8, 0, 0, 0)",sparse,degenerate,inconclusive,inconclusive,inconclusive,n/a
+4,4,1,"(2, 2, 2, 2)",uniform,simplex-like,success,fail,success,n/a
+4,4,2,"(7, 1, 0, 0)",boundary,simplex-like,success,fail,success,n/a
+4,4,2,"(4, 2, 2, 0)",mixed,simplex-like,success,fail,success,n/a
+4,4,2,"(8, 0, 0, 0)",sparse,degenerate,inconclusive,inconclusive,inconclusive,n/a
+4,4,2,"(2, 2, 2, 2)",uniform,simplex-like,success,fail,success,n/a
+4,4,4,"(7, 1, 0, 0)",boundary,simplex-like,success,success,success,"[-2.28e-10, 2.09e-09]"
+4,4,4,"(4, 2, 2, 0)",mixed,simplex-like,success,success,success,"[-5.26e-10, -5.25e-10]"
+4,4,4,"(8, 0, 0, 0)",sparse,degenerate,inconclusive,inconclusive,inconclusive,n/a
+4,4,4,"(2, 2, 2, 2)",uniform,simplex-like,success,success,success,"[-7.85e-10, -7.13e-10]"
+5,3,0,"(9, 1, 0)",boundary,simplex-like,success,success,success,"[-4.76e-09, -3.82e-09]"
+5,3,0,"(5, 3, 2)",mixed,simplex-like,success,success,success,"[1.66e-10, 2.28e-09]"
+5,3,0,"(10, 0, 0)",sparse,degenerate,inconclusive,inconclusive,inconclusive,n/a
+5,3,0,"(4, 3, 3)",uniform,simplex-like,success,success,success,"[-1.48e-09, -2.15e-10]"
+5,3,1,"(9, 1, 0)",boundary,simplex-like,success,fail,success,n/a
+5,3,1,"(5, 3, 2)",mixed,simplex-like,success,fail,success,n/a
+5,3,1,"(10, 0, 0)",sparse,degenerate,inconclusive,inconclusive,inconclusive,n/a
+5,3,1,"(4, 3, 3)",uniform,simplex-like,success,fail,success,n/a
+5,3,2,"(9, 1, 0)",boundary,simplex-like,success,fail,success,n/a
+5,3,2,"(5, 3, 2)",mixed,simplex-like,success,fail,success,n/a
+5,3,2,"(10, 0, 0)",sparse,degenerate,inconclusive,inconclusive,inconclusive,n/a
+5,3,2,"(4, 3, 3)",uniform,simplex-like,success,fail,success,n/a
+5,3,5,"(9, 1, 0)",boundary,simplex-like,success,success,success,"[-3.68e-10, 1.86e-09]"
+5,3,5,"(5, 3, 2)",mixed,simplex-like,success,success,success,"[9.15e-11, 1.53e-10]"
+5,3,5,"(10, 0, 0)",sparse,degenerate,inconclusive,inconclusive,inconclusive,n/a
+5,3,5,"(4, 3, 3)",uniform,simplex-like,success,success,success,"[7.59e-11, 9.64e-11]"
+5,4,0,"(9, 1, 0, 0)",boundary,simplex-like,success,success,success,"[-4.76e-09, -3.82e-09]"
+5,4,0,"(5, 3, 2, 0)",mixed,simplex-like,success,success,success,"[1.66e-10, 2.28e-09]"
+5,4,0,"(10, 0, 0, 0)",sparse,degenerate,inconclusive,inconclusive,inconclusive,n/a
+5,4,0,"(3, 3, 2, 2)",uniform,simplex-like,success,success,success,"[-5.32e-10, 1.80e-09]"
+5,4,1,"(9, 1, 0, 0)",boundary,simplex-like,success,fail,success,n/a
+5,4,1,"(5, 3, 2, 0)",mixed,simplex-like,success,fail,success,n/a
+5,4,1,"(10, 0, 0, 0)",sparse,degenerate,inconclusive,inconclusive,inconclusive,n/a
+5,4,1,"(3, 3, 2, 2)",uniform,simplex-like,success,fail,success,n/a
+5,4,2,"(9, 1, 0, 0)",boundary,simplex-like,success,fail,success,n/a
+5,4,2,"(5, 3, 2, 0)",mixed,simplex-like,success,fail,success,n/a
+5,4,2,"(10, 0, 0, 0)",sparse,degenerate,inconclusive,inconclusive,inconclusive,n/a
+5,4,2,"(3, 3, 2, 2)",uniform,simplex-like,success,fail,success,n/a
+5,4,5,"(9, 1, 0, 0)",boundary,simplex-like,success,success,success,"[-3.68e-10, 1.86e-09]"
+5,4,5,"(5, 3, 2, 0)",mixed,simplex-like,success,success,success,"[9.15e-11, 1.53e-10]"
+5,4,5,"(10, 0, 0, 0)",sparse,degenerate,inconclusive,inconclusive,inconclusive,n/a
+5,4,5,"(3, 3, 2, 2)",uniform,simplex-like,success,success,success,"[-2.94e-11, 2.32e-10]"
