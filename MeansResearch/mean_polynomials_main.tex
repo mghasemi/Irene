@@ -461,8 +461,16 @@ SOS positivity extends robustly on the tested families, whereas SONC membership 
 structural conditions than the broad conjectural form. Tables~\ref{tab:phase3-classification-d4}
 and~\ref{tab:phase3-classification-d5} summarize the refreshed classification output using the
 corrected support labels. We retain a placeholder row for $d \geq 6$ in the manuscript tables;
-a completed $d=6$ L-C2 SONC/GP slice and an initial $d=6$ L-C1 SOS/SDP batch are tracked
-in companion artifacts while the full $d=6$ SOS/SDP extension remains in progress.
+a completed $d=6$ L-C2 SONC/GP slice and a staged $d=6$ L-C1 SOS/SDP extension are tracked
+in companion artifacts. For $d=6$, $n=3$ uniform L-C1 slices are successful in the tested grid,
+whereas $n=4$ L-C1 slices exhibit timeout-dominated behavior across uniform, boundary, and mixed
+templates (including $p=6$ cross-template probes) under budgets up to 1800s. We therefore mark
+$d=6$ L-C1 as computationally deferred in the current manuscript tables.
+Additional CX-1 tractability probes indicate a solver-scaling ceiling for the current CVXOPT SDP
+pipeline at $n \leq 4$ for L-C1 families: d=4 probes at $n=5,6$ (boundary/mixed templates) timeout
+at 120s, d=5 at $n=5$ (boundary probe) times out at 900s, and even d=3 at $n=5$ requires 272s for
+a single successful boundary probe. This supports treating $n \geq 5$ high-degree sparse-family
+extensions as computationally deferred pending specialized solver paths.
 
 \input{results/phase3_classification_tables.tex}
 
@@ -485,7 +493,8 @@ computational evidence as follows.
 \end{itemize}
 This synthesis is tied to the classification tables in
 Tables~\ref{tab:phase3-classification-d4} and~\ref{tab:phase3-classification-d5},
-with a partial higher-degree extension from the completed $d=6$ L-C2 SONC/GP slice.
+with a partial higher-degree extension from the completed $d=6$ L-C2 SONC/GP slice and a
+deferred-status $d=6$ L-C1 SOS/SDP record.
 
 \paragraph{Reproducibility note.}
 The tables above are derived from the frozen $d=4,d=5$ artifacts:
@@ -496,23 +505,44 @@ The tables above are derived from the frozen $d=4,d=5$ artifacts:
     \item \path{phase3_classification_table.md}
 \end{itemize}
 A partial higher-degree extension is available for $d=6$.
-The completed L-C2 SONC/GP slice and an initial L-C1 SOS/SDP batch are:
+The completed L-C2 SONC/GP slice and staged L-C1 SOS/SDP artifacts are:
 \begin{itemize}
     \item \path{phase3_runs_clean_d6_lc2.jsonl}
     \item \path{phase3_pilot_summary_clean_d6_lc2.md}
     \item \path{phase3_sonc_diagnostics_d6_lc2.jsonl}
     \item \path{phase3_runs_clean_d6_lc1_batch1.jsonl}
     \item \path{phase3_pilot_summary_clean_d6_lc1_batch1.md}
+    \item \path{phase3_runs_clean_d6_lc1_batch2.jsonl}
+    \item \path{phase3_pilot_summary_clean_d6_lc1_batch2.md}
+    \item \path{phase3_runs_clean_d6_lc1_batch3.jsonl}
+    \item \path{phase3_pilot_summary_clean_d6_lc1_batch3.md}
+    \item \path{phase3_runs_clean_d6_lc1_batch4_boundary.jsonl}
+    \item \path{phase3_pilot_summary_clean_d6_lc1_batch4_boundary.md}
+    \item \path{phase3_runs_clean_d6_lc1_batch5_mixed.jsonl}
+    \item \path{phase3_pilot_summary_clean_d6_lc1_batch5_mixed.md}
+    \item \path{phase3_runs_clean_d6_lc1_batch6_uniform_p6.jsonl}
+    \item \path{phase3_pilot_summary_clean_d6_lc1_batch6_uniform_p6.md}
+    \item \path{phase3_runs_clean_d6_lc1_batch7_boundary_p6.jsonl}
+    \item \path{phase3_pilot_summary_clean_d6_lc1_batch7_boundary_p6.md}
+    \item \path{phase3_runs_clean_d6_lc1_batch8_mixed_p6.jsonl}
+    \item \path{phase3_pilot_summary_clean_d6_lc1_batch8_mixed_p6.md}
+    \item \path{phase3_runs_clean_cx1_d4_n5.jsonl}
+    \item \path{phase3_runs_clean_cx1_d4_n6.jsonl}
+    \item \path{phase3_runs_clean_cx1_batch1_d5_n5_boundary_mixed.jsonl}
+    \item \path{phase3_runs_clean_cx1_d3_n5_probe.jsonl}
+    \item \path{phase3_pilot_summary_cx1_d3_n5_probe.md}
 \end{itemize}
 The manuscript snippet \path{results/phase3_classification_tables.tex} is generated
 from the refreshed CSV by the table-builder script in \path{scripts/}.
 This keeps updates to the frozen $d=4,d=5$ slice and staged $d \geq 6$
 extensions reproducible without manual table editing.
 
-\paragraph{Follow-up evidence (in progress).}
-Sparse-family counterexample evidence (CX-1), cross-degree stress tests (CX-2), and
-the remaining $d=6$ SOS/SDP extension work are under development and will expand the
-claim-status synthesis upon completion.
+\paragraph{Follow-up evidence.}
+The CX-1 tractability probe is completed and currently supports a solver-scaling bottleneck
+interpretation (rather than a new non-SOS counterexample) for sparse-family $n\geq 5$ slices
+under the present CVXOPT SDP setup. Cross-degree transform stress tests (CX-2) and
+specialized-solver escalation paths for deferred $d=6$/$n\geq 5$ SOS/SDP slices remain
+in progress.
 
 \section{Beyond the SOSONC Cone}
 \label{s05}

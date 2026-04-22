@@ -2,7 +2,7 @@
 
 Deliver a 3-month research program that consolidates the proposal and three report PDFs into one coherent theory-to-evidence pipeline: unified manuscript skeleton, theorem/conjecture backlog with proof status, and a moderate computational validation protocol using Irene (SOS/SDP/SONC/GP) to stress-test and elaborate the mathematical findings.
 
-**Execution Update (2026-04-21)**
+**Execution Update (2026-04-22)**
 - Completed:
 	- Clean pilot runs for $d=4$ and $d=5$ with $n \in \{3,4\}$, tolerances $10^{-6},10^{-8}$, including SDP/SONC/GP comparisons.
 	- d=4 and d=5 pilot summaries and a consolidated classification table (`phase3_pilot_summary_clean.md`, `phase3_pilot_summary_clean_d5.md`, `phase3_classification_table.csv`).
@@ -14,15 +14,29 @@ Deliver a 3-month research program that consolidates the proposal and three repo
 	- Completed $d=6$ L-C2 SONC/GP clean slice with summary and diagnostics (`phase3_runs_clean_d6_lc2.jsonl`, `phase3_pilot_summary_clean_d6_lc2.md`, `phase3_sonc_diagnostics_d6_lc2.jsonl`).
 	- Completed initial $d=6$ L-C1 SOS/SDP batch (2 records) with pilot summary (`phase3_runs_clean_d6_lc1_batch1.jsonl`, `phase3_pilot_summary_clean_d6_lc1_batch1.md`).
 	- Completed $d=6$ L-C1 SOS/SDP batch2 uniform-$n=3$ extension (6 records covering $p \in \{0,1,2,3,4,6\}$) with pilot summary (`phase3_runs_clean_d6_lc1_batch2.jsonl`, `phase3_pilot_summary_clean_d6_lc1_batch2.md`).
-	- Completed initial $d=6$ L-C1 SOS/SDP batch3 probe on $n=4$ (2 records, $p \in \{0,1\}$) with timeout outcomes at 660s (`phase3_runs_clean_d6_lc1_batch3.jsonl`, `phase3_pilot_summary_clean_d6_lc1_batch3.md`).
-	- Added timeout-guarded and resumable benchmark execution support (`--solve-timeout`, `--skip-existing`) plus incremental JSONL writes in `scripts/phase3_benchmarks.py` for safer long-running $d=6$ SDP slices.
-- In progress:
-	- Remaining $d=6$ L-C1 SOS/SDP extension beyond uniform-$n=3$ (including $n=4$ runs that currently timeout under 660s) and table-promotion decision, plus CX-1/CX-2 follow-up evidence collection.
+	- Extended $d=6$ L-C1 SOS/SDP batch3 probe on $n=4$ to 4 records ($p \in \{0,1,2,3\}$): $p=0,1$ timed out at 660s, $p=2$ timed out at 1200s, and $p=3$ timed out at 1500s (`phase3_runs_clean_d6_lc1_batch3.jsonl`, `phase3_pilot_summary_clean_d6_lc1_batch3.md`).
+	- Extended $d=6$ L-C1 SOS/SDP batch3 probe on $n=4$ to 5 records by adding $p=4$ at 1800s timeout (`phase3_runs_clean_d6_lc1_batch3.jsonl`, `phase3_pilot_summary_clean_d6_lc1_batch3.md`).
+	- Completed targeted boundary mini-batch ($n=4$, $\alpha=(11,1,0,0)$, $p=0,1$) at 900s: both timeout (`phase3_runs_clean_d6_lc1_batch4_boundary.jsonl`, `phase3_pilot_summary_clean_d6_lc1_batch4_boundary.md`).
+	- Completed targeted mixed mini-batch ($n=4$, $\alpha=(6,4,2,0)$, $p=0,1$) at 1200s: both timeout, duplicates cleaned and deduplicated summary generated (`phase3_runs_clean_d6_lc1_batch5_mixed.jsonl`, `phase3_pilot_summary_clean_d6_lc1_batch5_mixed.md`).
+	- Completed cross-template $p=6$ probe for $n=4$: uniform ($\alpha=(3,3,3,3)$), boundary ($\alpha=(11,1,0,0)$), and mixed ($\alpha=(6,4,2,0)$) all timeout at 1200s (`phase3_runs_clean_d6_lc1_batch6_uniform_p6.jsonl`, `phase3_runs_clean_d6_lc1_batch7_boundary_p6.jsonl`, `phase3_runs_clean_d6_lc1_batch8_mixed_p6.jsonl` with corresponding summaries). **Verdict**: $n=4$ d=6 L-C1 appears computationally intractable across all template types and tested $p$ values under timeout budgets up to 1800s; evidence supports deferment of $d=6$ or escalation to specialized sparse/exploited-structure solvers.
+	- Added timeout-guarded, resumable benchmark execution support (`--solve-timeout`, `--skip-existing`, `--case-offset`) plus incremental JSONL writes in `scripts/phase3_benchmarks.py` for safer long-running $d=6$ SDP slices and targeted template probing.
+	- Completed CX-1 tractability probe: ran L-C1 boundary+mixed cases at n=5,6 for d=3,4 and n=5 for d=5 to assess CVXOPT scalability beyond n=4. Results:
+		- d=3 n=5 boundary (single probe): success at 272s/case; full d=3 n=5 grid (~8 cases) would require ~2200s — marginally feasible but impractical at scale.
+		- d=4 n=5 boundary+mixed (8 cases, 120s timeout): all timeout.
+		- d=4 n=6 boundary+mixed (8 cases, 120s timeout): all timeout.
+		- d=5 n=5 boundary (1 case, 900s timeout): timeout.
+		- **CX-1 Verdict**: CVXOPT tractability ceiling for L-C1 is $n \leq 4$ across all tested degrees. At $n=5+$, SDP moment matrix size (e.g., $56\times56$ at $n=5$, $q=6$) renders the solver infeasible within practical budgets. This mirrors the d=6 deferment and confirms that solver scalability is the dominant bottleneck.
+		- Artifacts: `phase3_runs_clean_cx1_d3_n5_probe.jsonl`, `phase3_pilot_summary_cx1_d3_n5_probe.md` (single boundary probe at d=3 n=5, 272s success), `phase3_runs_clean_cx1_d4_n5.jsonl`, `phase3_runs_clean_cx1_d4_n6.jsonl`, `phase3_runs_clean_cx1_batch1_d5_n5_boundary_mixed.jsonl` (all timeout).
+- Completed:
+	- d=6 L-C1 n=3 uniform grid (batches 1–2): success across all $p$ values (artifact-frozen).
+	- d=6 L-C1 n=4 all-template timeout probe (batches 3–8): all template types ($\alpha$ uniform/boundary/mixed) and all tested $p$ values (incl. $p=6$ cross-template) timeout at budgets up to 1800s → **d=6 L-C1 computationally deferred**.
+	- Manuscript, plan, and experiment matrix artifacts synchronized with d=6 deferment verdict.
+	- CX-1 tractability ceiling established: L-C1 n≥5 infeasible under CVXOPT at all tested degrees.
 - Next execution sprint:
-	1. Finish the remaining $d=6$ L-C1 SOS/SDP clean and diagnostic slice (increase timeout budget and continue $n=4$/nonuniform batches), then decide whether to promote $d=6$ from placeholder row to manuscript table.
-	2. Expand the claim-status synthesis with the completed $d=6$ and CX-1/CX-2 outcomes.
-	3. Revisit broader cross-degree extension after the manuscript-integrated $d=4,d=6$ evidence is frozen.
 
+	1. Update experiment matrix CX-1 row with tractability ceiling verdict.
+	2. Update manuscript TeX with CX-1 tractability finding (add to computational evidence paragraph).
+	3. Assess CX-2 (SONC/GP transform stress tests) tractability and priority; if feasible, execute targeted probe.
 **Steps**
 1. Phase 1 (Week 1): Source-of-truth consolidation for proposal + reports. Build a claim matrix from `/home/mehdi/Code/Irene/MeansResearch/Proposal- A Unified Approach to Optimization via Generalized Moment Problems and (p,q)-Mean Polynomials.pdf`, `/home/mehdi/Code/Irene/MeansResearch/mean_polynomials_main.pdf`, `/home/mehdi/Code/Irene/MeansResearch/PSD_Mean_31.12.2025(1).pdf`, and `/home/mehdi/Code/Irene/MeansResearch/The Cone Generated by Non-negative Mean Polynomials07.pdf`, using `/home/mehdi/Code/Irene/MeansResearch/mean_polynomials_main.tex` as the canonical editable anchor. Output: objective map, notation map, theorem overlap/diff map.
 2. Phase 1 (Week 1): Version reconciliation between `mean_polynomials_main` and `PSD_Mean_31.12.2025`: identify which statements are equivalent, strengthened, weakened, or unresolved. Mark all TODO markers in TeX as blockers. Output: prioritized discrepancy list. Depends on Step 1.

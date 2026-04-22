@@ -460,6 +460,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--degrees", default="4", help="Comma-separated d values, e.g. 4 or 4,5,6")
     parser.add_argument("--variables", default="3,4", help="Comma-separated n values, e.g. 3,4")
     parser.add_argument("--tolerances", default="1e-6,1e-8", help="Comma-separated numeric tolerances")
+    parser.add_argument(
+        "--case-offset",
+        type=int,
+        default=0,
+        help="Skip the first N generated cases before applying --max-cases",
+    )
     parser.add_argument("--max-cases", type=int, default=0, help="Optional cap on number of generated cases")
     parser.add_argument("--sdp-solver", default="cvxopt", help="SDP solver name accepted by Irene")
     parser.add_argument(
@@ -561,6 +567,9 @@ def main() -> None:
     all_cases: list[BenchmarkCase] = []
     for item_id in item_ids:
         all_cases.extend(build_case_family(item_id, d_values, n_values))
+
+    if args.case_offset > 0:
+        all_cases = all_cases[args.case_offset :]
 
     if args.max_cases > 0:
         all_cases = all_cases[: args.max_cases]
