@@ -460,10 +460,32 @@ all tested nondegenerate families in the same grid. This pattern supports a refi
 SOS positivity extends robustly on the tested families, whereas SONC membership requires stronger
 structural conditions than the broad conjectural form. Tables~\ref{tab:phase3-classification-d4}
 and~\ref{tab:phase3-classification-d5} summarize the refreshed classification output using the
-corrected support labels. We postpone the $d=6$ slice for a later update and retain only a
-placeholder row for $d \geq 6$ in the manuscript tables.
+corrected support labels. We retain a placeholder row for $d \geq 6$ in the manuscript tables;
+a completed $d=6$ L-C2 SONC/GP slice and an initial $d=6$ L-C1 SOS/SDP batch are tracked
+in companion artifacts while the full $d=6$ SOS/SDP extension remains in progress.
 
 \input{results/phase3_classification_tables.tex}
+
+\subsection*{Claim-Status Synthesis (Frozen $d=4,d=5$ Slice)}
+Using the frozen clean artifacts and refreshed classification outputs
+(listed in the reproducibility note below), we classify the current
+computational evidence as follows.
+\begin{itemize}
+    \item \textbf{Confirmed (within tested grid).}
+    For nondegenerate tested families at $d=4,5$ with $n \in \{3,4\}$, SDP/SOS and GP
+    outcomes are consistently feasible in the current runs.
+    \item \textbf{Weakened (scope-limited).}
+    Any broad SONC containment formulation for the same families is not supported
+    uniformly; the evidence favors a support-sensitive SONC statement rather than a
+    degree-only claim.
+    \item \textbf{Negative (robust failures).}
+    For nondegenerate families with $p \in \{1,2\}$, SONC infeasibility persists under
+    local/global solves and tighter tolerances in both degree slices, while SDP/SOS and
+    GP remain feasible.
+\end{itemize}
+This synthesis is tied to the classification tables in
+Tables~\ref{tab:phase3-classification-d4} and~\ref{tab:phase3-classification-d5},
+with a partial higher-degree extension from the completed $d=6$ L-C2 SONC/GP slice.
 
 \paragraph{Reproducibility note.}
 The tables above are derived from the frozen $d=4,d=5$ artifacts:
@@ -473,10 +495,24 @@ The tables above are derived from the frozen $d=4,d=5$ artifacts:
     \item \path{phase3_classification_table.csv}
     \item \path{phase3_classification_table.md}
 \end{itemize}
+A partial higher-degree extension is available for $d=6$.
+The completed L-C2 SONC/GP slice and an initial L-C1 SOS/SDP batch are:
+\begin{itemize}
+    \item \path{phase3_runs_clean_d6_lc2.jsonl}
+    \item \path{phase3_pilot_summary_clean_d6_lc2.md}
+    \item \path{phase3_sonc_diagnostics_d6_lc2.jsonl}
+    \item \path{phase3_runs_clean_d6_lc1_batch1.jsonl}
+    \item \path{phase3_pilot_summary_clean_d6_lc1_batch1.md}
+\end{itemize}
 The manuscript snippet \path{results/phase3_classification_tables.tex} is generated
 from the refreshed CSV by the table-builder script in \path{scripts/}.
-This keeps updates to the frozen $d=4,d=5$ slice and any future $d \geq 6$
-extension reproducible without manual table editing.
+This keeps updates to the frozen $d=4,d=5$ slice and staged $d \geq 6$
+extensions reproducible without manual table editing.
+
+\paragraph{Follow-up evidence (in progress).}
+Sparse-family counterexample evidence (CX-1), cross-degree stress tests (CX-2), and
+the remaining $d=6$ SOS/SDP extension work are under development and will expand the
+claim-status synthesis upon completion.
 
 \section{Beyond the SOSONC Cone}
 \label{s05}

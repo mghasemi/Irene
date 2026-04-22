@@ -113,12 +113,12 @@ def render_report(rows: list[dict[str, Any]], degree: int, n_values: list[int], 
 
     lines.append("## Status by Method")
     lines.append("")
-    lines.append("| Method | success | inconclusive | fail | infeasible |")
-    lines.append("|---|---:|---:|---:|---:|")
+    lines.append("| Method | success | inconclusive | timeout | fail | infeasible |")
+    lines.append("|---|---:|---:|---:|---:|---:|")
     for method in sorted(status.keys()):
         c = status[method]
         lines.append(
-            f"| {method} | {c.get('success', 0)} | {c.get('inconclusive', 0)} | {c.get('fail', 0)} | {c.get('infeasible', 0)} |"
+            f"| {method} | {c.get('success', 0)} | {c.get('inconclusive', 0)} | {c.get('timeout', 0)} | {c.get('fail', 0)} | {c.get('infeasible', 0)} |"
         )
     lines.append("")
 

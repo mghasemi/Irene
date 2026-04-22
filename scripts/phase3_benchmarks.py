@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import multiprocessing
 import subprocess
 import sys
 import time
@@ -420,11 +421,29 @@ def build_record_base(case: BenchmarkCase, commit_hash: str, tolerance: float) -
     }
 
 
-def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
+def append_record(path: Path, row: dict[str, Any]) -> None:
+    """Append a single record to a JSONL file immediately."""
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as f:
-        for row in rows:
-            f.write(json.dumps(row, sort_keys=True) + "\n")
+        f.write(json.dumps(row, sort_keys=True) + "\n")
+        f.flush()
+
+
+def load_existing_ids(path: Path) -> set[str]:
+    """Return the set of record IDs already present in output file."""
+    if not path.exists():
+        return set()
+    ids: set[str] = set()
+    with path.open(encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                ids.add(json.loads(line)["id"])
+            except (json.JSONDecodeError, KeyError):
+                pass
+    return ids
 
 
 def parse_csv_ints(value: str) -> list[int]:
@@ -449,11 +468,78 @@ def parse_args() -> argparse.Namespace:
         help="Include structurally degenerate families (one-hot alpha) instead of logging them as inconclusive.",
     )
     parser.add_argument(
+        "--skip-existing",
+        action="store_true",
+        help="Skip cases whose ID is already present in the output file (resume support).",
+    )
+    parser.add_argument(
+        "--solve-timeout",
+        type=int,
+        default=0,
+        help="Per-solve wall-clock timeout in seconds (0 = no limit). Timed-out solves are logged as status=timeout.",
+    )
+    parser.add_argument(
         "--output",
         default="MeansResearch/results/phase3_runs.jsonl",
         help="JSONL output path (relative to repo root)",
     )
     return parser.parse_args()
+
+
+def _run_sdp_worker(
+    case: BenchmarkCase,
+    tol: float,
+    solver: str,
+    result_queue: "multiprocessing.Queue[dict[str, Any]]",
+) -> None:
+    try:
+        result_queue.put(run_sdp(case, tol, solver))
+    except Exception as exc:
+        result_queue.put(
+            {
+                "method": "SDPRelaxations",
+                "status": "fail",
+                "bounds": None,
+                "runtime_sec": 0.0,
+                "decomposition_diagnostics": None,
+                "notes": str(exc),
+                "objective": None,
+                "solver_config": {"solver": solver.upper()},
+            }
+        )
+
+
+def run_sdp_with_timeout(
+    case: BenchmarkCase,
+    tol: float,
+    solver: str,
+    timeout_sec: int,
+) -> dict[str, Any]:
+    """Run SDP in a subprocess so it can be killed if it exceeds the timeout."""
+    if timeout_sec <= 0:
+        return run_sdp(case, tol, solver)
+
+    q: multiprocessing.Queue = multiprocessing.Queue()
+    p = multiprocessing.Process(target=_run_sdp_worker, args=(case, tol, solver, q))
+    p.start()
+    p.join(timeout_sec)
+    if p.is_alive():
+        p.terminate()
+        p.join(5)
+        if p.is_alive():
+            p.kill()
+            p.join()
+        return {
+            "method": "SDPRelaxations",
+            "status": "timeout",
+            "bounds": None,
+            "runtime_sec": float(timeout_sec),
+            "decomposition_diagnostics": None,
+            "notes": f"Solve exceeded timeout of {timeout_sec}s.",
+            "objective": None,
+            "solver_config": {"solver": solver.upper(), "error_tolerance": tol},
+        }
+    return q.get()
 
 
 def main() -> None:
@@ -479,11 +565,22 @@ def main() -> None:
     if args.max_cases > 0:
         all_cases = all_cases[: args.max_cases]
 
+    existing_ids: set[str] = set()
+    if args.skip_existing:
+        existing_ids = load_existing_ids(output)
+        if existing_ids:
+            print(f"Skipping {len(existing_ids)} already-completed IDs.")
+
     commit_hash = git_commit_hash(repo_root)
-    all_rows: list[dict[str, Any]] = []
+    total_written = 0
     for case in all_cases:
         for tol in tolerances:
             base = build_record_base(case, commit_hash, tol)
+            record_id = base["id"]
+
+            if record_id in existing_ids:
+                continue
+
             methods: list[dict[str, Any]] = []
 
             if is_structurally_degenerate(case) and not args.include_degenerate:
@@ -495,7 +592,9 @@ def main() -> None:
                     methods.append(make_inconclusive_result("GPRelaxations", skip_note))
             else:
                 if case.item_id == "L-C1":
-                    methods.append(run_sdp(case, tol, args.sdp_solver))
+                    methods.append(
+                        run_sdp_with_timeout(case, tol, args.sdp_solver, args.solve_timeout)
+                    )
                 elif case.item_id == "L-C2":
                     methods.append(run_sonc(case, tol))
                     methods.append(run_gp(case))
@@ -503,12 +602,12 @@ def main() -> None:
             for method_result in methods:
                 row = dict(base)
                 row.update(method_result)
-                if row.get("status") not in {"success", "inconclusive"}:
+                if row.get("status") not in {"success", "inconclusive", "timeout"}:
                     row["anomaly_flags"].append("method_failure")
-                all_rows.append(row)
+                append_record(output, row)
+                total_written += 1
 
-    write_jsonl(output, all_rows)
-    print(f"Wrote {len(all_rows)} records to {output}")
+    print(f"Wrote {total_written} records to {output}")
 
 
 if __name__ == "__main__":

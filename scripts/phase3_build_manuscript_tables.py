@@ -11,6 +11,7 @@ from pathlib import Path
 
 STATUS_ABBREV = {
     "success": "S",
+    "timeout": "T",
     "fail": "F",
     "inconclusive": "I",
     "unknown": "?",
@@ -86,7 +87,7 @@ def build_degree_table(rows: list[dict[str, str]], degree: int) -> list[str]:
         r"\centering",
         r"\scriptsize",
         r"\setlength{\tabcolsep}{4pt}",
-        rf"\caption{{Pilot classification summary for $d={degree}$ (degree ${2 * degree}$). Entries report $(\mathrm{{SDP}}/\mathrm{{SONC}}/\mathrm{{GP}})$ using $\mathrm{{S}}=$ success, $\mathrm{{F}}=$ fail, and $\mathrm{{I}}=$ inconclusive.}}",
+        rf"\caption{{Pilot classification summary for $d={degree}$ (degree ${2 * degree}$). Entries report $(\mathrm{{SDP}}/\mathrm{{SONC}}/\mathrm{{GP}})$ using $\mathrm{{S}}=$ success, $\mathrm{{T}}=$ timeout, $\mathrm{{F}}=$ fail, and $\mathrm{{I}}=$ inconclusive.}}",
         rf"\label{{tab:phase3-classification-d{degree}}}",
         r"\resizebox{\linewidth}{!}{%",
         r"\begin{tabular}{p{1.45cm}p{4.8cm}p{2.15cm}c" + "c" * len(p_values) + r"}",

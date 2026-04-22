@@ -20,3 +20,5 @@ build
 *.bak
 *.swp
 *.dist-info
+*.out
+*.aux
