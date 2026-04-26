@@ -39,8 +39,8 @@ Status vocabulary:
 
 | ID | Statement (short) | Current status | Dependencies | Planned computational hook | Next action |
 |---|---|---|---|---|---|
-| L-C1 | Extension of L-T5 to higher d beyond 3 | conjecture (d≤5 confirmed; d=6 n≤3 confirmed; d=6 n≥4 deferred — solver ceiling) | L-T5 patterns, sparse structure assumptions | SDPRelaxations.Decompose, SONCRelaxations.solve | Promote L-C1 into manuscript-level scoped conjecture language: confirmed on tested d in {4,5}, n in {3,4} nondegenerate slice and on tested d=6, n=3; explicitly deferred/open for d=6, n>=4 under current solver stack. |
-| L-C2 | Broad SONC membership behavior for M_{2d,p}(X,\alpha) families | conjecture | L-T3, Newton polytope structure | SONCRelaxations.solve, GPRelaxations.solve | Promote L-C2 into support-sensitive conjecture wording: avoid degree-only containment language and explicitly separate SONC-feasible subcases from robust p in {1,2} failure regimes on tested nondegenerate slices. |
+| L-C1 | Extension of L-T5 to higher d beyond 3 | scoped conjecture (confirmed on nondegenerate d in {4,5}, n in {3,4}; confirmed on partial d=6, n=3; deferred/open on d=6, n>=4 under solver ceiling) | L-T5 patterns, sparse structure assumptions | SDPRelaxations.Decompose, SONCRelaxations.solve | Keep manuscript wording aligned with explicit scope boundaries and evidence pointers: confirmed artifacts are `phase3_pilot_summary_clean.md`, `phase3_pilot_summary_clean_d5.md`, `phase3_runs_clean_d6_lc1_batch1.jsonl`, `phase3_runs_clean_d6_lc1_batch2.jsonl`, `phase3_pilot_summary_clean_d6_lc1_batch2.md`; deferred/open artifacts are the d=6 n=4 batch summaries plus `phase3_pilot_summary_d6_lc1_escalation_pass2.md`. |
+| L-C2 | Broad SONC membership behavior for M_{2d,p}(X,\alpha) families | conjecture | L-T3, Newton polytope structure | SONCRelaxations.solve, GPRelaxations.solve | Align with manuscript Conjecture~\ref{conj:B2_support_sensitive_sonc}: preserve support-sensitive (not degree-only) wording, keep the d=4/d=5 robust $p\in\{1,2\}$ failure diagnostics as slice-local evidence, and advance to theorem-level by proving a support-geometry criterion (or producing a certified counterexample) that explains SONC-feasible vs robust-failure support classes. |
 
 ## 2026-04-20 Computational Update
 
@@ -57,12 +57,20 @@ Status vocabulary:
 - L-C1 d=6 n=5 evidence artifacts: `phase3_runs_clean_d6_lc1_escalation_pass1.jsonl`, `phase3_pilot_summary_d6_lc1_escalation_pass1.md`, `phase3_runs_clean_d6_lc1_escalation_pass2_uniform.jsonl`, `phase3_runs_clean_d6_lc1_escalation_pass2_boundary.jsonl`, `phase3_runs_clean_d6_lc1_escalation_pass2_mixed.jsonl`, `phase3_pilot_summary_d6_lc1_escalation_pass2.md`.
 - **Interpretation**: The d=6 n≥4 L-C1 slice is **computationally intractable** under standard interior-point SDP solvers within practical budgets. This is a solver-ceiling result, not a mathematical negative — the conjecture remains open at d=6 n≥4. Continuation requires MOSEK, DSDP, or SDPA-GMP.
 
+## 2026-04-26 d=6 L-C2 Clean-Pilot Refresh and Cross-Degree Robustness Note
+
+- Refreshed d=6 L-C2 artifacts: `phase3_runs_clean_d6_lc2.jsonl`, `phase3_pilot_summary_clean_d6_lc2.md`, `phase3_sonc_diagnostics_d6_lc2.jsonl`, `phase3_sonc_diagnostics_d6_lc2.md`.
+- Clean-pilot totals on the refreshed d=6 slice ($n\in\{3,4\}$, tolerances $10^{-6},10^{-8}$): 384 method records; GP gives 140 successes, 48 inconclusive cases, and 4 fails; SONC gives 48 successes, 48 inconclusive cases, and 96 fails.
+- Paired-success signal: 24 SONC/GP paired successes remain, with $\mathrm{gp}-\mathrm{sonc}$ gap range in $[-4.238\times 10^{-9}, 2.793\times 10^{-9}]$.
+- Cross-degree SONC robustness pattern: all 24 failed nondegenerate SONC cases at d=4 remain failures under alternate diagnostics, the same 24/24 zero-recovery pattern holds at d=5, and the refreshed d=6 L-C2 slice extends this to 48/48 zero-recovery failures across uniform, boundary, and mixed templates.
+- Interpretation: the support-sensitive SONC negatives are now cross-degree robust on the executed clean-pilot ladder and should be framed as formulation-structural evidence on the tested slices rather than as local/global solve or tolerance artifacts.
+
 ## Counterexample Tracking
 
 | ID | Candidate | Current status | Why tracked | Next action |
 |---|---|---|---|---|
 | CX-1 | High-degree M_{2d,p} with sparse nonuniform \alpha potentially outside SOS | counterexample candidate | Could delimit the scope of L-T5 generalization | Generate symbolic families and test with SDP decomposition first. |
-| CX-2 | Mean-of-linear-forms examples near SONC boundary under coordinate transforms | counterexample candidate | Could sharpen separation narrative around L-T7 | Localized B3 transform-boundary conjecture is now formalized in manuscript synthesis; next action is dense neighborhood validation around Robinson-hat baseline (finer coefficient/transform sweeps) for potential theorem-level promotion. |
+| CX-2 | Mean-of-linear-forms examples near SONC boundary under coordinate transforms | counterexample candidate | Could sharpen separation narrative around L-T7 | OP3 sweeps completed (7x7 local grid + wide coefficient scan c=1.5–2.5). Finding: c=2.0 is the unique SONC-success point; H1 FAIL, H2 PASS, H3 PASS. Point-level sharpness confirmed. Next action: mathematical characterisation (Newton-polytope/AM-GM analysis) rather than further solver perturbation. |
 
 ## 2026-04-22 CX-2 Update
 
@@ -166,6 +174,18 @@ Status vocabulary:
 - Center point `(c=2.0, t=1.0)` remained SONC-feasible but GP-infeasible; every non-center grid point was robust_fail across all four SONC diagnostic configurations.
 - Gate status: H1 FAIL, H2 PASS, H3 PASS.
 - Interpretation update: the first local-neighborhood pass supports a sharply isolated SONC-positive center rather than a visibly extended nearby success region under the tested coefficient and transform perturbations.
+
+## 2026-04-26 OP3 Wide-Coefficient Scan Update
+
+- Wider coefficient scan at fixed t=1.0, c in {1.5, 1.6, 1.7, 1.8, 1.85, 1.9, 1.95, 1.98, 1.99, 1.995, 2.0, 2.005, 2.01, 2.02, 2.05, 2.1, 2.2, 2.5}: 18 points total.
+- Execution artifacts:
+	- `MeansResearch/results/op3_wide_coeff_scan_sweep.jsonl`
+	- `MeansResearch/results/op3_wide_coeff_scan_table.csv`
+	- `MeansResearch/results/op3_wide_coeff_scan_summary.md`
+- Outcome: c=2.0 is the **unique** SONC-success point in the full tested range (c=1.5 to c=2.5); all 17 other values are robust-fail across all four SONC diagnostic configurations.
+- Converging evidence: combining the 7x7 local grid (H1 FAIL) and the wide scan, the Robinson-hat post-transform SONC-feasibility is a **point-level** phenomenon at exactly c=2.0 under the baseline transform t=1.0.
+- Manuscript update: B3 paragraph updated to include both OP3 sweep findings and point-level sharpness interpretation.
+- Implication for B3 promotion path: further solver-perturbation sweeps are unlikely to be productive; the next required step is a mathematical characterisation of the certificate cone boundary at c=2.0 (Newton-polytope geometry, AM/GM structure, or dual-certificate analysis).
 
 ### Conjecture Backlog for Manuscript Integration
 
