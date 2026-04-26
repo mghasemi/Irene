@@ -39,7 +39,7 @@ Status vocabulary:
 
 | ID | Statement (short) | Current status | Dependencies | Planned computational hook | Next action |
 |---|---|---|---|---|---|
-| L-C1 | Extension of L-T5 to higher d beyond 3 | conjecture | L-T5 patterns, sparse structure assumptions | SDPRelaxations.Decompose, SONCRelaxations.solve | Extend the clean $d=4$ pilot to $d=5$ and extract a proof mechanism from the observed all-successful nondegenerate SOS pattern. |
+| L-C1 | Extension of L-T5 to higher d beyond 3 | conjecture (d≤5 confirmed; d=6 n≤3 confirmed; d=6 n≥4 deferred — solver ceiling) | L-T5 patterns, sparse structure assumptions | SDPRelaxations.Decompose, SONCRelaxations.solve | d=4 and d=5 (n∈{3,4}) fully confirmed. d=6 n=3 confirmed. d=6 n≥4 computationally intractable under CVXOPT/SDPA/CSDP at budgets up to 1200s/solver; formally deferred pending high-performance solver access. |
 | L-C2 | Broad SONC membership behavior for M_{2d,p}(X,\alpha) families | conjecture | L-T3, Newton polytope structure | SONCRelaxations.solve, GPRelaxations.solve | Replace the broad containment expectation with support-sensitive subcases; the clean $d=4$ pilot shows robust SONC failure on six nondegenerate families for $p \in \{1,2\}$. |
 
 ## 2026-04-20 Computational Update
@@ -47,6 +47,15 @@ Status vocabulary:
 - L-C1 evidence pointer: `phase3_runs_clean.jsonl`, `phase3_runs_clean_d5.jsonl`, `phase3_pilot_summary_clean.md`, and `phase3_pilot_summary_clean_d5.md` record 48/48 successful SDP SOS decompositions on the nondegenerate $d=4$ grid and 48/48 successful SDP SOS decompositions on the nondegenerate $d=5$ grid (both with $n \in \{3,4\}$); one-hot $\alpha$ cases are tracked as structurally degenerate and therefore inconclusive rather than failed.
 - L-C2 evidence pointer: `phase3_pilot_summary_clean.md` and `phase3_pilot_summary_clean_d5.md` show the same pattern at both $d=4$ and $d=5$: GP success on all 48 nondegenerate pilot cases but SONC success on only 24 of them.
 - SONC diagnostic pointer: `phase3_sonc_diagnostics.jsonl`, `phase3_sonc_diagnostics_summary.md`, `phase3_sonc_diagnostics_d5.jsonl`, and `phase3_sonc_diagnostics_summary_d5.md` show the same robustness pattern at both $d=4$ and $d=5$: all 24 nondegenerate SONC failures persist under local/global solves and under tighter error bound $10^{-10}$, so they should be treated as structural negatives for the current formulation rather than tuning artifacts.
+
+## 2026-04-26 Computational Update (d=6, n≥4 L-C1 Intractability)
+
+- **d=6, n=3**: All L-C1 uniform-grid cases succeed under CVXOPT (batches 1–2). Conjecture confirmed at this slice.
+- **d=6, n=4**: All template types (uniform, boundary, mixed) timeout at budgets up to 1800s under CVXOPT. Deferred (batches 3–8).
+- **d=6, n=5 escalation**: Two-pass escalation with solver sequence CVXOPT→SDPA→CSDP produced 18/18 timeout at 600s/solver (pass1) and 18/18 timeout at 1200s/solver (pass2) across all nondegenerate templates (uniform, boundary, mixed) and p-values {0,1,2,3,4,6}. Zero success or hard-fail outcomes across both passes.
+- **d=6 structural SONC**: 48 unique L-C2 failed cases across uniform/boundary/mixed templates for n∈{3,4} show zero recovery under all four alternate SONC diagnostic configs. Failures are configuration-robust.
+- L-C1 d=6 n=5 evidence artifacts: `phase3_runs_clean_d6_lc1_escalation_pass1.jsonl`, `phase3_pilot_summary_d6_lc1_escalation_pass1.md`, `phase3_runs_clean_d6_lc1_escalation_pass2_uniform.jsonl`, `phase3_runs_clean_d6_lc1_escalation_pass2_boundary.jsonl`, `phase3_runs_clean_d6_lc1_escalation_pass2_mixed.jsonl`, `phase3_pilot_summary_d6_lc1_escalation_pass2.md`.
+- **Interpretation**: The d=6 n≥4 L-C1 slice is **computationally intractable** under standard interior-point SDP solvers within practical budgets. This is a solver-ceiling result, not a mathematical negative — the conjecture remains open at d=6 n≥4. Continuation requires MOSEK, DSDP, or SDPA-GMP.
 
 ## Counterexample Tracking
 

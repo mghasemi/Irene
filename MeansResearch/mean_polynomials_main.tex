@@ -483,10 +483,16 @@ Post-transform SONC feasibility appears only at the baseline Robinson-hat coeffi
 with nearby coefficients in this sweep remaining SONC-infeasible. In the current computational
 window, this supports a localized transform-sensitive boundary effect rather than a broad
 coefficient-robust transform classification shift.
-For deferred $d=6$/$n\geq 5$ L-C1 SOS slices, we also prepared a specialized-solver escalation
-route in the benchmark driver via solver sequence fallback (`cvxopt,sdpa,csdp`) with per-solver
-timeout caps and per-attempt logging. A smoke run confirms the expected logging behavior, recording
-solver-by-solver timeout outcomes in the \texttt{solver\_attempts} field for the tested deferred case.
+For deferred $d=6$/$n\geq 5$ L-C1 SOS slices, we prepared and executed a specialized-solver
+escalation route in the benchmark driver via solver-sequence fallback
+(\texttt{cvxopt,sdpa,csdp}) with per-solver timeout caps and per-attempt logging.
+Pass1 (600s per solver) on the 18 nondegenerate $n=5$ cases (uniform, boundary, mixed templates)
+returned 18/18 timeouts across all three solvers; pass2 (1200s per solver) on the same 18 cases
+again returned 18/18 timeouts with no success and no hard-fail certificates.
+Thus, doubling the cap produced no solver/template delta, and under the current interior-point SDP
+stack this $d=6$, $n\geq 5$ L-C1 slice remains computationally intractable within practical budgets.
+We therefore retain this slice as deferred in the manuscript tables and treat it as a solver-ceiling
+computational limitation rather than a theorem-level negative result.
 
 \input{results/phase3_classification_tables.tex}
 
