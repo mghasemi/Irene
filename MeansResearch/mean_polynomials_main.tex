@@ -471,6 +471,22 @@ pipeline at $n \leq 4$ for L-C1 families: d=4 probes at $n=5,6$ (boundary/mixed 
 at 120s, d=5 at $n=5$ (boundary probe) times out at 900s, and even d=3 at $n=5$ requires 272s for
 a single successful boundary probe. This supports treating $n \geq 5$ high-degree sparse-family
 extensions as computationally deferred pending specialized solver paths.
+An initial CX-2 transform-stress micro-batch on Choi-Lam/Robinson-derived families shows
+transform-sensitive SONC behavior: Choi-Lam base/perturbed slices are feasible for SONC and GP,
+Robinson-hat base is infeasible for both methods, and the transformed Robinson-hat base becomes
+SONC-feasible while remaining GP-infeasible. This provides first concrete evidence that linear
+transform choices can change SONC classification behavior in the tested slice.
+A follow-up CX-2 coefficient sweep sharpens this picture: for Choi-Lam tail coefficients
+$c\in\{4.0,3.95,3.9,3.8\}$, SONC and GP remain feasible throughout, while for Robinson-hat
+coefficients $c\in\{2.0,1.98,1.95,1.9,1.85,1.8\}$ the pre-transform forms remain SONC/GP-infeasible.
+Post-transform SONC feasibility appears only at the baseline Robinson-hat coefficient $c=2.0$,
+with nearby coefficients in this sweep remaining SONC-infeasible. In the current computational
+window, this supports a localized transform-sensitive boundary effect rather than a broad
+coefficient-robust transform classification shift.
+For deferred $d=6$/$n\geq 5$ L-C1 SOS slices, we also prepared a specialized-solver escalation
+route in the benchmark driver via solver sequence fallback (`cvxopt,sdpa,csdp`) with per-solver
+timeout caps and per-attempt logging. A smoke run confirms the expected logging behavior, recording
+solver-by-solver timeout outcomes in the \texttt{solver\_attempts} field for the tested deferred case.
 
 \input{results/phase3_classification_tables.tex}
 
@@ -531,6 +547,11 @@ The completed L-C2 SONC/GP slice and staged L-C1 SOS/SDP artifacts are:
     \item \path{phase3_runs_clean_cx1_batch1_d5_n5_boundary_mixed.jsonl}
     \item \path{phase3_runs_clean_cx1_d3_n5_probe.jsonl}
     \item \path{phase3_pilot_summary_cx1_d3_n5_probe.md}
+    \item \path{phase3_runs_clean_cx2_transform_probe.jsonl}
+    \item \path{phase3_pilot_summary_cx2_transform_probe.md}
+    \item \path{phase3_runs_clean_cx2_transform_probe_batch2.jsonl}
+    \item \path{phase3_pilot_summary_cx2_transform_probe_batch2.md}
+    \item \path{phase3_runs_clean_d6_lc1_escalation_smoke.jsonl}
 \end{itemize}
 The manuscript snippet \path{results/phase3_classification_tables.tex} is generated
 from the refreshed CSV by the table-builder script in \path{scripts/}.
@@ -540,9 +561,12 @@ extensions reproducible without manual table editing.
 \paragraph{Follow-up evidence.}
 The CX-1 tractability probe is completed and currently supports a solver-scaling bottleneck
 interpretation (rather than a new non-SOS counterexample) for sparse-family $n\geq 5$ slices
-under the present CVXOPT SDP setup. Cross-degree transform stress tests (CX-2) and
-specialized-solver escalation paths for deferred $d=6$/$n\geq 5$ SOS/SDP slices remain
-in progress.
+under the present CVXOPT SDP setup. A first CX-2 transform-stress batch is also completed,
+showing a Robinson-hat base pre/post transform SONC-status change in the tested setup;
+a second CX-2 coefficient sweep indicates this behavior is currently localized near the
+baseline Robinson-hat coefficient under the tested transform family. Specialized-solver
+escalation paths for deferred $d=6$/$n\geq 5$ SOS/SDP slices are now implemented and
+ready for full pass execution.
 
 \section{Beyond the SOSONC Cone}
 \label{s05}

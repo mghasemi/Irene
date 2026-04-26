@@ -454,6 +454,17 @@ def parse_csv_items(value: str) -> list[str]:
     return [v.strip().upper() for v in value.split(",") if v.strip()]
 
 
+def parse_csv_solvers(value: str) -> list[str]:
+    solvers = [v.strip().lower() for v in value.split(",") if v.strip()]
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for s in solvers:
+        if s not in seen:
+            deduped.append(s)
+            seen.add(s)
+    return deduped
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run Phase 3 mean-polynomial benchmarks")
     parser.add_argument("--items", default="L-C1,L-C2", help="Comma-separated item IDs (L-C1,L-C2)")
@@ -468,6 +479,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--max-cases", type=int, default=0, help="Optional cap on number of generated cases")
     parser.add_argument("--sdp-solver", default="cvxopt", help="SDP solver name accepted by Irene")
+    parser.add_argument(
+        "--sdp-solver-seq",
+        default="",
+        help="Optional comma-separated solver fallback sequence (e.g. cvxopt,dsdp,sdpa,csdp). If set, overrides --sdp-solver.",
+    )
     parser.add_argument(
         "--include-degenerate",
         action="store_true",
@@ -548,6 +564,35 @@ def run_sdp_with_timeout(
     return q.get()
 
 
+def run_sdp_with_fallbacks(
+    case: BenchmarkCase,
+    tol: float,
+    solver_sequence: list[str],
+    timeout_sec: int,
+) -> dict[str, Any]:
+    attempts: list[dict[str, Any]] = []
+    for solver in solver_sequence:
+        result = run_sdp_with_timeout(case, tol, solver, timeout_sec)
+        attempt_status = result.get("status")
+        attempts.append(
+            {
+                "solver": solver.upper(),
+                "status": attempt_status,
+                "notes": result.get("notes"),
+                "runtime_sec": result.get("runtime_sec"),
+            }
+        )
+        # Stop fallback chain only on successful SDP solve.
+        if attempt_status == "success":
+            result["solver_attempts"] = attempts
+            return result
+
+    # No success: return the last attempt with full attempt history.
+    if attempts:
+        result["solver_attempts"] = attempts
+    return result
+
+
 def main() -> None:
     args = parse_args()
     repo_root = REPO_ROOT
@@ -558,6 +603,10 @@ def main() -> None:
     tolerances = tuple(float(v.strip()) for v in args.tolerances.split(",") if v.strip())
     if not tolerances:
         tolerances = DEFAULT_TOLERANCES
+
+    solver_sequence = parse_csv_solvers(args.sdp_solver_seq) if args.sdp_solver_seq else [args.sdp_solver.lower()]
+    if not solver_sequence:
+        solver_sequence = ["cvxopt"]
 
     valid_items = {"L-C1", "L-C2"}
     item_ids = [itm for itm in item_ids if itm in valid_items]
@@ -602,7 +651,7 @@ def main() -> None:
             else:
                 if case.item_id == "L-C1":
                     methods.append(
-                        run_sdp_with_timeout(case, tol, args.sdp_solver, args.solve_timeout)
+                        run_sdp_with_fallbacks(case, tol, solver_sequence, args.solve_timeout)
                     )
                 elif case.item_id == "L-C2":
                     methods.append(run_sonc(case, tol))

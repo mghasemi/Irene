@@ -9,6 +9,8 @@ Set up a long-term research program for:
 `{{question}}`
 
 Workflow:
+0. Run the stage planner first for full pipeline decomposition:
+   - `.github/prompts/stage-1-plan.prompt.md`
 1. Check whether a matching Vikunja project already exists:
    - `python3 .github/skills/vikunja/vikunja_tool.py projects search --query "{{question}}"`
 2. If none exists, create one:

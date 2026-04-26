@@ -27,16 +27,47 @@ Deliver a 3-month research program that consolidates the proposal and three repo
 		- d=5 n=5 boundary (1 case, 900s timeout): timeout.
 		- **CX-1 Verdict**: CVXOPT tractability ceiling for L-C1 is $n \leq 4$ across all tested degrees. At $n=5+$, SDP moment matrix size (e.g., $56\times56$ at $n=5$, $q=6$) renders the solver infeasible within practical budgets. This mirrors the d=6 deferment and confirms that solver scalability is the dominant bottleneck.
 		- Artifacts: `phase3_runs_clean_cx1_d3_n5_probe.jsonl`, `phase3_pilot_summary_cx1_d3_n5_probe.md` (single boundary probe at d=3 n=5, 272s success), `phase3_runs_clean_cx1_d4_n5.jsonl`, `phase3_runs_clean_cx1_d4_n6.jsonl`, `phase3_runs_clean_cx1_batch1_d5_n5_boundary_mixed.jsonl` (all timeout).
+	- Completed CX-2 transform stress batch 1 with dedicated runner (`scripts/phase3_cx2_transform_probe.py`) and artifacts (`phase3_runs_clean_cx2_transform_probe.jsonl`, `phase3_pilot_summary_cx2_transform_probe.md`).
+		- Choi-Lam base/perturbed: SONC and GP both feasible at $10^{-6},10^{-8}$.
+		- Robinson-hat base: SONC and GP both infeasible pre-transform.
+		- Robinson-hat transformed base: SONC becomes feasible while GP remains infeasible.
+		- Perturbed Robinson-hat transformed slice remains infeasible for both methods in this initial micro-batch.
+	- Completed CX-2 transform stress batch 2 coefficient sweep (`phase3_runs_clean_cx2_transform_probe_batch2.jsonl`, `phase3_pilot_summary_cx2_transform_probe_batch2.md`).
+		- Choi-Lam family with tail coefficients $\\{4.0,3.95,3.9,3.8\\}$ remains SONC+GP feasible.
+		- Robinson-hat family pre-transform remains SONC+GP infeasible for coefficients $\\{2.0,1.98,1.95,1.9,1.85,1.8\\}$.
+		- Robinson-hat post-transform SONC feasibility appears isolated at baseline coefficient $2.0$; nearby coefficients remain SONC-infeasible.
+	- Completed d=6/n>=5 SOS escalation infrastructure for L-C1:
+		- Added solver fallback chain support to benchmark runner via `--sdp-solver-seq` in `scripts/phase3_benchmarks.py`.
+		- Verified environment solver availability: `CVXOPT, SDPA, CSDP`.
+		- Smoke probe with `cvxopt,sdpa,csdp` and 20s cap logs per-solver outcomes in `solver_attempts` (`phase3_runs_clean_d6_lc1_escalation_smoke.jsonl`), all timeout on tested case.
+	- Completed d=6 structural SONC ablation extension on the finished L-C2 clean slice (`phase3_sonc_diagnostics_d6_structural.jsonl`, `phase3_sonc_diagnostics_d6_structural.md`).
+		- Scope: 48 unique failed SONC cases across the nondegenerate `uniform`, `boundary`, and `mixed` templates for d=6 and n in {3,4}.
+		- Result: zero recoveries under all four alternate SONC diagnostic configs (`local_tol`, `global_tol`, `local_1e-10`, `global_1e-10`).
+		- Interpretation: the d=6 structural SONC failures in this slice are configuration-robust rather than artifacts of local/global solve choice or tighter tolerance alone.
+	- Completed d=6/n=5 L-C1 escalation pass1 (`phase3_runs_clean_d6_lc1_escalation_pass1.jsonl`) with solver-attempt trace summary (`phase3_pilot_summary_d6_lc1_escalation_pass1.md`).
+		- Scope: 24 records at tolerance 1e-6 with solver sequence `cvxopt,sdpa,csdp` and 600s per-solver cap.
+		- Outcome: 18 nondegenerate template cases (`uniform`, `boundary`, `mixed`) timeout under all three solvers; 6 sparse cases remain structurally inconclusive.
+		- Solver-level signal: no `success` or hard `fail` outcomes; attempts are uniformly timeout-dominated on nondegenerate slices.
+	- Prepared pass2 command set targeting only unresolved nondegenerate templates at 1200s per solver (`phase3_escalation_pass2_command_set.md`).
 - Completed:
 	- d=6 L-C1 n=3 uniform grid (batches 1–2): success across all $p$ values (artifact-frozen).
 	- d=6 L-C1 n=4 all-template timeout probe (batches 3–8): all template types ($\alpha$ uniform/boundary/mixed) and all tested $p$ values (incl. $p=6$ cross-template) timeout at budgets up to 1800s → **d=6 L-C1 computationally deferred**.
 	- Manuscript, plan, and experiment matrix artifacts synchronized with d=6 deferment verdict.
 	- CX-1 tractability ceiling established: L-C1 n≥5 infeasible under CVXOPT at all tested degrees.
+	- CX-2 initial transform-sensitive behavior captured and archived via JSONL + summary artifacts.
+	- CX-2 coefficient sweep completed; boundary-like transform sensitivity now evidenced around Robinson-hat baseline coefficient.
+	- d=6 deferred-slice escalation path now operational with solver-attempt logging and reproducible command template.
+	- d=6 structural SONC ablation completed with a no-recovery result across all tested nondegenerate templates and alternate SONC configs.
+	- d=6/n=5 L-C1 escalation pass1 completed and summarized; unresolved nondegenerate cases are now isolated for pass2.
+	- Roadmap synchronized with Vikunja project 17; current execution queue refreshed around d=6/n=5 escalation pass1, pass1 summarization, and pass2 promotion.
+- In progress:
+	- d=6/n=5 L-C1 SOS escalation pass2 (1200s per solver) is running for nondegenerate templates (`uniform`, `boundary`, `mixed`).
+	- Live artifacts: `MeansResearch/results/phase3_runs_clean_d6_lc1_escalation_pass2_uniform.jsonl`, `MeansResearch/results/phase3_runs_clean_d6_lc1_escalation_pass2_boundary.jsonl`, `MeansResearch/results/phase3_runs_clean_d6_lc1_escalation_pass2_mixed.jsonl`.
 - Next execution sprint:
 
-	1. Update experiment matrix CX-1 row with tractability ceiling verdict.
-	2. Update manuscript TeX with CX-1 tractability finding (add to computational evidence paragraph).
-	3. Assess CX-2 (SONC/GP transform stress tests) tractability and priority; if feasible, execute targeted probe.
+	1. Finish pass2 and summarize solver-attempt traces against pass1 baseline.
+	2. Quantify solver/template deltas from pass1 -> pass2 and identify any first non-timeout outcomes.
+	3. If still timeout-dominated, launch targeted pass3 singleton escalation (1800s) on highest-value unresolved nondegenerate cases.
 **Steps**
 1. Phase 1 (Week 1): Source-of-truth consolidation for proposal + reports. Build a claim matrix from `/home/mehdi/Code/Irene/MeansResearch/Proposal- A Unified Approach to Optimization via Generalized Moment Problems and (p,q)-Mean Polynomials.pdf`, `/home/mehdi/Code/Irene/MeansResearch/mean_polynomials_main.pdf`, `/home/mehdi/Code/Irene/MeansResearch/PSD_Mean_31.12.2025(1).pdf`, and `/home/mehdi/Code/Irene/MeansResearch/The Cone Generated by Non-negative Mean Polynomials07.pdf`, using `/home/mehdi/Code/Irene/MeansResearch/mean_polynomials_main.tex` as the canonical editable anchor. Output: objective map, notation map, theorem overlap/diff map.
 2. Phase 1 (Week 1): Version reconciliation between `mean_polynomials_main` and `PSD_Mean_31.12.2025`: identify which statements are equivalent, strengthened, weakened, or unresolved. Mark all TODO markers in TeX as blockers. Output: prioritized discrepancy list. Depends on Step 1.

@@ -9,6 +9,8 @@ Run a weekly review for:
 `{{question}}`
 
 Workflow:
+0. Use the final reflection checklist when closing a cycle:
+   - `.github/prompts/stage-6-reflect.prompt.md`
 1. Resolve target project:
    - `python3 .github/skills/vikunja/vikunja_tool.py projects search --query "{{question}}"`
 2. Pull task status and overdue items for the selected project.

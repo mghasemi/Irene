@@ -1,0 +1,89 @@
+---
+# ADR (Agent Decision Record) Security Wrapper Configuration
+# Controls what packages, URL domains, and filesystem paths agents are permitted to access.
+# This file is read by scripts/adr-wrapper.sh at every intercepted command.
+---
+
+# Python packages that agents may install or import without escalation.
+# Add new packages here after human review.
+allowed_packages:
+  # Standard scientific stack
+  - numpy
+  - scipy
+  - sympy
+  - matplotlib
+  - pandas
+  - requests
+  - httpx
+  - pydantic
+  # Project-specific
+  - pyzotero
+  - pytest
+  - lean4
+  - pylatexenc
+  # Notebook / ML
+  - jupyter
+  - notebook
+  - scikit-learn
+  - torch
+  - transformers
+  # Internal / lightweight
+  - tqdm
+  - rich
+  - typer
+  - click
+  - toml
+  - pyyaml
+
+# One-off approved Python import module names.
+# Use this for import/package mismatches (example: pyyaml -> yaml)
+# or temporary approved exceptions after human review.
+#
+# Supported entry formats (both are valid):
+# - yaml
+# - sklearn|reason=import-name-mismatch|expires_at=2026-12-31
+#
+# Notes:
+# - module name is the first segment (before first '|')
+# - expires_at is optional and interpreted as UTC date (YYYY-MM-DD)
+# - expired entries are ignored by policy checks
+allowed_python_module_exceptions:
+  - yaml
+  - sklearn|reason=import-name-mismatch|expires_at=2026-12-31
+
+# HTTP/HTTPS domains that agent code may contact without escalation.
+allowed_domains:
+  # Local infrastructure
+  - "192.168.1.70"
+  - "192.168.1.84"
+  - "mghasemi.ddns.net"
+  # Academic / research
+  - "arxiv.org"
+  - "export.arxiv.org"
+  - "ar5iv.org"
+  - "api.semanticscholar.org"
+  - "api.zotero.org"
+  # Wolfram
+  - "api.wolframalpha.com"
+  # PyPI (for pip installs)
+  - "pypi.org"
+  - "files.pythonhosted.org"
+
+# Filesystem paths that agent code may write to without escalation.
+# Paths are matched as prefixes (i.e., any subpath is allowed).
+allowed_write_paths:
+  - "/home/mehdi/Code/MathAgent"
+  - "/tmp"
+  - "/var/tmp"
+
+# Maximum CPU time (seconds) for a single sandboxed code execution.
+sandbox_cpu_limit: 30
+
+# Maximum memory (MB) for a single sandboxed code execution.
+sandbox_memory_limit_mb: 512
+
+# Vikunja task priority for security violations.
+violation_priority: "critical"
+
+# SiYuan notebook path for violation logs.
+siyuan_violation_path: "/MathAgent/Security/ADR-Violations"

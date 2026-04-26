@@ -53,7 +53,17 @@ Status vocabulary:
 | ID | Candidate | Current status | Why tracked | Next action |
 |---|---|---|---|---|
 | CX-1 | High-degree M_{2d,p} with sparse nonuniform \alpha potentially outside SOS | counterexample candidate | Could delimit the scope of L-T5 generalization | Generate symbolic families and test with SDP decomposition first. |
-| CX-2 | Mean-of-linear-forms examples near SONC boundary under coordinate transforms | counterexample candidate | Could sharpen separation narrative around L-T7 | Build focused transformation stress tests with SONC solver diagnostics. |
+| CX-2 | Mean-of-linear-forms examples near SONC boundary under coordinate transforms | counterexample candidate | Could sharpen separation narrative around L-T7 | Completed focused transform stress tests (batch1+batch2); next action is to formalize a localized boundary conjecture around the Robinson-hat baseline coefficient under this transform family. |
+
+## 2026-04-22 CX-2 Update
+
+- Evidence pointer (batch 1): `phase3_runs_clean_cx2_transform_probe.jsonl`, `phase3_pilot_summary_cx2_transform_probe.md`.
+- Evidence pointer (batch 2): `phase3_runs_clean_cx2_transform_probe_batch2.jsonl`, `phase3_pilot_summary_cx2_transform_probe_batch2.md`.
+- Observed computational pattern under current SONC/GP setup:
+	- Choi-Lam tail sweep (`c\in\{4.0,3.95,3.9,3.8\}`) remains SONC+GP feasible.
+	- Robinson-hat pre-transform sweep (`c\in\{2.0,1.98,1.95,1.9,1.85,1.8\}`) remains SONC+GP infeasible.
+	- Robinson-hat post-transform SONC feasibility is observed only at baseline `c=2.0`; nearby coefficients in the tested sweep remain SONC-infeasible.
+- Interpretation update: current evidence supports a **localized transform-sensitive SONC boundary effect** rather than a broad transform-invariance failure across nearby Robinson-hat perturbations.
 
 ## Weekly Update Protocol
 

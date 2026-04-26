@@ -1,0 +1,137 @@
+{
+  "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/main/schema/mcp-server.schema.json",
+  "mcpServers": {
+    "vikunja": {
+      "type": "stdio",
+      "command": "python3",
+      "args": [".github/skills/vikunja/vikunja_tool.py"],
+      "env": {
+        "VIKUNJA_URL": "http://192.168.1.84:3456",
+        "VIKUNJA_ALT_URL": "http://mghasemi.ddns.net:3456",
+        "VIKUNJA_TOKEN": "${VIKUNJA_TOKEN}"
+      }
+    },
+    "wolfram-alpha": {
+      "type": "stdio",
+      "command": "python3",
+      "args": [".github/skills/wolfram-alpha/wolfram_alpha_tool.py"],
+      "env": {
+        "WOLFRAM_ALPHA_APPID": "${WOLFRAM_ALPHA_APPID}",
+        "WOLFRAM_ALPHA_TIMEOUT": "20"
+      }
+    },
+    "lean4": {
+      "type": "stdio",
+      "command": "python3",
+      "args": [".github/skills/lean4/lean4_tool.py"],
+      "env": {
+        "LEAN4_PROJECT_DIR": "${LEAN4_PROJECT_DIR}",
+        "LEAN4_TIMEOUT": "60",
+        "LEAN4_ALLOW_SCRATCH": "true",
+        "LEAN4_SCRATCH_ROOT": "${HOME}/.cache/lean4_tool"
+      }
+    },
+    "lightrag-query": {
+      "type": "stdio",
+      "command": "python3",
+      "args": [".github/skills/lightrag-query/lightrag_query_tool.py"],
+      "env": {
+        "LIGHTRAG_URL": "http://192.168.1.70:9621",
+        "LIGHTRAG_ALT_URL": "http://mghasemi.ddns.net:9621",
+        "LIGHTRAG_TIMEOUT": "20",
+        "LIGHTRAG_API_KEY": "${LIGHTRAG_API_KEY}"
+      }
+    },
+    "lightrag-ingest": {
+      "type": "stdio",
+      "command": "python3",
+      "args": [".github/skills/lightrag-ingest/lightrag_ingest_tool.py"],
+      "env": {
+        "LIGHTRAG_URL": "http://192.168.1.70:9621",
+        "LIGHTRAG_ALT_URL": "http://mghasemi.ddns.net:9621",
+        "LIGHTRAG_TIMEOUT": "60",
+        "LIGHTRAG_API_KEY": "${LIGHTRAG_API_KEY}"
+      }
+    },
+    "siyuan": {
+      "type": "stdio",
+      "command": "python3",
+      "args": [".github/skills/siyuan/siyuan_tool.py"],
+      "env": {
+        "SIYUAN_URL": "${SIYUAN_URL}",
+        "SIYUAN_TOKEN": "${SIYUAN_TOKEN}"
+      }
+    },
+    "zimi": {
+      "type": "stdio",
+      "command": "python3",
+      "args": [".github/skills/zimi/zimi_tool.py"],
+      "env": {
+        "ZIMI_URL": "http://192.168.1.70:8899",
+        "ZIMI_ALT_URL": "http://mghasemi.ddns.net:8899",
+        "ZIMI_TIMEOUT": "20"
+      }
+    },
+    "searxng": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", ".github/skills/searxng/scripts/searxng.py"],
+      "env": {
+        "SEARXNG_URL": "http://192.168.1.70:5050/"
+      }
+    },
+    "research-memory": {
+      "type": "stdio",
+      "command": "python3",
+      "args": [".github/skills/research-memory/research_memory_tool.py"],
+      "env": {
+        "RESEARCH_MEMORY_DB": ".github/skills/research-memory/research_memory.sqlite3"
+      }
+    },
+    "sympy-mcp": {
+      "type": "stdio",
+      "command": ".github/skills/sympy-mcp/.venv/bin/python",
+      "args": [".github/skills/sympy-mcp/sympy_tool.py"]
+    },
+    "sagemath-mcp": {
+      "type": "stdio",
+      "command": "/home/mehdi/miniforge3/bin/mamba",
+      "args": ["run", "-n", "sage", "python3", ".github/skills/sagemath-mcp/sagemath_tool.py"],
+      "env": {
+        "SAGE_TIMEOUT": "60"
+      }
+    },
+    "zotero": {
+      "type": "stdio",
+      "command": ".github/skills/zotero/.venv/bin/python",
+      "args": [".github/skills/zotero/zotero_tool.py"],
+      "env": {
+        "ZOTERO_LIBRARY_TYPE": "user",
+        "ZOTERO_LIBRARY_ID": "2281712",
+        "ZOTERO_API_KEY": "Bz4n2UzL8zt25Fp77npdTdha",
+        "ZOTERO_BIB_PATH": "${ZOTERO_BIB_PATH}"
+      }
+    },
+    "latex-manuscript": {
+      "type": "stdio",
+      "command": "python3",
+      "args": [".github/skills/latex-manuscript/latex_tool.py"],
+      "env": {
+        "LATEX_COMPILER": "pdflatex",
+        "LATEX_GLOSSARY_GROUP": "math-notation-glossary"
+      }
+    },
+    "scientific-coding": {
+      "type": "stdio",
+      "command": "python3",
+      "args": [".github/skills/scientific-coding/scientific_coding_tool.py"],
+      "env": {
+        "SANDBOX_CPU_SECONDS": "30",
+        "SANDBOX_MEM_MB": "512",
+        "SIYUAN_URL": "${SIYUAN_URL}",
+        "SIYUAN_TOKEN": "${SIYUAN_TOKEN}",
+        "RESEARCH_MEMORY_DB": ".github/skills/research-memory/research_memory.sqlite3"
+      }
+    }
+  }
+}
