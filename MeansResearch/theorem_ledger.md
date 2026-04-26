@@ -62,7 +62,7 @@ Status vocabulary:
 | ID | Candidate | Current status | Why tracked | Next action |
 |---|---|---|---|---|
 | CX-1 | High-degree M_{2d,p} with sparse nonuniform \alpha potentially outside SOS | counterexample candidate | Could delimit the scope of L-T5 generalization | Generate symbolic families and test with SDP decomposition first. |
-| CX-2 | Mean-of-linear-forms examples near SONC boundary under coordinate transforms | counterexample candidate | Could sharpen separation narrative around L-T7 | Completed focused transform stress tests (batch1+batch2); next action is to formalize a localized boundary conjecture around the Robinson-hat baseline coefficient under this transform family. |
+| CX-2 | Mean-of-linear-forms examples near SONC boundary under coordinate transforms | counterexample candidate | Could sharpen separation narrative around L-T7 | Localized B3 transform-boundary conjecture is now formalized in manuscript synthesis; next action is dense neighborhood validation around Robinson-hat baseline (finer coefficient/transform sweeps) for potential theorem-level promotion. |
 
 ## 2026-04-22 CX-2 Update
 
@@ -73,6 +73,12 @@ Status vocabulary:
 	- Robinson-hat pre-transform sweep (`c\in\{2.0,1.98,1.95,1.9,1.85,1.8\}`) remains SONC+GP infeasible.
 	- Robinson-hat post-transform SONC feasibility is observed only at baseline `c=2.0`; nearby coefficients in the tested sweep remain SONC-infeasible.
 - Interpretation update: current evidence supports a **localized transform-sensitive SONC boundary effect** rather than a broad transform-invariance failure across nearby Robinson-hat perturbations.
+
+## 2026-04-26 B3 Formalization Update
+
+- Manuscript integration: B3 is now formalized as a **localized transform-boundary conjecture** (CX-2 linked) in the computational synthesis section.
+- Scope guard: wording is explicitly family- and slice-local (Robinson-hat baseline neighborhood) and avoids global transform-invariance claims.
+- Required follow-up for promotion: denser coefficient neighborhoods around baseline and transform-path perturbation sweeps with paired SONC/GP reproducibility checks.
 
 ## 2026-04-26 Phase 4 Integration Kickoff
 
@@ -121,6 +127,45 @@ Status vocabulary:
 1. **OP1 (highest):** resolve whether d=6, n>=4 L-C1 all-timeout behavior is purely a solver-ceiling artifact or indicates deeper structural complexity in SOS decomposition for the tested families.
 2. **OP2 (high):** formulate a support-sensitive SONC membership criterion consistent with persistent p in {1,2} failures under local/global and tightened-tolerance diagnostics.
 3. **OP3 (medium):** determine whether the observed CX-2 Robinson-hat baseline post-transform SONC-feasibility point extends to a provable local neighborhood.
+
+## 2026-04-26 OP1 Decision Memo Update
+
+- Decision memo artifact added: `MeansResearch/op1_escalation_decision_memo.md`.
+- Memo defines staged escalation path (E1 backend trial, E2 structure-aware reformulation, E3 freeze-and-package fallback).
+- Budget assumptions and first non-timeout acceptance gates are now explicit and can be used as stop/go criteria for future OP1 reruns.
+
+## 2026-04-26 OP2 Prototype Plan Update
+
+- Prototype-plan artifact added: `MeansResearch/op2_support_sensitive_sonc_prototype_plan.md`.
+- Plan defines support-descriptor based criterion template, development/stress validation slices, and G1-G3 acceptance gates.
+- OP2 remains conjectural-program level until prototype separation and reproducibility gates are met.
+
+## 2026-04-26 OP2 Prototype Instantiation (phi/support v1)
+
+- Instantiation artifacts added:
+	- `MeansResearch/results/op2_prototype_classification_table.csv`
+	- `MeansResearch/results/op2_prototype_validation_summary.md`
+- Frozen slice used: d in {4,5}, nondegenerate rows only (48 records).
+- Prototype-1 rule outcome: predicted vs observed accuracy = 48/48 (1.000) on the frozen slice; degree-only baseline = 24/48 (0.500).
+- Gate status: G1 PASS, G2 PASS, G3 PASS under the prototype-plan criteria.
+- Scope caveat retained: this is still an empirical prototype result and not a theorem-level criterion.
+
+## 2026-04-26 OP3 Local-Neighborhood Plan Update
+
+- Local-neighborhood test-plan artifact added: `MeansResearch/op3_local_neighborhood_test_plan.md`.
+- Plan specifies crossed coefficient/transform neighborhood sweeps around Robinson-hat baseline, with reproducibility schema and H1-H3 acceptance gates.
+- OP3 remains open pending execution artifacts for the local sweep and gate evaluation outcomes.
+
+## 2026-04-26 OP3 Local-Neighborhood Execution Update
+
+- Execution artifacts added:
+	- `MeansResearch/results/op3_local_neighborhood_sweep.jsonl`
+	- `MeansResearch/results/op3_local_neighborhood_table.csv`
+	- `MeansResearch/results/op3_local_neighborhood_summary.md`
+- Primary 7x7 sweep outcome at base tolerance 1e-8: 49 total points, with 1 robust_success point and 48 robust_fail points; no unstable or condition-skipped points occurred.
+- Center point `(c=2.0, t=1.0)` remained SONC-feasible but GP-infeasible; every non-center grid point was robust_fail across all four SONC diagnostic configurations.
+- Gate status: H1 FAIL, H2 PASS, H3 PASS.
+- Interpretation update: the first local-neighborhood pass supports a sharply isolated SONC-positive center rather than a visibly extended nearby success region under the tested coefficient and transform perturbations.
 
 ### Conjecture Backlog for Manuscript Integration
 

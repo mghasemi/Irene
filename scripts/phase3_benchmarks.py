@@ -68,6 +68,81 @@ def git_commit_hash(repo_root: Path) -> str:
         return "unknown"
 
 
+def weak_compositions(total: int, parts: int) -> list[tuple[int, ...]]:
+    if parts <= 0:
+        return []
+    if parts == 1:
+        return [(total,)]
+    out: list[tuple[int, ...]] = []
+    for first in range(total + 1):
+        for rest in weak_compositions(total - first, parts - 1):
+            out.append((first, *rest))
+    return out
+
+
+def support_from_case(case: BenchmarkCase) -> set[tuple[int, ...]]:
+    support: set[tuple[int, ...]] = set()
+    q = case.q
+
+    # First term contributes x_i^q when alpha_i != 0.
+    for i, ai in enumerate(case.alpha):
+        if ai == 0:
+            continue
+        exp = [0] * case.n
+        exp[i] = q
+        support.add(tuple(exp))
+
+    # Second term support is exact for p=0 and combinatorial for p>0.
+    if case.p == 0:
+        support.add(tuple(int(a) for a in case.alpha))
+        return support
+
+    if q % case.p != 0:
+        return support
+
+    power = q // case.p
+    for k in weak_compositions(power, case.n):
+        # Zero alpha_i cancels terms with k_i > 0.
+        if any(ki > 0 and ai == 0 for ki, ai in zip(k, case.alpha)):
+            continue
+        support.add(tuple(case.p * ki for ki in k))
+
+    return support
+
+
+def support_class_from_support(support: set[tuple[int, ...]]) -> str:
+    if len(support) <= 1:
+        return "degenerate"
+
+    points = np.array(sorted(support), dtype=float)
+    centered = points - points[0]
+    affine_dim = int(np.linalg.matrix_rank(centered))
+    if affine_dim <= 0:
+        return "degenerate"
+
+    if affine_dim == 1:
+        num_vertices = 2
+    else:
+        try:
+            _u, _s, vh = np.linalg.svd(centered, full_matrices=False)
+            basis = vh[:affine_dim].T
+            projected = centered @ basis
+            hull = ConvexHull(projected)
+            num_vertices = len(hull.vertices)
+        except (np.linalg.LinAlgError, QhullError, ValueError):
+            return "degenerate"
+
+    if num_vertices == affine_dim + 1:
+        return "simplex-like"
+    if num_vertices > affine_dim + 1:
+        return "non-simplex"
+    return "degenerate"
+
+
+def support_class_from_case(case: BenchmarkCase) -> str:
+    return support_class_from_support(support_from_case(case))
+
+
 def support_class_from_objective(objective: Any) -> str:
     if objective is None or not hasattr(objective, "content"):
         return "degenerate"
@@ -392,8 +467,7 @@ def build_record_base(case: BenchmarkCase, commit_hash: str, tolerance: float) -
         generation_error = "structurally_degenerate_family"
     else:
         try:
-            _problem, objective = create_problem(case)
-            support = support_class_from_objective(objective)
+            support = support_class_from_case(case)
         except Exception as exc:
             generation_error = str(exc)
 

@@ -15,7 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts.phase3_benchmarks import BenchmarkCase, mean_polynomial, support_class_from_objective
+from scripts.phase3_benchmarks import BenchmarkCase, support_class_from_case
 
 
 METHOD_SDP = "SDPRelaxations"
@@ -33,8 +33,7 @@ def recompute_support_class(desc: dict[str, Any]) -> str:
             alpha=tuple(int(x) for x in desc.get("alpha", [])),
             alpha_template=str(desc.get("alpha_template") or "unknown"),
         )
-        _sg, _alg, objective = mean_polynomial(case)
-        return support_class_from_objective(objective)
+        return support_class_from_case(case)
     except Exception:
         return str(desc.get("support_class") or "unknown")
 

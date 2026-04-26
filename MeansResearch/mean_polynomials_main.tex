@@ -511,6 +511,18 @@ Post-transform SONC feasibility appears only at the baseline Robinson-hat coeffi
 with nearby coefficients in this sweep remaining SONC-infeasible. In the current computational
 window, this supports a localized transform-sensitive boundary effect rather than a broad
 coefficient-robust transform classification shift.
+
+\paragraph{Localized transform-boundary conjecture (B3, CX-2).}
+The current CX-2 record motivates a narrowly scoped transform-boundary conjecture: within the
+tested Robinson-hat family and current normalization, the observed post-transform SONC-feasible
+point at baseline coefficient $c=2.0$ behaves as a localized boundary phenomenon rather than as
+evidence of a coefficient-robust transform-induced SONC phase shift. Equivalently, the present
+data support the existence of a small transform-sensitive region around the baseline where SONC
+classification can flip, while nearby coefficients in the tested sweep remain in the SONC-failure
+regime. We therefore treat B3 as a localized conjectural statement tied to this family and slice,
+not as a global transform principle. Promotion beyond conjectural status requires targeted
+neighborhood sweeps around $c=2.0$ (including finer coefficient granularity and transform-path
+perturbations) together with reproducible SONC/GP cross-checks on the same instances.
 For deferred $d=6$/$n\geq 5$ L-C1 SOS slices, we prepared and executed a specialized-solver
 escalation route in the benchmark driver via solver-sequence fallback
 (\texttt{cvxopt,sdpa,csdp}) with per-solver timeout caps and per-attempt logging.
