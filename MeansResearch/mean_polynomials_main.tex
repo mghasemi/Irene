@@ -439,6 +439,34 @@ infeasible under local and global solves and under error bounds $10^{-6}$, $10^{
 and $10^{-10}$. This provides positive evidence for a degree-$8$ extension of
 Theorem \ref{thm:M_2d_p_SOS} and negative evidence against a broad SONC
 containment statement, while still leaving a theorem-level explanation open.
+
+\paragraph{Scoped extension conjecture for Theorem~\ref{thm:M_2d_p_SOS}.}
+The current computational record supports the following qualified extension of
+Theorem~\ref{thm:M_2d_p_SOS}. For nondegenerate tested families of
+$M_{2d,p}(X,\alpha)$, SOS feasibility persists throughout the frozen
+$d\in\{4,5\}$ slice with $n\in\{3,4\}$ and the executed $p$-grid, and it also
+holds on the tested $d=6$, $n=3$ uniform slice. This evidence motivates the
+conjecture that the SOS behavior of Theorem~\ref{thm:M_2d_p_SOS} extends beyond
+$d\leq 3$ on a broader structured class of mean-polynomial families. At the
+same time, the $d=6$, $n\geq 4$ L-C1 slice remains computationally deferred:
+under the present SDP stack (CVXOPT/SDPA/CSDP), all tested nondegenerate cases
+timeout without producing either an SOS certificate or a hard infeasibility
+certificate. Accordingly, we treat the higher-degree extension as computationally
+supported on the confirmed slices and explicitly open on the deferred slice,
+rather than as a theorem-level statement in full generality.
+
+\paragraph{Scoped SONC conjecture.}
+The current computational record does not support a broad degree-only SONC
+containment statement for the families $M_{2d,p}(X,\alpha)$. Instead, the
+evidence favors a support-sensitive formulation: on the tested nondegenerate
+$d\in\{4,5\}$ slice with $n\in\{3,4\}$, SONC feasibility persists on some
+support classes, while the $p\in\{1,2\}$ families exhibit robust SONC failure
+under local/global solves and tightened tolerances, even though SDP/SOS and GP
+remain feasible on the same instances. This suggests that SONC membership in
+these mean-polynomial families is controlled by finer support geometry rather
+than by degree alone. We therefore formulate the higher-degree SONC question as
+a support-sensitive conjectural program rather than as a uniform containment
+expectation.
 \end{remark}
 
 \subsection*{Computational Evidence Snapshot (Degrees $8$ and $10$)}
@@ -518,6 +546,90 @@ Tables~\ref{tab:phase3-classification-d4} and~\ref{tab:phase3-classification-d5}
 with a partial higher-degree extension from the completed $d=6$ L-C2 SONC/GP slice and a
 deferred-status $d=6$ L-C1 SOS/SDP record.
 
+\paragraph{Confirmed hypotheses (artifact-scoped).}
+Within the tested computational window, the following claims are supported by direct evidence.
+Each claim is intentionally scoped by degree/variable/template slice.
+\begin{itemize}
+    \item \textbf{C1 (SOS robustness on the frozen slice).}
+    For nondegenerate template families at $d\in\{4,5\}$, $n\in\{3,4\}$, and
+    $p\in\{0,1,2,4,5\}$, SDP/SOS decomposition is consistently feasible in the current runs.
+    Evidence: \path{phase3_pilot_summary_clean.md},
+    \path{phase3_pilot_summary_clean_d5.md}, and
+    \path{phase3_classification_table.csv}.
+    \item \textbf{C2 (GP feasibility on the same frozen slice).}
+    On the same nondegenerate $d\in\{4,5\}$ tested grid, GP relaxations remain feasible
+    across all recorded cases in the refreshed classification outputs.
+    Evidence: \path{phase3_pilot_summary_clean.md},
+    \path{phase3_pilot_summary_clean_d5.md}, and
+    \path{phase3_classification_table.csv}.
+    \item \textbf{C3 (partial higher-degree SOS extension at low-$n$).}
+    For the tested $d=6$ L-C1 uniform $n=3$ slice,
+    SOS/SDP outcomes are feasible across the executed $p$ grid.
+    Evidence: \path{phase3_runs_clean_d6_lc1_batch1.jsonl},
+    \path{phase3_runs_clean_d6_lc1_batch2.jsonl}, and
+    \path{phase3_pilot_summary_clean_d6_lc1_batch2.md}.
+\end{itemize}
+
+\paragraph{Weakened or null findings (scope-limited).}
+The following outcomes narrow the current conjectural scope or report null gains under stronger
+computational budgets.
+\begin{itemize}
+    \item \textbf{W1 (broad SONC containment is weakened).}
+    For nondegenerate tested families at $d\in\{4,5\}$ with $n\in\{3,4\}$,
+    SONC infeasibility persists on the $p\in\{1,2\}$ slices under local/global solves and tighter
+    tolerances.
+    Implication: SONC claims should be formulated as support-sensitive, not degree-only.
+    Evidence: \path{phase3_sonc_diagnostics_summary.md},
+    \path{phase3_sonc_diagnostics_summary_d5.md}.
+    Caveat: this is not a theorem-level non-membership proof for all families.
+    \item \textbf{W2 (null improvement from escalation pass1 to pass2).}
+    For $d=6$, $n=5$, L-C1 nondegenerate templates (uniform/boundary/mixed),
+    increasing the per-solver cap from 600s to 1200s in the
+    \texttt{cvxopt,sdpa,csdp} sequence yields no first success and no hard-fail certificate.
+    Implication: current conclusions are solver-ceiling computational limitations, not mathematical
+    refutations of SOS membership.
+    Evidence: \path{phase3_pilot_summary_d6_lc1_escalation_pass1.md},
+    \path{phase3_pilot_summary_d6_lc1_escalation_pass2.md}.
+    Caveat: this does not prove infeasibility in stronger solver stacks.
+    \item \textbf{W3 (structural SONC diagnostics remove tuning-artifact explanation).}
+    On the tested d=6 L-C2 failed set, alternate SONC diagnostic configurations
+    (local/global and tighter tolerance) show zero recoveries.
+    Implication: these failures should be treated as formulation-robust negatives in the tested slice.
+    Evidence: \path{phase3_sonc_diagnostics_d6_structural.md}.
+    Caveat: robustness is empirical on the executed slices, not a universal impossibility theorem.
+\end{itemize}
+
+\paragraph{Counterexamples and anomalies register (follow-up tracked).}
+To keep negative evidence first-class, we maintain the following compact register with fields
+\{family/slice, status pattern, suspected cause, confidence, follow-up action\}.
+\begin{itemize}
+    \item \textbf{A1 (CX-2 transform-sensitive boundary behavior).}
+    Family/slice: Robinson-hat transform probe and coefficient sweep.
+    Status pattern: pre-transform infeasible, baseline post-transform SONC-feasible,
+    nearby transformed coefficients reverting to SONC-infeasible.
+    Suspected cause: localized geometric sensitivity of the transformed support/coefficient regime,
+    not a uniform transform effect.
+    Confidence: medium (replicated in two batches on a narrow coefficient band).
+    Follow-up action: run a denser local coefficient sweep around the baseline and test adjacent
+    transform families.
+    Evidence: \path{phase3_pilot_summary_cx2_transform_probe.md},
+    \path{phase3_pilot_summary_cx2_transform_probe_batch2.md}.
+    \item \textbf{A2 ($d=6$, $n=5$ L-C1 solver-ceiling timeout wall).}
+    Family/slice: nondegenerate uniform/boundary/mixed templates with $p\in\{0,1,2,3,4,6\}$.
+    Status pattern: all-timeout in pass1 (600s/solver) and pass2 (1200s/solver) across
+    \texttt{CVXOPT->SDPA->CSDP}.
+    Suspected cause: SDP size/conditioning driven scalability ceiling under the current
+    interior-point stack.
+    Confidence: high (18/18 consistent timeouts in both passes, no countervailing solver signal).
+    Follow-up action: keep this slice deferred in theorem claims and revisit only with stronger
+    solvers or structure-exploiting formulations.
+    Evidence: \path{phase3_runs_clean_d6_lc1_escalation_pass2_uniform.jsonl},
+    \path{phase3_runs_clean_d6_lc1_escalation_pass2_boundary.jsonl},
+    \path{phase3_runs_clean_d6_lc1_escalation_pass2_mixed.jsonl},
+    \path{phase3_pilot_summary_d6_lc1_escalation_pass2.md}, and
+    \path{theorem_ledger.md}.
+\end{itemize}
+
 \paragraph{Reproducibility note.}
 The tables above are derived from the frozen $d=4,d=5$ artifacts:
 \begin{itemize}
@@ -573,6 +685,92 @@ a second CX-2 coefficient sweep indicates this behavior is currently localized n
 baseline Robinson-hat coefficient under the tested transform family. Specialized-solver
 escalation paths for deferred $d=6$/$n\geq 5$ SOS/SDP slices are now implemented and
 ready for full pass execution.
+
+\subsection*{Phase 4 Integration Kickoff: Open Problems and Conjecture Backlog}
+To initiate Phase 4 integration, we record a ranked open-problem list and a conjecture backlog
+that directly links theory-facing statements to the completed computational evidence.
+In addition, we now rank candidate publishable claims from strongest to most exploratory.
+\begin{enumerate}
+    \item \textbf{Publishable Claim PC1 (strongest):}
+    on the tested nondegenerate $d\in\{4,5\}$ slice with $n\in\{3,4\}$,
+    SOS/SDP and GP are consistently feasible while SONC is support-sensitive with robust
+    failures on the $p\in\{1,2\}$ families under diagnostic perturbations.
+    \item \textbf{Publishable Claim PC2 (strong):}
+    for L-C1 at $d=6$, $n\geq 4$, the current interior-point solver stack reaches a clear
+    computational ceiling (pass1/pass2 all-timeout pattern), yielding a reproducible deferment
+    criterion for this slice rather than a theorem-level negative statement.
+    \item \textbf{Publishable Claim PC3 (exploratory):}
+    CX-2 exhibits a localized transform-sensitive SONC boundary effect in the Robinson-hat
+    track, motivating a focused geometric conjecture and targeted local sweeps.
+\end{enumerate}
+
+\noindent\textbf{Fallback publication path.}
+If OP1 remains unresolved under available solver resources, we package a scope-limited
+result set centered on PC1 and PC2: robust support-sensitive separation on the frozen slice,
+explicit solver-ceiling deferment protocol for $d=6$, $n\geq 4$, and a clearly delimited
+future-work trajectory for PC3/OP3.
+
+The high-value open problems remain:
+\begin{enumerate}
+    \item \textbf{Open Problem OP1 (high priority):} determine whether the d=6, $n\geq 4$
+    L-C1 solver ceiling reflects only algorithmic limits or a deeper structural barrier in
+    SOS decomposition complexity for the tested mean-polynomial families.
+    \item \textbf{Open Problem OP2 (high priority):} formalize support-sensitive SONC
+    membership criteria that explain the persistent $p\in\{1,2\}$ failures under robust
+    diagnostics while preserving the observed GP feasibility pattern.
+    \item \textbf{Open Problem OP3 (medium priority):} characterize the localized
+    transform-sensitive SONC boundary behavior in the Robinson-hat family and determine
+    whether the observed baseline feasibility point extends to a provable neighborhood.
+\end{enumerate}
+
+The current conjecture backlog for integration into the final manuscript is:
+\begin{itemize}
+    \item \textbf{B1:} extend Theorem~\ref{thm:M_2d_p_SOS} beyond $d\leq 3$ with explicit
+    scope qualifiers reflecting the confirmed slices ($d\in\{4,5\}$ nondegenerate,
+    partial $d=6$ low-$n$) and deferred slices ($d=6$, $n\geq 4$).
+    \item \textbf{B2:} replace broad SONC containment phrasing by a support-sensitive
+    conjectural statement that is consistent with the d=4/d=5/d=6 diagnostic record.
+    \item \textbf{B3:} state a localized transform-boundary conjecture for the CX-2
+    Robinson-hat track, including explicit follow-up tests needed for escalation from
+    computational observation to theorem-level claim.
+\end{itemize}
+
+\paragraph{Next-quarter continuation plan.}
+We define three coordinated tracks for the next-quarter cycle.
+\begin{enumerate}
+    \item \textbf{Primary path (theory-first):}
+    refine B1 and B2 into publishable theorem/conjecture statements with explicit
+    scope qualifiers, and convert the current computational synthesis into lemma-level
+    support statements that can be cited in the main narrative.
+    \item \textbf{Computational path (solver escalation):}
+    rerun the deferred $d=6$, $n\geq 4$ L-C1 slices with stronger SDP tooling or
+    structure-exploiting formulations, preserving the same JSONL schema for direct
+    pass-to-pass comparability with the current CVXOPT/SDPA/CSDP baseline.
+    \item \textbf{Fallback path (scope-limited packaging):}
+    if OP1 remains unresolved under available compute, submit a scope-limited
+    manuscript centered on PC1+PC2, with PC3 and OP3 presented as forward-looking
+    conjectural directions and a documented specialized-solver agenda.
+\end{enumerate}
+
+\paragraph{Experiment report and reproducibility close-out.}
+For the Phase 4 close-out package, we freeze the experiment-report narrative around three
+evidence classes: confirmed slices, scope-limited/weakened statements, and anomaly-led
+forward directions.
+\begin{itemize}
+    \item \textbf{Confirmed evidence bundle:}
+    frozen d=4/d=5 nondegenerate SOS/GP feasibility with support-sensitive SONC outcomes,
+    plus partial d=6 low-$n$ extension.
+    \item \textbf{Deferred evidence bundle:}
+    d=6, $n\geq 4$ L-C1 solver-ceiling deferment documented by pass1/pass2 escalation traces
+    under \texttt{CVXOPT->SDPA->CSDP}.
+    \item \textbf{Anomaly evidence bundle:}
+    CX-2 localized transform-sensitive boundary behavior and follow-up local-sweep agenda.
+\end{itemize}
+
+Reproducibility is closed out by (i) artifact-path provenance in this section and
+the theorem ledger, (ii) the generated classification-table snippet inclusion,
+and (iii) deterministic two-pass manuscript builds via \texttt{make pdf} in
+\path{MeansResearch/}.
 
 \section{Beyond the SOSONC Cone}
 \label{s05}

@@ -39,8 +39,8 @@ Status vocabulary:
 
 | ID | Statement (short) | Current status | Dependencies | Planned computational hook | Next action |
 |---|---|---|---|---|---|
-| L-C1 | Extension of L-T5 to higher d beyond 3 | conjecture (d≤5 confirmed; d=6 n≤3 confirmed; d=6 n≥4 deferred — solver ceiling) | L-T5 patterns, sparse structure assumptions | SDPRelaxations.Decompose, SONCRelaxations.solve | d=4 and d=5 (n∈{3,4}) fully confirmed. d=6 n=3 confirmed. d=6 n≥4 computationally intractable under CVXOPT/SDPA/CSDP at budgets up to 1200s/solver; formally deferred pending high-performance solver access. |
-| L-C2 | Broad SONC membership behavior for M_{2d,p}(X,\alpha) families | conjecture | L-T3, Newton polytope structure | SONCRelaxations.solve, GPRelaxations.solve | Replace the broad containment expectation with support-sensitive subcases; the clean $d=4$ pilot shows robust SONC failure on six nondegenerate families for $p \in \{1,2\}$. |
+| L-C1 | Extension of L-T5 to higher d beyond 3 | conjecture (d≤5 confirmed; d=6 n≤3 confirmed; d=6 n≥4 deferred — solver ceiling) | L-T5 patterns, sparse structure assumptions | SDPRelaxations.Decompose, SONCRelaxations.solve | Promote L-C1 into manuscript-level scoped conjecture language: confirmed on tested d in {4,5}, n in {3,4} nondegenerate slice and on tested d=6, n=3; explicitly deferred/open for d=6, n>=4 under current solver stack. |
+| L-C2 | Broad SONC membership behavior for M_{2d,p}(X,\alpha) families | conjecture | L-T3, Newton polytope structure | SONCRelaxations.solve, GPRelaxations.solve | Promote L-C2 into support-sensitive conjecture wording: avoid degree-only containment language and explicitly separate SONC-feasible subcases from robust p in {1,2} failure regimes on tested nondegenerate slices. |
 
 ## 2026-04-20 Computational Update
 
@@ -73,6 +73,66 @@ Status vocabulary:
 	- Robinson-hat pre-transform sweep (`c\in\{2.0,1.98,1.95,1.9,1.85,1.8\}`) remains SONC+GP infeasible.
 	- Robinson-hat post-transform SONC feasibility is observed only at baseline `c=2.0`; nearby coefficients in the tested sweep remain SONC-infeasible.
 - Interpretation update: current evidence supports a **localized transform-sensitive SONC boundary effect** rather than a broad transform-invariance failure across nearby Robinson-hat perturbations.
+
+## 2026-04-26 Phase 4 Integration Kickoff
+
+### Ranked Publishable Claims (current ordering)
+
+1. **PC1 (strongest):** on the tested nondegenerate d in {4,5}, n in {3,4} slice, SOS/SDP and GP are consistently feasible while SONC remains support-sensitive with robust p in {1,2} failures under diagnostic perturbations.
+2. **PC2 (strong):** for L-C1 at d=6, n>=4, pass1/pass2 escalation establishes a reproducible solver-ceiling deferment criterion under CVXOPT->SDPA->CSDP, with explicit non-negation caveat at theorem level.
+3. **PC3 (exploratory):** CX-2 indicates a localized transform-sensitive SONC boundary effect in the Robinson-hat track, suitable as a conjectural direction with targeted follow-up sweeps.
+
+### Steering Fallback Direction
+
+- If OP1 remains unresolved under current compute and solver access, prioritize a scope-limited publication package around PC1+PC2 and keep PC3 as a forward-looking conjectural thread.
+- Fallback manuscript framing: emphasize robust empirical separation claims and reproducible deferment protocol; avoid overclaiming theorem-level impossibility.
+
+### Next-Quarter Continuation Plan (Task #40)
+
+1. **Primary path (theory-first):** promote B1 and B2 into sharpened theorem/conjecture text with explicit scope qualifiers and proof-dependency notes suitable for manuscript integration.
+2. **Computational path (solver escalation):** reattempt deferred d=6, n>=4 L-C1 slices with stronger SDP tooling or structure-aware formulations, preserving JSONL comparability against the current baseline.
+3. **Fallback path (scope-limited packaging):** if OP1 remains unresolved, package PC1+PC2 as the core publishable contribution and retain PC3/OP3 as explicit forward-work commitments.
+
+#### Success Criteria for Next Quarter
+
+- At least one of: (a) a theorem-level strengthening for B1/B2, or (b) a first non-timeout/nontrivial outcome on deferred slices under escalated tooling.
+- Finalized manuscript framing that separates confirmed statements, deferred statements, and conjectural statements without scope ambiguity.
+
+### Experiment Report and Reproducibility Close-out (Task #38)
+
+#### Close-out Deliverables
+
+1. Final experiment-report synthesis with three buckets: confirmed, weakened/deferred, and anomaly-driven follow-up.
+2. Stable artifact pointers for all Phase 3 and escalation evidence used in claims PC1-PC3 and OP1-OP3.
+3. Reproducible manuscript build path (`make pdf` in `MeansResearch/`) validated after each Phase 4 synthesis update.
+
+#### Completion Record (2026-04-26)
+
+- Manuscript close-out block added under Phase 4 integration section.
+- Ranked publishable claims/open problems and continuation plan integrated in manuscript + ledger.
+- Two-pass PDF build path validated through Makefile target.
+
+#### Residual Risk Note
+
+- d=6, n>=4 L-C1 remains a solver-ceiling deferment item; report framing must continue to avoid theorem-level impossibility language until stronger computational evidence is available.
+
+### Ranked Open Problems (procedural priority)
+
+1. **OP1 (highest):** resolve whether d=6, n>=4 L-C1 all-timeout behavior is purely a solver-ceiling artifact or indicates deeper structural complexity in SOS decomposition for the tested families.
+2. **OP2 (high):** formulate a support-sensitive SONC membership criterion consistent with persistent p in {1,2} failures under local/global and tightened-tolerance diagnostics.
+3. **OP3 (medium):** determine whether the observed CX-2 Robinson-hat baseline post-transform SONC-feasibility point extends to a provable local neighborhood.
+
+### Conjecture Backlog for Manuscript Integration
+
+- **B1 (L-C1 extension with scoped qualifiers):** extend the L-T5 narrative beyond d<=3 with explicit computational scope tags: confirmed slices (d in {4,5} nondegenerate; d=6 n=3 partial), deferred slices (d=6 n>=4).
+- **B2 (SONC scope refinement):** replace broad SONC containment language with a support-sensitive conjecture aligned with d=4/d=5/d=6 diagnostics.
+- **B3 (transform-boundary conjecture):** promote CX-2 from anomaly note to a localized transform-boundary conjecture with explicit follow-up tests required for theorem-level promotion.
+
+### Immediate Integration Actions
+
+1. Mirror OP1-OP3 and B1-B3 in the manuscript computational synthesis section.
+2. Keep solver-ceiling deferment language explicit for d=6 n>=4 and avoid theorem-level negation claims.
+3. Feed B1-B3 into final steering tasks (publishable-claims ranking and next-quarter continuation plan).
 
 ## Weekly Update Protocol
 
