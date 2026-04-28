@@ -1,0 +1,137 @@
+{
+  "by_slice": {
+    "clean_d6_lc2": {
+      "accuracy": 1.0,
+      "by_p": {
+        "0": {
+          "matches": 6,
+          "obs_R": 0,
+          "pred_R": 0,
+          "total": 6
+        },
+        "1": {
+          "matches": 6,
+          "obs_R": 6,
+          "pred_R": 6,
+          "total": 6
+        },
+        "2": {
+          "matches": 6,
+          "obs_R": 6,
+          "pred_R": 6,
+          "total": 6
+        },
+        "3": {
+          "matches": 6,
+          "obs_R": 6,
+          "pred_R": 6,
+          "total": 6
+        },
+        "4": {
+          "matches": 6,
+          "obs_R": 6,
+          "pred_R": 6,
+          "total": 6
+        },
+        "6": {
+          "matches": 6,
+          "obs_R": 0,
+          "pred_R": 0,
+          "total": 6
+        }
+      },
+      "matches": 36,
+      "observed_counts": {
+        "F": 12,
+        "R": 24
+      },
+      "predicted_counts": {
+        "F": 12,
+        "R": 24
+      },
+      "rows": 36
+    },
+    "frozen_d45": {
+      "accuracy": 1.0,
+      "by_p": {
+        "0": {
+          "matches": 12,
+          "obs_R": 0,
+          "pred_R": 0,
+          "total": 12
+        },
+        "1": {
+          "matches": 12,
+          "obs_R": 12,
+          "pred_R": 12,
+          "total": 12
+        },
+        "2": {
+          "matches": 12,
+          "obs_R": 12,
+          "pred_R": 12,
+          "total": 12
+        },
+        "4": {
+          "matches": 6,
+          "obs_R": 0,
+          "pred_R": 0,
+          "total": 6
+        },
+        "5": {
+          "matches": 6,
+          "obs_R": 0,
+          "pred_R": 0,
+          "total": 6
+        }
+      },
+      "matches": 48,
+      "observed_counts": {
+        "F": 24,
+        "R": 24
+      },
+      "predicted_counts": {
+        "F": 24,
+        "R": 24
+      },
+      "rows": 48
+    },
+    "stress_d6_structural": {
+      "accuracy": 1.0,
+      "by_p": {
+        "1": {
+          "matches": 6,
+          "obs_R": 6,
+          "pred_R": 6,
+          "total": 6
+        },
+        "2": {
+          "matches": 6,
+          "obs_R": 6,
+          "pred_R": 6,
+          "total": 6
+        },
+        "3": {
+          "matches": 6,
+          "obs_R": 6,
+          "pred_R": 6,
+          "total": 6
+        },
+        "4": {
+          "matches": 6,
+          "obs_R": 6,
+          "pred_R": 6,
+          "total": 6
+        }
+      },
+      "matches": 24,
+      "observed_counts": {
+        "R": 24
+      },
+      "predicted_counts": {
+        "R": 24
+      },
+      "rows": 24
+    }
+  }
+}

@@ -40,7 +40,7 @@ Status vocabulary:
 | ID | Statement (short) | Current status | Dependencies | Planned computational hook | Next action |
 |---|---|---|---|---|---|
 | L-C1 | Extension of L-T5 to higher d beyond 3 | scoped conjecture (confirmed on nondegenerate d in {4,5}, n in {3,4}; confirmed on partial d=6, n=3; deferred/open on d=6, n>=4 under solver ceiling) | L-T5 patterns, sparse structure assumptions | SDPRelaxations.Decompose, SONCRelaxations.solve | Keep manuscript wording aligned with explicit scope boundaries and evidence pointers: confirmed artifacts are `phase3_pilot_summary_clean.md`, `phase3_pilot_summary_clean_d5.md`, `phase3_runs_clean_d6_lc1_batch1.jsonl`, `phase3_runs_clean_d6_lc1_batch2.jsonl`, `phase3_pilot_summary_clean_d6_lc1_batch2.md`; deferred/open artifacts are the d=6 n=4 batch summaries plus `phase3_pilot_summary_d6_lc1_escalation_pass2.md`. |
-| L-C2 | Broad SONC membership behavior for M_{2d,p}(X,\alpha) families | conjecture | L-T3, Newton polytope structure | SONCRelaxations.solve, GPRelaxations.solve | Keep support-sensitive (not degree-only) wording and move to a geometry-first theorem candidate: define a circuit/barycentric support margin that explains robust-failure vs feasible classes across d=4/5 and d=6 stress slices; current p-band prototype alone is insufficient on d=6 structural failures. |
+| L-C2 | Broad SONC membership behavior for M_{2d,p}(X,\alpha) families | conjecture | L-T3, Newton polytope structure | SONCRelaxations.solve, GPRelaxations.solve | Keep support-sensitive (not degree-only) wording and advance the geometry-first interiority criterion Delta_support(case)=min(p,d-p)/d. Current empirical check is 48/48 on frozen d=4/5, 24/24 on d=6 structural stress, and 36/36 on unique nondegenerate d=6 clean-pilot SONC cases. Active next step: complete the uniform-family proof skeleton (boundary branch Delta=0, interior branch Delta>0, circuit-margin deficit argument) and then extend to boundary/mixed templates with explicit nondegeneracy guards. |
 
 ## 2026-04-20 Computational Update
 
@@ -71,7 +71,7 @@ Status vocabulary:
 	- unavailable: MOSEK, SDPA-GMP (not found on pip/conda-forge or in PATH)
 	- available: DSDP (/home/mehdi/miniforge3/envs/sage/bin/dsdp5, requires PATH injection), SDPA, CSDP
 - **Updated 2026-04-28**: E1 pilot (6 representative nondegenerate d=6, n=5 cases, solver sequence DSDP/CSDP/SDPA/CVXOPT, 600s per solver) completed on 2026-04-27. Outcome: 6/6 timeout; gate failed. OP1 is frozen for this cycle; continuation requires a higher-performance backend or structure-aware reformulation (E2/E3 paths in op1_escalation_decision_memo.md).
-- OP2 status (updated 2026-04-28): prototype validated on 2026-04-28. Frozen d=4/5 slice accuracy 48/48 (1.000), degree-only baseline 0.500; G1/G2/G3 all PASS. Stress-slice audit on d=6 structural failures gives 24/24 robust-fail cases while v1 prototype predicts R/U split (12/24 match), so theorem-stage work now targets a geometry-first criterion instead of p-band heuristics.
+- OP2 status (updated 2026-04-28): prototype validated on 2026-04-28. Frozen d=4/5 slice accuracy 48/48 (1.000), degree-only baseline 0.500; G1/G2/G3 all PASS. Geometry-first Delta_support criterion now matches frozen, d=6 structural stress, and unique nondegenerate d=6 clean-pilot SONC slices (48/48, 24/24, 36/36); theorem-stage focus shifts to analytic justification and scope conditions.
 - OP3 status (updated 2026-04-28): boundary characterization note drafted with falsifiable criteria C1-C3 and dependency map D1-D3. C3 micro-grid verification completed (9 points): center-only robust_success (1/9), non-center robust_fail (8/9), no unstable points. Next action: prioritize C1/C2 analytic verification.
 
 ## Counterexample Tracking
@@ -247,8 +247,22 @@ Integration and framing consistency pass completed on 2026-04-28 (5-session plan
 
 - Prototype gate status remains PASS on frozen d=4/5 nondegenerate slice (G1/G2/G3).
 - Stress-slice check using `phase3_sonc_diagnostics_d6_structural.jsonl`: 24 unique cases, all robust SONC failures across p in {1,2,3,4}.
-- v1 prototype extrapolation to this stress slice yields 12/24 agreement (R on p={1,2}, U on p={3,4}), so current heuristic is not yet theorem-grade.
-- Updated theorem-stage target: construct a support-geometry criterion (circuit/barycentric margin) that explains robust failure across both frozen and stress slices, or isolate a certified counterexample family if no unified criterion exists.
+- Geometry-first Delta_support update (run on 2026-04-28):
+	- definition: Delta_support(case)=min(p,d-p)/d
+	- rule: Delta_support>0 -> robust-failure class R, Delta_support=0 -> feasible class F
+	- frozen d=4/5 slice: 48/48 agreement
+	- d=6 structural stress slice: 24/24 agreement
+	- d=6 L-C2 clean-pilot SONC slice (unique nondegenerate cases): 36/36 agreement
+	- artifacts: `op2_delta_support_table.csv`, `op2_delta_support_summary.json`
+- Approval update (2026-04-28): user approved promoting the Delta-support statement as the primary B2 formal conjecture wording with slice-local scope caveat.
+- D-OP2-1 progress (2026-04-28): first-pass uniform-template circuit-margin identity drafted in `op2_support_sensitive_sonc_prototype_plan.md` as a theorem-stage working proxy, with explicit scope and validation hooks.
+- D-OP2-2 progress (2026-04-28): first-pass barycentric admissibility bridge drafted in `op2_support_sensitive_sonc_prototype_plan.md`, including a working slack proxy s_min and boundary/interior equivalence targets.
+- D-OP2-2 explicit-slice progress (2026-04-28): n=3 edge-circuit lambda formulas added, with identity s_min^{edge}(p)=min(p,d-p)/d=Delta_support(d,p) on the scoped edge path.
+- D-OP2-2 full-support lift progress (2026-04-28): n=3 uniform-template support-strata decomposition drafted (vertex/edge/interior strata) with implementation-aligned barycentric slack definitions in `op2_support_sensitive_sonc_prototype_plan.md`.
+- D-OP2-2 n=4 lift progress (2026-04-28): n=4 support-strata/slack lift drafted (vertex/edge/face/full-interior strata) with explicit p=4 caveat that full-interior presence alone is insufficient as a universal obstruction trigger.
+- D-OP2-3 progress (2026-04-28): first nondegeneracy guard set drafted (degenerate-family exclusion, divisibility condition for p>0, simplex-frame applicability, stratum-availability logging).
+- D-OP2-4 progress (2026-04-28): minimal n=4 stratified-slack functional `Phi_4(d,p)=1{2d/p>=3}` (for p>0, p|2d) drafted and checked against current OP2 artifacts; d=6,n=4 simplex-like rows match 30/30 (including stress-only subset 12/12), with p=0 and p=6 feasible and p in {1,2,3,4} robust-failure.
+- Updated theorem-stage target: prove (or sharply delimit) a face-activation-to-circuit-deficit lemma for n=4 uniform templates, then test transfer to boundary/mixed templates under D-OP2-3 guards; if transfer fails, register the minimal counterexample family and narrow B2 scope accordingly.
 
 ## Weekly Update Protocol
 

@@ -481,33 +481,37 @@ deferred/open for $d=6$, $n\geq 4$ under the present solver ceiling.
 \begin{sloppypar}
 The current computational record does not support a broad degree-only SONC
 containment statement for the families $M_{2d,p}(X,\alpha)$. Instead, the
-evidence favors a support-sensitive conjectural formulation: on the tested
-nondegenerate $d\in\{4,5\}$ slice with $n\in\{3,4\}$, SONC feasibility persists
-on some support classes, but the $p\in\{1,2\}$ families remain robustly
-SONC-infeasible under all executed local/global and tightened-tolerance
-diagnostic reruns, even though SDP/SOS and GP remain feasible on the same
-instances. The d=4 and d=5 SONC diagnostics therefore support a support-geometry
-boundary, not a uniform degree-driven SONC containment principle. Our current
-conjectural stance is accordingly limited: SONC membership for these
-mean-polynomial families should be formulated in terms of support-sensitive
-structural conditions, while the robust $p\in\{1,2\}$ failures are treated as
-empirical negative evidence on the tested slices rather than as a universal
-non-membership theorem for all $M_{2d,p}(X,\alpha)$ families.
+evidence favors a support-sensitive formulation in terms of an exponent-interiority
+margin. Define
+\[
+\Delta_{\mathrm{support}}(d,p) := \frac{\min\{p,d-p\}}{d}.
+\]
+Empirically, on the executed nondegenerate slices, SONC status aligns with the
+sign of $\Delta_{\mathrm{support}}$: boundary cases ($\Delta_{\mathrm{support}}=0$)
+are SONC-feasible, while interior cases ($\Delta_{\mathrm{support}}>0$) are
+robustly SONC-infeasible under the executed diagnostic reruns.
 \end{sloppypar}
-\begin{conjecture}[Support-sensitive SONC behavior on tested mean-polynomial slices]
+\begin{conjecture}[Delta-support criterion on tested mean-polynomial slices]
 \label{conj:B2_support_sensitive_sonc}
-For the tested nondegenerate families $M_{2d,p}(X,\alpha)$ on the
-$d\in\{4,5\}$, $n\in\{3,4\}$ clean-pilot slice, SONC membership is governed by
-support-sensitive structure rather than by degree alone. In particular, there
-exist support classes in this slice where SONC certificates are observed, while
-the tested $p\in\{1,2\}$ subfamilies are robustly SONC-infeasible under all
-executed local/global and tightened-tolerance diagnostic reruns.
+For the tested nondegenerate families $M_{2d,p}(X,\alpha)$ in the executed
+slices below, SONC status is support-sensitive and consistent with
+$\Delta_{\mathrm{support}}(d,p)$:
+\begin{enumerate}
+    \item clean pilot $d\in\{4,5\}$, $n\in\{3,4\}$,
+    \item structural-stress diagnostics at $d=6$,
+    \item nondegenerate SONC rows from the executed $d=6$ L-C2 clean pilot.
+\end{enumerate}
+On these slices, $\Delta_{\mathrm{support}}=0$ aligns with observed SONC feasibility,
+and $\Delta_{\mathrm{support}}>0$ aligns with robust SONC-infeasibility under the
+executed local/global and tightened-tolerance diagnostics.
 \end{conjecture}
 
 \noindent\textit{Scope caveat.}
 Conjecture~\ref{conj:B2_support_sensitive_sonc} is an empirical, slice-local
-statement tied to the executed diagnostics; it is not a universal non-membership
-claim for all $M_{2d,p}(X,\alpha)$ families.
+statement tied to the executed diagnostics; it is not yet a universal criterion
+for all $M_{2d,p}(X,\alpha)$ families. The remaining theorem-stage task is an
+analytic derivation (or sharp delimitation) of this criterion via
+circuit/barycentric arguments.
 \end{remark}
 
 \subsection*{Computational Evidence Snapshot (Degrees $8$ and $10$)}
