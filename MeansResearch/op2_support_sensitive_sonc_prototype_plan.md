@@ -104,4 +104,28 @@ Suggested output filenames:
 
 ## 9) Immediate Next Action
 
-Instantiate a first phi(support) descriptor set on the frozen d in {4,5} nondegenerate slice, produce predicted vs observed class table, and evaluate G1-G3 before any claim-strength upgrade.
+Completed on 2026-04-28:
+- Instantiated first phi(support) descriptor set on frozen d in {4,5} nondegenerate slice.
+- Produced predicted vs observed class table and validation summary.
+- Evaluated G1-G3 with PASS/PASS/PASS.
+
+## 10) 2026-04-28 Theorem-Stage Kickoff Update
+
+Prototype status transition:
+- OP2 moves from prototype-instantiation to theorem-stage criterion development.
+
+Cross-slice stress check (d=6 structural failures):
+- Source: MeansResearch/results/phase3_sonc_diagnostics_d6_structural.jsonl
+- Unique cases: 24 (all robust SONC failures across p in {1,2,3,4} and template families uniform/boundary/mixed)
+- v1 prototype behavior on this stress slice: predicts R on p in {1,2} and U on p in {3,4}; match rate against observed robust-failure labels is 12/24 = 0.50.
+
+Interpretation:
+- The v1 p-band rule captures the frozen d=4/5 slice but does not yet explain the d=6 stress slice.
+- The theorem-stage target should therefore be support-geometry based (circuit/barycentric margin) rather than p-band only.
+
+## 11) Immediate Next Action (Updated)
+
+1. Define a geometry-first criterion candidate Delta_support(case) that predicts robust failure when Delta_support > 0.
+2. Compute Delta_support on the frozen d=4/5 slice and on d=6 structural stress cases for consistency checks.
+3. Attempt one template-family proof skeleton (start with uniform) and record exact assumptions needed.
+4. If a unified criterion fails, extract a certified counterexample family that separates p-band heuristics from geometry-based behavior.

@@ -58,3 +58,14 @@ Confusion (observed -> predicted):
 
 - `MeansResearch/results/op2_prototype_classification_table.csv`
 - `MeansResearch/results/op2_prototype_validation_summary.md`
+
+## Revalidation (2026-04-28)
+
+- Recomputed directly from `op2_prototype_classification_table.csv`:
+  - rows: 48
+  - matches: 48
+  - accuracy: 1.000
+  - predicted counts: F=24, R=24
+  - observed counts: F=24, R=24
+- Degree-only baseline recomputed (majority label by degree): 0.500.
+- Conclusion: prior G1/G2/G3 outcomes remain unchanged.

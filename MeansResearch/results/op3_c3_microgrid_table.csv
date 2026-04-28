@@ -1,0 +1,10 @@
+experiment_id,coefficient_c,transform_t,transform_condition_number,sonc_status_base,gp_status_base,sonc_status_local_tol,sonc_status_global_tol,sonc_status_local_1e-10,sonc_status_global_1e-10,final_class,runtime_seconds
+Rhat-local-c1p999-t0p995,1.999,0.995,3.7320236027691442,fail,fail,fail,fail,fail,fail,robust_fail,3.9182259289664216
+Rhat-local-c1p999-t1,1.999,1.0,3.732050807568877,fail,fail,fail,fail,fail,fail,robust_fail,1.2051136890077032
+Rhat-local-c1p999-t1p005,1.999,1.005,3.732024141458347,fail,fail,fail,fail,fail,fail,robust_fail,3.9785803589620627
+Rhat-local-c2-t0p995,2.0,0.995,3.7320236027691442,fail,fail,fail,fail,fail,fail,robust_fail,4.008862158050761
+Rhat-local-c2-t1,2.0,1.0,3.732050807568877,success,fail,success,success,success,success,robust_success,0.058337506954558194
+Rhat-local-c2-t1p005,2.0,1.005,3.732024141458347,fail,fail,fail,fail,fail,fail,robust_fail,4.076929734961595
+Rhat-local-c2p001-t0p995,2.001,0.995,3.7320236027691442,fail,fail,fail,fail,fail,fail,robust_fail,4.479308106005192
+Rhat-local-c2p001-t1,2.001,1.0,3.732050807568877,fail,fail,fail,fail,fail,fail,robust_fail,0.4745889810146764
+Rhat-local-c2p001-t1p005,2.001,1.005,3.732024141458347,fail,fail,fail,fail,fail,fail,robust_fail,4.590506285021547

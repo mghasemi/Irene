@@ -40,7 +40,7 @@ Status vocabulary:
 | ID | Statement (short) | Current status | Dependencies | Planned computational hook | Next action |
 |---|---|---|---|---|---|
 | L-C1 | Extension of L-T5 to higher d beyond 3 | scoped conjecture (confirmed on nondegenerate d in {4,5}, n in {3,4}; confirmed on partial d=6, n=3; deferred/open on d=6, n>=4 under solver ceiling) | L-T5 patterns, sparse structure assumptions | SDPRelaxations.Decompose, SONCRelaxations.solve | Keep manuscript wording aligned with explicit scope boundaries and evidence pointers: confirmed artifacts are `phase3_pilot_summary_clean.md`, `phase3_pilot_summary_clean_d5.md`, `phase3_runs_clean_d6_lc1_batch1.jsonl`, `phase3_runs_clean_d6_lc1_batch2.jsonl`, `phase3_pilot_summary_clean_d6_lc1_batch2.md`; deferred/open artifacts are the d=6 n=4 batch summaries plus `phase3_pilot_summary_d6_lc1_escalation_pass2.md`. |
-| L-C2 | Broad SONC membership behavior for M_{2d,p}(X,\alpha) families | conjecture | L-T3, Newton polytope structure | SONCRelaxations.solve, GPRelaxations.solve | Align with manuscript Conjecture~\ref{conj:B2_support_sensitive_sonc}: preserve support-sensitive (not degree-only) wording, keep the d=4/d=5 robust $p\in\{1,2\}$ failure diagnostics as slice-local evidence, and advance to theorem-level by proving a support-geometry criterion (or producing a certified counterexample) that explains SONC-feasible vs robust-failure support classes. |
+| L-C2 | Broad SONC membership behavior for M_{2d,p}(X,\alpha) families | conjecture | L-T3, Newton polytope structure | SONCRelaxations.solve, GPRelaxations.solve | Keep support-sensitive (not degree-only) wording and move to a geometry-first theorem candidate: define a circuit/barycentric support margin that explains robust-failure vs feasible classes across d=4/5 and d=6 stress slices; current p-band prototype alone is insufficient on d=6 structural failures. |
 
 ## 2026-04-20 Computational Update
 
@@ -64,6 +64,15 @@ Status vocabulary:
 - Paired-success signal: 24 SONC/GP paired successes remain, with $\mathrm{gp}-\mathrm{sonc}$ gap range in $[-4.238\times 10^{-9}, 2.793\times 10^{-9}]$.
 - Cross-degree SONC robustness pattern: all 24 failed nondegenerate SONC cases at d=4 remain failures under alternate diagnostics, the same 24/24 zero-recovery pattern holds at d=5, and the refreshed d=6 L-C2 slice extends this to 48/48 zero-recovery failures across uniform, boundary, and mixed templates.
 - Interpretation: the support-sensitive SONC negatives are now cross-degree robust on the executed clean-pilot ladder and should be framed as formulation-structural evidence on the tested slices rather than as local/global solve or tolerance artifacts.
+
+## 2026-04-26 Immediate Next-Step Kickoff (OP1/OP2/OP3)
+
+- OP1 escalation readiness check completed in the current environment:
+	- unavailable: MOSEK, SDPA-GMP (not found on pip/conda-forge or in PATH)
+	- available: DSDP (/home/mehdi/miniforge3/envs/sage/bin/dsdp5, requires PATH injection), SDPA, CSDP
+- **Updated 2026-04-28**: E1 pilot (6 representative nondegenerate d=6, n=5 cases, solver sequence DSDP/CSDP/SDPA/CVXOPT, 600s per solver) completed on 2026-04-27. Outcome: 6/6 timeout; gate failed. OP1 is frozen for this cycle; continuation requires a higher-performance backend or structure-aware reformulation (E2/E3 paths in op1_escalation_decision_memo.md).
+- OP2 status (updated 2026-04-28): prototype validated on 2026-04-28. Frozen d=4/5 slice accuracy 48/48 (1.000), degree-only baseline 0.500; G1/G2/G3 all PASS. Stress-slice audit on d=6 structural failures gives 24/24 robust-fail cases while v1 prototype predicts R/U split (12/24 match), so theorem-stage work now targets a geometry-first criterion instead of p-band heuristics.
+- OP3 status (updated 2026-04-28): boundary characterization note drafted with falsifiable criteria C1-C3 and dependency map D1-D3. C3 micro-grid verification completed (9 points): center-only robust_success (1/9), non-center robust_fail (8/9), no unstable points. Next action: prioritize C1/C2 analytic verification.
 
 ## Counterexample Tracking
 
@@ -198,6 +207,48 @@ Status vocabulary:
 1. Mirror OP1-OP3 and B1-B3 in the manuscript computational synthesis section.
 2. Keep solver-ceiling deferment language explicit for d=6 n>=4 and avoid theorem-level negation claims.
 3. Feed B1-B3 into final steering tasks (publishable-claims ranking and next-quarter continuation plan).
+
+## 2026-04-28 Session 5 Integration Update
+
+Integration and framing consistency pass completed on 2026-04-28 (5-session plan, Session 5).
+
+### OP Status Summary (post-Session-5)
+
+| OP | Status | Last outcome | Next action |
+|---|---|---|---|
+| OP1 (d=6 n≥4 L-C1 SOS/SDP) | Frozen this cycle | E1 pilot: 6/6 timeout at 600s across DSDP/CSDP/SDPA/CVXOPT; gate failed | Frozen; continue only via E2 structure-aware reformulation or E3 package fallback when stronger backend is procured |
+| OP2 (support-sensitive SONC criterion) | Prototype validated | 48/48 accuracy on frozen d=4/5 slice; G1/G2/G3 PASS | Advance to theorem-level: prove a support-geometry criterion or produce a certified counterexample |
+| OP3 (Robinson-hat SONC boundary) | Boundary note drafted | C1-C3 criteria and D1-D3 dependencies documented; gate PASS | Verify or falsify C1-C3 via Newton-polytope/AM-GM analysis or dual-certificate construction |
+
+### Framing Consistency Checks
+
+- L-C1 (conjecture, d=6 n≥4): confirmed solver-ceiling deferment; manuscript wording must remain non-negating throughout.
+- L-C2 (conjecture, support-sensitive SONC): OP2 prototype validates support-sensitive framing over degree-only; still a prototype, not a theorem.
+- CX-2 (counterexample candidate, Robinson-hat boundary): OP3 note identifies C1-C3 as the concrete next verification targets; B3 localized-boundary framing remains accurate.
+- OP1 memo (op1_escalation_decision_memo.md): E1 complete and gate failed; E2/E3 paths remain open as documented in the memo.
+- OP2 memo (op2_support_sensitive_sonc_prototype_plan.md): prototype plan executed and all gates passed; plan remains valid as a basis for theorem-level follow-up.
+- OP3 memo (op3_local_neighborhood_test_plan.md): local-neighborhood test plan executed; boundary note extends the plan with explicit criteria.
+
+### Cross-Document Contradiction Check
+
+- theorem_ledger.md (this file): kickoff section updated above to remove stale DSDP-unavailability note.
+- plan.md: point 8 updated to reflect E1 pilot freeze outcome and OP2/OP3 completion.
+- immediate_execution_tracker_2026-04-27.md: Session 5 marked complete with gate passed.
+- No remaining cross-document contradictions detected.
+
+## 2026-04-28 OP3 C3 Micro-Grid Verification Update
+
+- New verification artifacts: `op3_c3_microgrid_sweep.jsonl`, `op3_c3_microgrid_table.csv`, `op3_c3_microgrid_summary.md`.
+- Targeted grid executed: c in {1.999, 2.000, 2.001}, t in {0.995, 1.000, 1.005} (9 points).
+- Outcome: robust_success only at center (c=2.000, t=1.000), robust_fail at all 8 non-center points.
+- Interpretation: C3 isolated-atom claim is not falsified on the targeted micro-grid; next OP3 effort should focus on C1/C2 proof dependencies (D1-D3) rather than broader parameter sweeps.
+
+## 2026-04-28 OP2 Theorem-Stage Kickoff Update
+
+- Prototype gate status remains PASS on frozen d=4/5 nondegenerate slice (G1/G2/G3).
+- Stress-slice check using `phase3_sonc_diagnostics_d6_structural.jsonl`: 24 unique cases, all robust SONC failures across p in {1,2,3,4}.
+- v1 prototype extrapolation to this stress slice yields 12/24 agreement (R on p={1,2}, U on p={3,4}), so current heuristic is not yet theorem-grade.
+- Updated theorem-stage target: construct a support-geometry criterion (circuit/barycentric margin) that explains robust failure across both frozen and stress slices, or isolate a certified counterexample family if no unified criterion exists.
 
 ## Weekly Update Protocol
 
