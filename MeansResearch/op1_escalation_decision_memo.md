@@ -12,6 +12,14 @@ Primary decision:
 - Execute one additional solver-generation escalation cycle aimed at producing at least one non-timeout outcome on a nondegenerate case.
 - If no gate is met, freeze OP1 as unresolved and proceed with scope-limited publication package (PC1+PC2 core, PC3 exploratory).
 
+2026-04-28 status update:
+- E1 backend trial has now been completed and failed its first non-timeout gate.
+- OP1 is frozen for the current project cycle.
+- Reopening conditions are now restricted to two paths only:
+    1. access to a materially stronger backend than the current routine stack (for example MOSEK or SDPA-GMP), or
+    2. a structure-aware reformulation path under E2 that preserves the mathematical slice while changing the computational burden.
+- Until one of those conditions is met, OP1 should be treated as a solver-ceiling deferment item rather than an active execution track.
+
 ## 2) Baseline Evidence Used
 
 Current baseline (already completed):
