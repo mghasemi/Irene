@@ -7,9 +7,9 @@ import sys
 
 import requests
 
-URL = os.getenv("VIKUNJA_URL", "http://192.168.1.84:3456")
+URL = os.getenv("VIKUNJA_URL", "http://192.168.1.70:3456")
 ALT_URL = os.getenv("VIKUNJA_ALT_URL", "http://mghasemi.ddns.net:3456")
-TOKEN = os.getenv("VIKUNJA_TOKEN", "tk_6118b79f059dc5374f4819aa7e4bd3b1ee6ad190")
+TOKEN = os.getenv("VIKUNJA_TOKEN", "tk_5a6a744aa4af979d44bfcacbef37b3fe970ed5df")
 
 
 class VikunjaError(RuntimeError):

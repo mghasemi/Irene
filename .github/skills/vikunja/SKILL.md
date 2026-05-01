@@ -112,7 +112,7 @@ python3 {baseDir}/vikunja_tool.py --dry-run tasks create --project-id 12 --title
 
 ## Configuration
 Defaults are built into the script:
-- URL: `http://192.168.1.84:3456`
+- URL: `http://192.168.1.70:3456`
 - ALT_URL: `http://mghasemi.ddns.net:3456`
 - TOKEN: provided API token
 
