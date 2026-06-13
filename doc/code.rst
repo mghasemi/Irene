@@ -21,3 +21,6 @@ Code Documentation
 
 .. automodule:: Irene.sonc
    :members:
+
+.. automodule:: Irene.sosonc
+   :members:

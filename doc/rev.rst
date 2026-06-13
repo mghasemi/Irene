@@ -2,6 +2,13 @@
 Revision History
 =============================
 
+**Version 1.2.6 (Jun 12, 2026)**
+
+	- Improved documentation build portability by defaulting ``SPHINXBUILD`` to the repository virtual environment (``../.venv/bin/python -m sphinx``).
+	- Hardened ``make latexpdf`` to use ``latexmk`` when available and automatically fall back to two-pass ``pdflatex`` when ``latexmk`` is missing.
+	- Added ``make latexpdf-clean`` to remove stale LaTeX build artifacts and perform a clean PDF rebuild.
+	- Fixed a LaTeX compilation blocker in the SOS+SONC docs by replacing a non-ASCII real-number symbol in a code block with LaTeX-safe ASCII text.
+
 **Version 1.2.5 (Mar 12, 2026)**
 
 	- Expanded documentation from SDP-only emphasis to a unified POP guide covering SDP, geometric programming, and SONC relaxations.
