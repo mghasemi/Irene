@@ -215,7 +215,7 @@ Example
    from Irene.program import OptimizationProblem
    from Irene.sosonc import SOSONCRelaxations, sosonc_bounds
 
-   # x^4 - x^2 on ℝ (global minimum = -0.25)
+   # x^4 - x^2 on R (global minimum = -0.25)
    sg = CommutativeSemigroup(['x'])
    sga = SemigroupAlgebra(sg)
    x = sga['x']

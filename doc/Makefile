@@ -3,7 +3,7 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
+SPHINXBUILD   ?= ../.venv/bin/python -m sphinx
 PAPER         =
 BUILDDIR      = _build
 
@@ -30,6 +30,7 @@ help:
 	@echo "  epub3      to make an epub3"
 	@echo "  latex      to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
 	@echo "  latexpdf   to make LaTeX files and run them through pdflatex"
+	@echo "  latexpdf-clean to rebuild PDF from a clean LaTeX state"
 	@echo "  latexpdfja to make LaTeX files and run them through platex/dvipdfmx"
 	@echo "  text       to make text files"
 	@echo "  man        to make manual pages"
@@ -137,9 +138,23 @@ latex:
 .PHONY: latexpdf
 latexpdf:
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
-	@echo "Running LaTeX files through pdflatex..."
-	$(MAKE) -C $(BUILDDIR)/latex all-pdf
+	@if command -v latexmk >/dev/null 2>&1; then \
+		echo "Running LaTeX files through latexmk..."; \
+		$(MAKE) -C $(BUILDDIR)/latex all-pdf; \
+	else \
+		echo "latexmk not found; falling back to pdflatex (2 passes)..."; \
+		for tex in $(BUILDDIR)/latex/*.tex; do \
+			pdflatex -interaction=nonstopmode -halt-on-error -output-directory=$(BUILDDIR)/latex "$$tex"; \
+			pdflatex -interaction=nonstopmode -halt-on-error -output-directory=$(BUILDDIR)/latex "$$tex"; \
+		done; \
+	fi
 	@echo "pdflatex finished; the PDF files are in $(BUILDDIR)/latex."
+
+.PHONY: latexpdf-clean
+latexpdf-clean:
+	@echo "Cleaning LaTeX build artifacts..."
+	rm -rf $(BUILDDIR)/latex
+	$(MAKE) latexpdf
 
 .PHONY: latexpdfja
 latexpdfja:
