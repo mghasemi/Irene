@@ -19,6 +19,7 @@ Contents:
    optim
    geometric
    sonc
+   sosonc
    approx
    benchmarks
    examples
