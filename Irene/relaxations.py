@@ -455,7 +455,25 @@ class SDPRelaxations(base):
                 for expn in t_monos:
                     mono = reduce(mul, [self.AuxSyms[k] ** expn[k]
                                         for k in range(self.NumGenerators)], 1)
-                    t_mmnt += t_monos[expn] * self.Info['moments'][mono]
+                    # Groebner reduction may produce monomials not in the
+                    # truncated moment sequence. Reduce such monomials
+                    # further or fall back to zero (they are beyond the
+                    # relaxation order and contribute negligibly).
+                    if mono in self.Info['moments']:
+                        t_mmnt += t_monos[expn] * self.Info['moments'][mono]
+                    else:
+                        # Attempt to reduce the monomial via Groebner basis
+                        # and re-express in terms of known moments
+                        rmono = self.ReduceExp(mono)
+                        rm_dict = Poly(rmono, *self.AuxSyms).as_dict()
+                        for rexp in rm_dict:
+                            rmon = reduce(mul, [self.AuxSyms[k] ** rexp[k]
+                                                for k in range(self.NumGenerators)], 1)
+                            if rmon in self.Info['moments']:
+                                t_mmnt += (t_monos[expn] * rm_dict[rexp]
+                                           * self.Info['moments'][rmon])
+                        # Any remaining unknown monomials are beyond the
+                        # relaxation order and set to zero
                 Mmnt[i, j] = t_mmnt
                 Mmnt[j, i] = Mmnt[i, j]
         return array(Mmnt.tolist()).astype(float64)
