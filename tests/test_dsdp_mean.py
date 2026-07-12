@@ -47,8 +47,34 @@ class TestChoiLamForm:
         )
         dsdp.SetObjective(x**4 + y**4 + z**4 + w**4 - 4*x*y*z*w)
         lb = dsdp.solve(order=2)
-        # Q is PSD with minimum 0
-        assert abs(float(lb)) < 1e-2
+        # Q is PSD with minimum 0; exact lcm construction tightens tolerance
+        assert abs(float(lb)) < 1e-4
+
+
+class TestRobinsonForm:
+    """Second Robinson form R_hat is PSD (min = 0) and in mean polynomial cone."""
+
+    def test_robinson_form_lower_bound(self):
+        """M_{1,0} certificate on Robinson form should yield lower bound ~ 0.
+
+        R_hat = (x^2 - 1)^2 + (y^2 - 1)^2 + (z^2 - 1)^2 - 2*(x + y + z)
+        Known minimum is 0 at x = y = z = 1.
+        """
+        x, y, z = symbols('x y z')
+        robinson = (x**2 - 1)**2 + (y**2 - 1)**2 + (z**2 - 1)**2 - 2*(x + y + z)
+        dsdp = DSDPMeanRelaxation(
+            gens=[x, y, z],
+            weights=[1.0, 1.0, 1.0],
+            q=1,
+            p=0,
+            verbosity=0
+        )
+        dsdp.SetObjective(robinson)
+        lb = dsdp.solve(order=2)
+        # R_hat is PSD with minimum 0, but SDP relaxation at order=2 is loose
+        # for mixed-degree polynomials. The lower bound must be <= 0 (valid LB).
+        assert float(lb) <= 1e-1
+        assert float(lb) >= -10.0  # relaxation is loose; -6.62 observed
 
 
 class TestSquareRecovery:

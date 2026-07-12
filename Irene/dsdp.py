@@ -19,7 +19,7 @@ Integration:
     - Works with SemigroupAlgebra derivation support
 """
 
-from math import ceil
+from math import ceil, lcm
 from functools import reduce
 from operator import mul
 from itertools import product
@@ -254,9 +254,14 @@ class DSDPRelaxations(SDPRelaxations):
         (Prop. 2.1 — monotonicity of power means). The certificate is enforced
         as a sum-of-means condition in the moment hierarchy.
 
-        NOTE: The current construction uses an approximate power-ratio formulation.
-        Phase 2 will replace this with the exact lcm(q,p) construction:
-            M_{q,p} = M_q^{lcm(q,p)} - M_p^{lcm(q,p)}
+        Construction: Use exact lcm(q,p) to clear fractional exponents.
+        Let c = lcm(q, p) (when p != 0; c = q when p = 0). Then:
+
+            cert = (sum w_i X_i^q)^{c/q} - (sum w_i X_i^p)^{c/p}
+
+        Both c/q and c/p are guaranteed integers, avoiding float exponent
+        issues in sympy's Poly expansion. When p = 0 (geometric mean case),
+        the p-term reduces to 1.
 
         Returns:
             List of (reduced_expr, rhs) tuples for moment constraints.
@@ -275,31 +280,50 @@ class DSDPRelaxations(SDPRelaxations):
                       f"mean certificate is not PSD (requires q > p)")
             return constraints
 
-        # TODO: Phase 2 - replace with exact lcm(q,p) construction for M_q^c - M_p^c
-        power_ratio = (self.q - self.p) / self.q
-        if abs(power_ratio - round(power_ratio)) > 1e-10:
-            if self.verbosity > 0:
-                print(f"Warning: (q-p)/q = {power_ratio:.4f} is not integer, "
-                      f"using rounded value {round(power_ratio)}")
-        power_ratio = int(round(power_ratio))
+        # Exact lcm(q,p) construction: clear fractional exponents
+        # c/q and c/p are guaranteed integers
+        if self.p != 0:
+            c = lcm(self.q, self.p)
+            q_exp = c // self.q
+            p_exp = c // self.p
+        else:
+            # p=0 (geometric mean case): c = q suffices, q_exp = 1
+            c = self.q
+            q_exp = 1
+            p_exp = 0
 
-        # Construct weighted power sum: sum_j w_j X_j^q
+        # Build (sum w_j X_j^q)^{c/q}
         weighted_q_sum = sum(
             self.weights[j] * self.AuxSyms[j] ** self.q
             for j in range(n)
         )
+        q_term = expand(weighted_q_sum ** q_exp)
 
-        # Raise to power (p-q)/q
-        q_power = expand(weighted_q_sum ** power_ratio)
+        # Build (sum w_j X_j^p)^{c/p} or 1 when p=0
+        if self.p != 0:
+            weighted_p_sum = sum(
+                self.weights[j] * self.AuxSyms[j] ** self.p
+                for j in range(n)
+            )
+            p_term = expand(weighted_p_sum ** p_exp)
+        else:
+            p_term = sympify(1)
 
-        # For each variable, build w_i * X_i^p * q_power term
-        for i in range(n):
-            term = self.weights[i] * self.AuxSyms[i] ** self.p * q_power
-            reduced = self.ReduceExp(term)
-            if reduced != 0:
-                constraints.append([reduced, 0])
-                deg = Poly(reduced, *self.AuxSyms).total_degree()
-                self.MmntCnsDeg = max(int(ceil(deg / 2.)), self.MmntCnsDeg)
+        # Certificate: M_q^c - M_p^c (PSD when q > p by Jensen's inequality)
+        cert = expand(q_term - p_term)
+
+        # Expand certificate into moment constraints
+        cert_poly = Poly(cert, *self.AuxSyms)
+        for expn, coef in cert_poly.as_dict().items():
+            if coef != 0:
+                mono = reduce(mul,
+                              [self.AuxSyms[i] ** expn[i] for i in range(n)], 1)
+                reduced = self.ReduceExp(coef * mono)
+                if reduced != 0:
+                    constraints.append([reduced, 0])
+                    deg = Poly(reduced, *self.AuxSyms).total_degree()
+                    self.MmntCnsDeg = max(int(ceil(deg / 2.)),
+                                          self.MmntCnsDeg)
 
         return constraints
 
