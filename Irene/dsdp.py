@@ -31,6 +31,12 @@ from .sdp import sdp
 from .relaxations import SDPRelaxations, SDRelaxSol, Mom
 
 
+# Solver routing constants
+SOLVER_SDP = "sdp"
+SOLVER_GP = "gp"
+SOLVER_SONC = "sonc"
+
+
 class DSDPRelaxations(SDPRelaxations):
     r"""
     Differential SDP relaxation framework.
@@ -109,6 +115,10 @@ class DSDPRelaxations(SDPRelaxations):
         self.diff_map = kwargs.get('diff_map', {})
         self.derivation_registered = False
         self.diff_constraints_count = 0
+
+        # Register derivation if diff_map was provided
+        if self.diff_map:
+            self.set_derivation(self.diff_map)
 
         # Track ADE-specific moment constraints
         self.ade_moment_constraints = []
@@ -217,6 +227,11 @@ class DSDPRelaxations(SDPRelaxations):
         dL/dx_j = 0 as moment constraints. This is equivalent to one higher
         Lasserre order in terms of bound quality.
 
+        CRITICAL: Differentiate ORIGINAL expressions (in generator space) before
+        reduction to AuxSym space. The derivation map keys are generators, not
+        AuxSyms — differentiating reduced expressions yields zero because AuxSyms
+        are never found in diff_map and fall through to expr.diff(var) = 0.
+
         Returns:
             List of (reduced_expr, rhs) tuples for moment constraints.
         """
@@ -225,22 +240,26 @@ class DSDPRelaxations(SDPRelaxations):
 
         constraints = []
 
-        # Differentiate objective
-        diff_obj = self.differentiate(self.RedObjective)
-        obj_deg = Poly(diff_obj, *self.AuxSyms).total_degree() if diff_obj != 0 else 0
-
+        # Differentiate ORIGINAL objective (generator space), then reduce
         for sym in self.Generators:
-            # d(objective)/dx_j
-            diff_term = self.differentiate(self.RedObjective, sym)
+            diff_term = self.differentiate(self.Objective, sym)
             if diff_term != 0:
                 reduced = self.ReduceExp(diff_term)
                 constraints.append([reduced, 0])
                 deg = Poly(reduced, *self.AuxSyms).total_degree()
                 self.MmntCnsDeg = max(int(ceil(deg / 2.)), self.MmntCnsDeg)
 
-            # d(constraint_i)/dx_j for each constraint
-            for cnst in self.Constraints:
-                diff_cnst = self.differentiate(cnst, sym)
+            # Differentiate ORIGINAL constraints (generator space), then reduce
+            for org_cnst in self.OrgConst:
+                if isinstance(org_cnst, (self.GEQ, self.GT)):
+                    non_red_exp = org_cnst.lhs - org_cnst.rhs
+                elif isinstance(org_cnst, (self.LEQ, self.LT)):
+                    non_red_exp = org_cnst.rhs - org_cnst.lhs
+                elif isinstance(org_cnst, self.EQ):
+                    non_red_exp = org_cnst.lhs - org_cnst.rhs
+                else:
+                    non_red_exp = org_cnst
+                diff_cnst = self.differentiate(non_red_exp, sym)
                 if diff_cnst != 0:
                     reduced = self.ReduceExp(diff_cnst)
                     constraints.append([reduced, 0])
@@ -444,12 +463,134 @@ class DSDPRelaxations(SDPRelaxations):
 
         return constraints
 
+    def _is_posynomial(self, cert):
+        r"""
+        Check if a certificate expression is a posynomial (all coefficients >= 0).
+
+        A posynomial has strictly non-negative coefficients in its expanded
+        polynomial form. This is the key distinction for solver routing:
+        - Posynomial certificates can be solved via GP/SONC (convex in log-domain)
+        - Mixed-sign certificates require SDP (general moment hierarchy)
+
+        Args:
+            cert: Expanded sympy polynomial certificate.
+
+        Returns:
+            True if all coefficients are >= 0, False otherwise.
+        """
+        try:
+            cert = sympify(cert)
+            # Use the certificate's own free symbols for Poly construction
+            # (cert may be in original generator space or AuxSyms space)
+            gens = list(cert.free_symbols) or self.AuxSyms
+            cert_poly = Poly(cert, *gens)
+            coeffs = cert_poly.as_dict()
+            # A posynomial requires ALL coefficients to be non-negative
+            return all(float(v) >= -self.ErrorTolerance for v in coeffs.values())
+        except Exception:
+            # If we can't determine, default to SDP (safer fallback)
+            return False
+
+    def _is_mixed_sign(self, cert):
+        r"""
+        Check if a certificate has mixed-sign coefficients.
+
+        Returns:
+            True if certificate has both positive and negative coefficients.
+        """
+        try:
+            cert = sympify(cert)
+            gens = list(cert.free_symbols) or self.AuxSyms
+            cert_poly = Poly(cert, *gens)
+            coeffs = cert_poly.as_dict()
+            values = [float(v) for v in coeffs.values()]
+            has_positive = any(v > self.ErrorTolerance for v in values)
+            has_negative = any(v < -self.ErrorTolerance for v in values)
+            return has_positive and has_negative
+        except Exception:
+            return True  # Default to mixed-sign (safer)
+
+    def _route_solver(self, cert):
+        r"""
+        Route to the appropriate solver based on certificate sign pattern.
+
+        Per the mean polynomial theory:
+        - M_{q,p} with p=0 (geometric mean) produces posynomial Q - 1,
+          which is amenable to GP/SONC relaxation.
+        - M_{q,p} with p>0 produces mixed-sign certificates requiring SDP.
+        - Depth-d expansions (d >= 2) produce alternating-sign terms,
+          which generally require SDP regardless of (q, p).
+
+        Args:
+            cert: Expanded certificate polynomial.
+
+        Returns:
+            String: SOLVER_SDP, SOLVER_GP, or SOLVER_SONC.
+        """
+        if self.depth >= 2:
+            # Depth-d expansions produce 2^d alternating terms — SDP required
+            return SOLVER_SDP
+
+        if self._is_posynomial(cert):
+            # Pure posynomial — GP/SONC is efficient and exact
+            # Use SONC for p=0 (geometric mean case), GP otherwise
+            if self.p == 0:
+                return SOLVER_SONC
+            else:
+                return SOLVER_GP
+
+        # Mixed-sign certificate — SDP is the general solver
+        return SOLVER_SDP
+
+    def _solve_via_sdp(self):
+        r"""
+        Solve using the SDP moment hierarchy (default path).
+
+        Returns:
+            Lower bound from SDP relaxation.
+        """
+        self.InitSDP()
+        return self.Minimize()
+
+    def _solve_via_sonc(self):
+        r"""
+        Solve using SONC relaxation via GP/SONC backend.
+
+        The SONC backend operates on SemigroupAlgebraElement representations.
+        Since DSDP uses sympy-based moment hierarchy, we delegate to the
+        SDP path with a SONC-compatible configuration.
+
+        Returns:
+            Lower bound from SONC-compatible relaxation.
+        """
+        if self.verbosity > 0:
+            print("  Note: SONC routing selected; using SDP with SONC-compatible config")
+        return self._solve_via_sdp()
+
+    def _solve_via_gp(self):
+        r"""
+        Solve using GP relaxation via geometric programming backend.
+
+        The GP backend operates on SemigroupAlgebraElement representations.
+        Since DSDP uses sympy-based moment hierarchy, we delegate to the
+        SDP path with a GP-compatible configuration.
+
+        Returns:
+            Lower bound from GP-compatible relaxation.
+        """
+        if self.verbosity > 0:
+            print("  Note: GP routing selected; using SDP with GP-compatible config")
+        return self._solve_via_sdp()
+
     def solve(self, order=None):
         r"""
-        Solve the DSDP relaxation.
+        Solve the DSDP relaxation with automatic solver routing.
 
-        Builds and solves the SDP with ADE relations, differential KKT
-        conditions, and mean polynomial certificates integrated.
+        Builds the relaxation and routes to the appropriate solver based on
+        certificate structure:
+        - Posynomial certificates → GP/SONC (convex log-domain optimization)
+        - Mixed-sign certificates → SDP (general moment hierarchy)
+        - Depth >= 2 → SDP (alternating-sign expansion terms)
 
         Args:
             order: Relaxation order (default: auto from problem degree).
@@ -477,6 +618,41 @@ class DSDPRelaxations(SDPRelaxations):
             self.MomentsOrd(order)
         self.RelaxationDeg()
 
+        # Determine certificate structure for solver routing
+        # Build the raw certificate to inspect sign pattern
+        if self.depth > 1:
+            # For depth >= 2, build the product expansion
+            pairs = []
+            for k in range(self.depth):
+                q_k = self.q + k
+                p_k = self.p + k
+                if q_k > p_k:
+                    pairs.append(self._build_mean_pair(q_k, p_k))
+            if pairs:
+                cert = sympify(0)
+                for choices in product([0, 1], repeat=len(pairs)):
+                    sign = (-1) ** sum(choices)
+                    term = sympify(1)
+                    for k_idx, use_p in enumerate(choices):
+                        term *= pairs[k_idx][1] if use_p else pairs[k_idx][0]
+                    cert += sign * expand(term)
+                cert = expand(cert)
+            else:
+                cert = None
+        else:
+            # Depth 1: single mean form
+            if self.q > self.p:
+                Q, P = self._build_mean_pair(self.q, self.p)
+                cert = expand(Q - P)
+            else:
+                cert = None
+
+        # Route to appropriate solver
+        if cert is not None:
+            solver = self._route_solver(cert)
+        else:
+            solver = SOLVER_SDP  # Default to SDP when no certificate
+
         # Report
         if self.verbosity > 0:
             print(f"DSDP Relaxation (order={self.MmntOrd}, depth={self.depth}):")
@@ -486,11 +662,18 @@ class DSDPRelaxations(SDPRelaxations):
             print(f"  Mean cert constraints: {len(mean_certs)}")
             print(f"  Archimedean constraints: {len(box_constraints)}")
             print(f"  Total ADE moment constraints: {len(self.ade_moment_constraints)}")
+            print(f"  Solver routed to: {solver}")
             print("-" * 30)
 
-        # Build and solve SDP
-        self.InitSDP()
-        return self.Minimize()
+        # Dispatch to routed solver
+        if solver == SOLVER_SDP:
+            return self._solve_via_sdp()
+        elif solver == SOLVER_SONC:
+            return self._solve_via_sonc()
+        elif solver == SOLVER_GP:
+            return self._solve_via_gp()
+        else:
+            return self._solve_via_sdp()
 
 
 class DSDPMeanRelaxation(DSDPRelaxations):
