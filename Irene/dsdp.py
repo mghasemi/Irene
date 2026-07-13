@@ -68,6 +68,9 @@ class DSDPRelaxations(SDPRelaxations):
             **kwargs:
                 - q: Power mean parameter q (default: 1).
                 - p: Power mean parameter p (default: 0).
+                - depth: Product depth d for hierarchy (default: 1).
+                  At depth d, the certificate expands d mean forms into
+                  2^d alternating-sign posynomial terms (§3.2).
                 - weights: Weight vector for mean certificates (default: uniform).
                 - use_diff_kkt: Enable differential KKT injection (default: False).
                 - kkt_order: Order of differential KKT conditions (default: 1).
@@ -81,6 +84,7 @@ class DSDPRelaxations(SDPRelaxations):
         # DSDP configuration
         self.q = kwargs.get('q', 1)
         self.p = kwargs.get('p', 0)
+        self.depth = kwargs.get('depth', 1)
         self.use_diff_kkt = kwargs.get('use_diff_kkt', False)
         self.kkt_order = kwargs.get('kkt_order', 1)
         self.archimedean = kwargs.get('archimedean', True)
@@ -246,22 +250,61 @@ class DSDPRelaxations(SDPRelaxations):
         self.diff_constraints_count = len(constraints)
         return constraints
 
-    def _build_mean_certificate_moments(self):
+    def _build_mean_pair(self, q, p):
         r"""
-        Build moment constraints encoding M_{q,p}(X,w) nonnegativity.
+        Build the (Q, P) posynomial pair for a single mean form M_{q,p}.
 
-        The mean polynomial certificate M_{q,p}(X, w) is PSD iff q > p
-        (Prop. 2.1 — monotonicity of power means). The certificate is enforced
-        as a sum-of-means condition in the moment hierarchy.
+        Per Eq. (920) in the manuscript:
+            M_{q,p} = Q - P
+            Q = (sum w_i X_i^q)^{c/q}
+            P = (sum w_i X_i^p)^{c/p}   (or 1 when p=0)
 
-        Construction: Use exact lcm(q,p) to clear fractional exponents.
-        Let c = lcm(q, p) (when p != 0; c = q when p = 0). Then:
+        where c = lcm(q, p) clears fractional exponents.
 
-            cert = (sum w_i X_i^q)^{c/q} - (sum w_i X_i^p)^{c/p}
+        Args:
+            q: Power mean parameter q (positive integer).
+            p: Power mean parameter p (non-negative integer, p < q).
 
-        Both c/q and c/p are guaranteed integers, avoiding float exponent
-        issues in sympy's Poly expansion. When p = 0 (geometric mean case),
-        the p-term reduces to 1.
+        Returns:
+            Tuple (Q, P) of expanded sympy expressions.
+        """
+        n = self.NumGenerators
+
+        if p != 0:
+            c = lcm(q, p)
+            q_exp = c // q
+            p_exp = c // p
+        else:
+            # p=0 (geometric mean case): c = q suffices, q_exp = 1
+            c = q
+            q_exp = 1
+            p_exp = 0
+
+        # Build (sum w_j X_j^q)^{c/q}
+        weighted_q_sum = sum(
+            self.weights[j] * self.AuxSyms[j] ** q
+            for j in range(n)
+        )
+        Q = expand(weighted_q_sum ** q_exp)
+
+        # Build (sum w_j X_j^p)^{c/p} or 1 when p=0
+        if p != 0:
+            weighted_p_sum = sum(
+                self.weights[j] * self.AuxSyms[j] ** p
+                for j in range(n)
+            )
+            P = expand(weighted_p_sum ** p_exp)
+        else:
+            P = sympify(1)
+
+        return Q, P
+
+    def _expand_certificate(self, cert):
+        r"""
+        Expand a certificate expression into moment constraints.
+
+        Args:
+            cert: Expanded sympy polynomial certificate.
 
         Returns:
             List of (reduced_expr, rhs) tuples for moment constraints.
@@ -269,50 +312,6 @@ class DSDPRelaxations(SDPRelaxations):
         constraints = []
         n = self.NumGenerators
 
-        if n == 0:
-            return constraints
-
-        # Theory (§2.1): M_{q,p} is PSD iff q > p (monotonicity of power means).
-        # If q <= p, the form is indefinite/negative and cannot certify nonnegativity.
-        if self.q <= self.p:
-            if self.verbosity > 0:
-                print(f"Warning: q={self.q} <= p={self.p}, "
-                      f"mean certificate is not PSD (requires q > p)")
-            return constraints
-
-        # Exact lcm(q,p) construction: clear fractional exponents
-        # c/q and c/p are guaranteed integers
-        if self.p != 0:
-            c = lcm(self.q, self.p)
-            q_exp = c // self.q
-            p_exp = c // self.p
-        else:
-            # p=0 (geometric mean case): c = q suffices, q_exp = 1
-            c = self.q
-            q_exp = 1
-            p_exp = 0
-
-        # Build (sum w_j X_j^q)^{c/q}
-        weighted_q_sum = sum(
-            self.weights[j] * self.AuxSyms[j] ** self.q
-            for j in range(n)
-        )
-        q_term = expand(weighted_q_sum ** q_exp)
-
-        # Build (sum w_j X_j^p)^{c/p} or 1 when p=0
-        if self.p != 0:
-            weighted_p_sum = sum(
-                self.weights[j] * self.AuxSyms[j] ** self.p
-                for j in range(n)
-            )
-            p_term = expand(weighted_p_sum ** p_exp)
-        else:
-            p_term = sympify(1)
-
-        # Certificate: M_q^c - M_p^c (PSD when q > p by Jensen's inequality)
-        cert = expand(q_term - p_term)
-
-        # Expand certificate into moment constraints
         cert_poly = Poly(cert, *self.AuxSyms)
         for expn, coef in cert_poly.as_dict().items():
             if coef != 0:
@@ -326,6 +325,100 @@ class DSDPRelaxations(SDPRelaxations):
                                           self.MmntCnsDeg)
 
         return constraints
+
+    def _build_depth_product(self):
+        r"""
+        Build depth-d product expansion of mean forms.
+
+        Per §3.2 (product-depth truncation): a depth-d certificate is
+        a product of d mean forms, each M_{q_k, p_k} = Q_k - P_k.
+        The expansion yields 2^d alternating-sign posynomial terms:
+
+            prod_{k=1}^d (Q_k - P_k) = sum_{s in {0,1}^d} (-1)^|s| prod term_k(s_k)
+
+        For d=2: (Q1-P1)(Q2-P2) = Q1*Q2 + P1*P2 - Q1*P2 - P1*Q2.
+
+        The (q_k, p_k) pairs are chosen as (q+k, p+k) for k=0..d-1,
+        ensuring each level uses a distinct mean order.
+
+        Returns:
+            List of (reduced_expr, rhs) tuples for moment constraints.
+        """
+        n = self.NumGenerators
+
+        if n == 0:
+            return []
+
+        # Theory (§2.1): M_{q,p} is PSD iff q > p.
+        if self.q <= self.p:
+            if self.verbosity > 0:
+                print(f"Warning: q={self.q} <= p={self.p}, "
+                      f"mean certificate is not PSD (requires q > p)")
+            return []
+
+        # Build d mean pairs with increasing (q, p) orders
+        pairs = []
+        for k in range(self.depth):
+            q_k = self.q + k
+            p_k = self.p + k
+            if q_k > p_k:
+                pairs.append(self._build_mean_pair(q_k, p_k))
+
+        if not pairs:
+            return []
+
+        # Expand product: each choice is Q (index 0) or P (index 1)
+        # Sign = (-1)^{number of P choices}
+        cert = sympify(0)
+        for choices in product([0, 1], repeat=len(pairs)):
+            sign = (-1) ** sum(choices)
+            term = sympify(1)
+            for k, use_p in enumerate(choices):
+                term *= pairs[k][1] if use_p else pairs[k][0]
+            cert += sign * expand(term)
+
+        cert = expand(cert)
+
+        if self.verbosity > 0:
+            num_terms = len(Poly(cert, *self.AuxSyms).as_dict())
+            print(f"  Depth-{self.depth} expansion: {num_terms} monomials "
+                  f"(from {len(pairs)} mean pairs, 2^{len(pairs)} terms)")
+
+        return self._expand_certificate(cert)
+
+    def _build_mean_certificate_moments(self):
+        r"""
+        Build moment constraints encoding M_{q,p}(X,w) nonnegativity.
+
+        For depth=1, this is a single mean form M_{q,p} = Q - P.
+        For depth>=2, this expands a product of d mean forms into
+        2^d alternating-sign posynomial terms (§3.2 product-depth truncation).
+
+        Returns:
+            List of (reduced_expr, rhs) tuples for moment constraints.
+        """
+        n = self.NumGenerators
+
+        if n == 0:
+            return []
+
+        # Theory (§2.1): M_{q,p} is PSD iff q > p (monotonicity of power means).
+        # If q <= p, the form is indefinite/negative and cannot certify nonnegativity.
+        if self.q <= self.p:
+            if self.verbosity > 0:
+                print(f"Warning: q={self.q} <= p={self.p}, "
+                      f"mean certificate is not PSD (requires q > p)")
+            return []
+
+        # For depth > 1, generate multiple (q,p) pairs and expand products
+        if self.depth > 1:
+            return self._build_depth_product()
+
+        # Depth 1: single mean form M_{q,p} = Q - P
+        Q, P = self._build_mean_pair(self.q, self.p)
+        cert = expand(Q - P)
+
+        return self._expand_certificate(cert)
 
     def _add_archimedean_boxing(self):
         r"""
@@ -386,7 +479,7 @@ class DSDPRelaxations(SDPRelaxations):
 
         # Report
         if self.verbosity > 0:
-            print(f"DSDP Relaxation (order={self.MmntOrd}):")
+            print(f"DSDP Relaxation (order={self.MmntOrd}, depth={self.depth}):")
             print(f"  Generators: {self.NumGenerators}")
             print(f"  ADE relations: {len(self.FreeRelations)}")
             print(f"  Diff KKT constraints: {self.diff_constraints_count}")
