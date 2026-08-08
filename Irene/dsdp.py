@@ -24,11 +24,18 @@ from functools import reduce
 from operator import mul
 from itertools import product
 
-from sympy import Symbol, Poly, sympify, groebner, QQ, expand, zeros, Matrix
+from sympy import Symbol, Poly, groebner, QQ
 
 from .base import base
 from .sdp import sdp
 from .relaxations import SDPRelaxations, SDRelaxSol, Mom
+from .symbolic_engine import engine, to_sympy
+
+# Aliases for engine-routed polynomial operations
+sympify = engine.sympify
+expand = engine.expand
+zeros = engine.zeros
+Matrix = engine.Matrix
 
 
 # Solver routing constants
@@ -123,6 +130,20 @@ class DSDPRelaxations(SDPRelaxations):
         # Track ADE-specific moment constraints
         self.ade_moment_constraints = []
 
+    @property
+    def sp_auxsyms(self):
+        """Return AuxSyms converted to pure SymPy (engine.Symbol → sympy.Symbol)."""
+        return [to_sympy(s) for s in self.AuxSyms]
+
+    def _poly_deg(self, expr):
+        """Compute total degree of *expr* as a Poly in the AuxSym generators.
+
+        Converts both expression and gens to pure SymPy before calling Poly()
+        to avoid SymEngine/SymPy cross-backend crashes.
+        """
+        sp_expr = to_sympy(expr) if not isinstance(expr, (int, float)) else expr
+        return Poly(sp_expr, *self.sp_auxsyms).total_degree()
+
     def set_derivation(self, diff_map: dict) -> None:
         r"""
         Register a derivation map for differential KKT conditions.
@@ -216,7 +237,7 @@ class DSDPRelaxations(SDPRelaxations):
         """
         reduced = self.ReduceExp(sympify(expr))
         self.ade_moment_constraints.append([reduced, rhs])
-        tot_deg = Poly(reduced, *self.AuxSyms).total_degree()
+        tot_deg = self._poly_deg(reduced)
         self.MmntCnsDeg = max(int(ceil(tot_deg / 2.)), self.MmntCnsDeg)
 
     def _build_diff_kkt_moments(self):
@@ -246,7 +267,7 @@ class DSDPRelaxations(SDPRelaxations):
             if diff_term != 0:
                 reduced = self.ReduceExp(diff_term)
                 constraints.append([reduced, 0])
-                deg = Poly(reduced, *self.AuxSyms).total_degree()
+                deg = self._poly_deg(reduced)
                 self.MmntCnsDeg = max(int(ceil(deg / 2.)), self.MmntCnsDeg)
 
             # Differentiate ORIGINAL constraints (generator space), then reduce
@@ -263,7 +284,7 @@ class DSDPRelaxations(SDPRelaxations):
                 if diff_cnst != 0:
                     reduced = self.ReduceExp(diff_cnst)
                     constraints.append([reduced, 0])
-                    deg = Poly(reduced, *self.AuxSyms).total_degree()
+                    deg = self._poly_deg(reduced)
                     self.MmntCnsDeg = max(int(ceil(deg / 2.)), self.MmntCnsDeg)
 
         self.diff_constraints_count = len(constraints)
@@ -331,7 +352,7 @@ class DSDPRelaxations(SDPRelaxations):
         constraints = []
         n = self.NumGenerators
 
-        cert_poly = Poly(cert, *self.AuxSyms)
+        cert_poly = Poly(to_sympy(cert), *self.sp_auxsyms)
         for expn, coef in cert_poly.as_dict().items():
             if coef != 0:
                 mono = reduce(mul,
@@ -339,7 +360,7 @@ class DSDPRelaxations(SDPRelaxations):
                 reduced = self.ReduceExp(coef * mono)
                 if reduced != 0:
                     constraints.append([reduced, 0])
-                    deg = Poly(reduced, *self.AuxSyms).total_degree()
+                    deg = self._poly_deg(reduced)
                     self.MmntCnsDeg = max(int(ceil(deg / 2.)),
                                           self.MmntCnsDeg)
 
@@ -399,7 +420,7 @@ class DSDPRelaxations(SDPRelaxations):
         cert = expand(cert)
 
         if self.verbosity > 0:
-            num_terms = len(Poly(cert, *self.AuxSyms).as_dict())
+            num_terms = len(Poly(to_sympy(cert), *self.sp_auxsyms).as_dict())
             print(f"  Depth-{self.depth} expansion: {num_terms} monomials "
                   f"(from {len(pairs)} mean pairs, 2^{len(pairs)} terms)")
 
@@ -814,7 +835,7 @@ class DSDPKKTRelaxation(DSDPRelaxations):
             if diff_L != 0:
                 reduced = self.ReduceExp(diff_L)
                 constraints.append((reduced, 0))
-                deg = Poly(reduced, *self.AuxSyms).total_degree()
+                deg = self._poly_deg(reduced)
                 self.MmntCnsDeg = max(int(ceil(deg / 2.)), self.MmntCnsDeg)
 
         return constraints

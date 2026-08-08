@@ -1,7 +1,24 @@
+import warnings as _warnings
+
 from .base import base
 
 from numpy import array, zeros, matrix, float64
 from time import time
+
+# ---------------------------------------------------------------------------
+# Deprecation helper — legacy text-file I/O path
+# ---------------------------------------------------------------------------
+def _legacy_warning(method_name):
+    """Emit a one-time deprecation warning for the legacy text-writer path."""
+    _warnings.warn(
+        f"sdp.{method_name}() uses the legacy text-file I/O solver interface, "
+        "which is deprecated.  The CVXPY DCP layer (_cvxpy_solve) is now the "
+        "primary solve path and bypasses disk I/O entirely.  Explicitly set "
+        "solver='CLARABEL' or solver='SCS' to use the new path, or suppress "
+        "this warning with warnings.filterwarnings('ignore', module='Irene.sdp').",
+        DeprecationWarning,
+        stacklevel=4,
+    )
 
 
 class sdp(base):
@@ -24,13 +41,23 @@ class sdp(base):
         + `DSDP`.
     """
     Solvers = ['CVXOPT', 'SDPA', 'CSDP', 'DSDP']
+    # CVXPY is always available when installed; listed separately so legacy code
+    # that passes solver='cvxopt' still works without change.
+    CvxpySolvers = ['CLARABEL', 'SCS', 'CVXOPT']
     SolverOptions = {}
     Info = {}
 
     def __init__(self, solver='cvxopt', solver_path=None):
         solver_upper = solver.upper() if isinstance(solver, str) else None
-        if solver_upper not in self.Solvers:
-            raise ValueError("Currently the following solvers are supported: 'CVXOPT', 'SDPA', 'CSDP', 'DSDP'")
+        # Accept CVXPY-family solvers directly (bypasses legacy text writers)
+        if solver_upper in self.CvxpySolvers:
+            # Store as fallback; actual solve will use _cvxpy_solve() first anyway
+            pass
+        elif solver_upper not in self.Solvers:
+            raise ValueError(
+                f"Currently the following solvers are supported: "
+                f"{self.Solvers + self.CvxpySolvers}"
+            )
         super(sdp, self).__init__()
         if solver_path:
             self.Path = dict(solver_path)
@@ -46,9 +73,10 @@ class sdp(base):
         self.num_constraints = 0
         self.num_blocks = 0
 
-        # checks the availability of solver
-        if self.solver not in self.AvailableSDPSolvers():
-            raise ImportError("The solver '%s' is not available" % solver)
+        # checks the availability of legacy solver (CVXPY-family skips this)
+        if solver_upper not in self.CvxpySolvers:
+            if self.solver not in self.AvailableSDPSolvers():
+                raise ImportError("The solver '%s' is not available" % solver)
 
     def SetObjective(self, b):
         r"""
@@ -499,7 +527,12 @@ class sdp(base):
     def sdpa(self):
         r"""
         Calls `SDPA` to solve the initiated semidefinite program.
+
+        .. deprecated::
+            This method uses the legacy text-file I/O interface.
+            The CVXPY DCP layer is now preferred and tried first in ``solve()``.
         """
+        _legacy_warning("sdpa")
         import subprocess
         prg_file = "prg.dat"
         out_file = "out.res"
@@ -521,8 +554,13 @@ class sdp(base):
 
     def csdp(self):
         r"""
-        Calls `SDPA` to solve the initiated semidefinite program.
+        Calls `CSDP` to solve the initiated semidefinite program.
+
+        .. deprecated::
+            This method uses the legacy text-file I/O interface.
+            The CVXPY DCP layer is now preferred and tried first in ``solve()``.
         """
+        _legacy_warning("csdp")
         import subprocess
         prg_file = "prg.dat-s"
         out_file = "out.res"
@@ -541,10 +579,64 @@ class sdp(base):
         out = completed.stdout
         self.read_csdp_out(out_file, out)
 
+    def _cvxpy_solve(self):
+        r"""
+        Solve via CVXPY abstraction layer (no text I/O).
+        Populates ``self.Info`` with the same keys as CvxOpt/sdpa/csdp.
+
+        If ``self.solver`` is one of CLARABEL/SCS/CVXOPT, uses that directly.
+        Otherwise picks the first available CVXPY solver (default: CLARABEL).
+        """
+        try:
+            from Irene.cvxpy_solver import CvxpySDPSolver, available_solvers
+
+            if not len(available_solvers()):
+                return False
+
+            # Prefer CLARABEL/SCS over CVXOPT backend; fall back to None (auto)
+            # when self.solver is a legacy name that maps to the CVXPY CVXOPT backend
+            if self.solver in ('CVXOPT', 'DSDP'):
+                cvx_solver = None  # auto-pick CLARABEL/SCS
+            elif self.solver in self.CvxpySolvers:
+                cvx_solver = self.solver
+            else:
+                cvx_solver = None
+            cvx = CvxpySDPSolver(solver=cvx_solver)
+            cvx.SetObjective(self.b)
+            for i in range(len(self.A)):
+                cvx.AddConstraintBlock(self.A[i])
+            cvx.AddConstantBlock(self.C)
+
+            # Forward solver options if they look like CVXPY kwargs
+            for param, val in self.solver_options.items():
+                try:
+                    cvx.Option(param, val)
+                except Exception:
+                    pass  # ignore unknown params
+
+            result = cvx.solve()
+            self.Info = result.to_info_dict()
+            self.Info['solver'] = f"CVXPY-{result.status}"
+            # Return False on failure so legacy fallback can try
+            if result.status not in ('Optimal', 'OptimalInaccurate'):
+                return False
+            return True
+        except (ImportError, Exception):
+            return False
+
     def solve(self):
         r"""
-        Solves the initiated semidefinite program according to the requested solver.
+        Solves the initiated semidefinite program.
+
+        Tries CVXPY first (no text I/O, direct DCP formulation). Falls back to
+        the legacy solver specified by ``self.solver`` if CVXPY is unavailable
+        or fails.
         """
+        # Fast path: CVXPY when available
+        if self._cvxpy_solve():
+            return
+
+        # Legacy dispatch
         if self.solver in ['CVXOPT', 'DSDP']:
             self.CvxOpt()
         elif self.solver == 'SDPA':

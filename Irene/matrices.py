@@ -1,45 +1,46 @@
 import numpy as np
-import sympy as sp
 import cvxpy as cp
 from sympy.polys.monomials import itermonomials
 from sympy.polys.orderings import monomial_key
+from .symbolic_engine import engine
+
 
 def get_gram_matrix(polynomial):
     """
-    Computes a symmetric Gram matrix Q for a given SymPy polynomial p
+    Computes a symmetric Gram matrix Q for a given polynomial p
     such that p = Z.T * Q * Z, where Z is the vector of monomials.
 
+    Uses SymEngine for polynomial expansion and SymPy fallback for Poly operations.
+
     Args:
-        polynomial (sympy.Expr): A sympy polynomial expression.
+        polynomial: A symbolic polynomial expression (SymEngine or SymPy).
 
     Returns:
-        Q (sympy.Matrix): The Gram matrix.
-        Z (sympy.Matrix): The monomial basis vector.
+        Q_np (np.ndarray): The Gram matrix as float64 array.
+        Q_sym: The symbolic Gram matrix.
     """
-    # 1. Extract variables and ensure it is a polynomial
-    poly = sp.Poly(polynomial)
-    vars = poly.gens
+    # 1. Extract variables and ensure it is a polynomial — Poly always falls back to SymPy
+    poly = engine.Poly(polynomial)
+    vars_list = poly.gens
     degree = poly.total_degree()
 
     # 2. Gram matrices typically require an even degree (2d)
     if degree % 2 != 0:
         raise ValueError(f"Polynomial must have an even total degree. Current degree: {degree}")
-    
+
     half_degree = degree // 2
 
     # 3. Generate the basis Z (monomials up to degree d)
-    # We sort them to ensure the matrix is deterministic and organized
-    monoms = sorted(list(itermonomials(vars, half_degree)), 
-                    key=monomial_key('grlex', vars))
-    
-    Z = sp.Matrix(monoms)
+    monoms = sorted(list(itermonomials(vars_list, half_degree)),
+                    key=monomial_key('grlex', vars_list))
+
+    Z = engine.Matrix(monoms)
     n = len(Z)
-    Q = sp.zeros(n, n)
+    Q = engine.zeros(n, n)
 
     # 4. Map monomials in p to matrix indices (i, j) that produce them
-    # We create a map: product_monomial -> list of (i, j) pairs
     product_map = {}
-    
+
     for i in range(n):
         for j in range(n):
             prod = Z[i] * Z[j]
@@ -48,26 +49,25 @@ def get_gram_matrix(polynomial):
             product_map[prod].append((i, j))
 
     # 5. Fill the Matrix Q
-    # We iterate through the terms of the input polynomial
-    # and distribute the coefficient equally among all (i, j) pairs that form that term.
     terms = poly.as_expr().as_coefficients_dict()
-    
+
     for monom, coeff in terms.items():
-        # Handle constant term explicitly if it's '1' (sympy treats it differently sometimes)
         if monom == 1:
-            monom = sp.Integer(1)
-            
+            monom = engine.sympify(1)
+
         if monom in product_map:
             pairs = product_map[monom]
             num_pairs = len(pairs)
-            
-            # Distribute coefficient equally
+
             value = coeff / num_pairs
-            
+
             for (i, j) in pairs:
                 Q[i, j] += value
 
-    return np.array(Q.evalf(), dtype=np.float64), Q
+    # Convert to numpy — engine handles the .evalf() path via SymPy fallback
+    from Irene.symbolic_engine import to_sympy
+    Q_sp = to_sympy(Q)
+    return np.array(Q_sp.evalf(), dtype=np.float64), Q_sp
 
 def is_psd_numeric(matrix, tol=1e-8):
     """
@@ -107,22 +107,22 @@ def is_psd_symbolic(matrix):
 
 def find_psd_gram_matrix(polynomial):
     """
-    Uses Convex Optimization (SDP) to find a Positive Semidefinite (PSD) 
+    Uses Convex Optimization (SDP) to find a Positive Semidefinite (PSD)
     Gram matrix for the given polynomial.
     """
-    # 1. Setup SymPy polynomial and Basis
-    poly = sp.Poly(polynomial)
-    vars = poly.gens
+    # 1. Setup polynomial and Basis — engine.Poly routes through SymPy fallback
+    poly = engine.Poly(polynomial)
+    vars_list = poly.gens
     degree = poly.total_degree()
-    
+
     if degree % 2 != 0:
         print("Polynomial has odd degree. Cannot be SOS.")
         return None
 
     half_degree = degree // 2
     # Create basis vector Z
-    basis = sorted(list(itermonomials(vars, half_degree)), 
-                   key=monomial_key('grlex', vars))
+    basis = sorted(list(itermonomials(vars_list, half_degree)),
+                   key=monomial_key('grlex', vars_list))
     n = len(basis)
     
     print(f"Polynomial: {polynomial}")
