@@ -1,0 +1,59 @@
+# ============================================================================
+# IreneRewrite — Docker Compose for multi-Python CI testing
+# ============================================================================
+# Usage:
+#   docker compose up --build          # run all three Python versions in parallel
+#   docker compose up --build python310  # test only Python 3.10
+#   docker compose run --rm python311  # one-shot run on Python 3.11
+# ============================================================================
+
+x-common: &common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  volumes:
+    - ./benchmarks/results:/app/benchmarks/results
+    - coverage-results:/app/coverage-results
+  environment:
+    PYTHONDONTWRITEBYTECODE: "1"
+    PYTHONUNBUFFERED: "1"
+
+services:
+  # -----------------------------------------------------------------------
+  # Python 3.10 — oldest supported (EOL Oct 2026, still in support window)
+  # -----------------------------------------------------------------------
+  python310:
+    <<: *common
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: "3.10"
+
+  # -----------------------------------------------------------------------
+  # Python 3.11 — current stable, primary development target
+  # -----------------------------------------------------------------------
+  python311:
+    <<: *common
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: "3.11"
+
+  # -----------------------------------------------------------------------
+  # Python 3.12 — newest supported, forward-compat check
+  # -----------------------------------------------------------------------
+  python312:
+    <<: *common
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: "3.12"
+
+# ============================================================================
+# Volumes — persist coverage XML and benchmark results across runs
+# ============================================================================
+volumes:
+  coverage-results:
