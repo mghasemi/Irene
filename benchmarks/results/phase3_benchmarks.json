@@ -1,0 +1,487 @@
+{
+  "benchmark_date": "2026-08-08 11:35:29",
+  "relaxation_degree": 2,
+  "num_problems": 12,
+  "results": [
+    {
+      "name": "Motzkin",
+      "sparsity_class": "sparse",
+      "nvars": 2,
+      "degree": 6,
+      "relaxation_degree": 2,
+      "moment_degree": 4,
+      "num_constraints": 0,
+      "newton_pruning": {
+        "original_basis_size": 5,
+        "admissible_basis_size": 3,
+        "reduction_ratio": 0.6,
+        "pruned_count": 2,
+        "wall_time_s": 0.0006
+      },
+      "moment_matrix": {
+        "dim_before": 5,
+        "dim_after_newton": 3,
+        "reduction_factor": 1.67,
+        "dim_after_chordal": 15,
+        "chordal_reduction_factor": 0.33
+      },
+      "correlative_sparsity": {
+        "num_edges": 1,
+        "num_cliques": 1,
+        "clique_sizes": [
+          2
+        ],
+        "max_clique_size": 2,
+        "is_chordal_decomposable": false,
+        "is_sparse": false,
+        "wall_time_s": 0.0001
+      },
+      "conditioning": {
+        "estimated_cond_before": 5.0,
+        "estimated_cond_after_newton": 3.0,
+        "cond_improvement_ratio": 1.67
+      },
+      "total_wall_time_s": 0.0007
+    },
+    {
+      "name": "Robinson",
+      "sparsity_class": "sparse",
+      "nvars": 2,
+      "degree": 6,
+      "relaxation_degree": 2,
+      "moment_degree": 4,
+      "num_constraints": 0,
+      "newton_pruning": {
+        "original_basis_size": 5,
+        "admissible_basis_size": 5,
+        "reduction_ratio": 1.0,
+        "pruned_count": 0,
+        "wall_time_s": 0.0004
+      },
+      "moment_matrix": {
+        "dim_before": 5,
+        "dim_after_newton": 5,
+        "reduction_factor": 1.0,
+        "dim_after_chordal": 15,
+        "chordal_reduction_factor": 0.33
+      },
+      "correlative_sparsity": {
+        "num_edges": 1,
+        "num_cliques": 1,
+        "clique_sizes": [
+          2
+        ],
+        "max_clique_size": 2,
+        "is_chordal_decomposable": false,
+        "is_sparse": false,
+        "wall_time_s": 0.0001
+      },
+      "conditioning": {
+        "estimated_cond_before": 5.0,
+        "estimated_cond_after_newton": 5.0,
+        "cond_improvement_ratio": 1.0
+      },
+      "total_wall_time_s": 0.0005
+    },
+    {
+      "name": "ChoiLam",
+      "sparsity_class": "sparse",
+      "nvars": 2,
+      "degree": 4,
+      "relaxation_degree": 2,
+      "moment_degree": 4,
+      "num_constraints": 0,
+      "newton_pruning": {
+        "original_basis_size": 5,
+        "admissible_basis_size": 5,
+        "reduction_ratio": 1.0,
+        "pruned_count": 0,
+        "wall_time_s": 0.0006
+      },
+      "moment_matrix": {
+        "dim_before": 5,
+        "dim_after_newton": 5,
+        "reduction_factor": 1.0,
+        "dim_after_chordal": 15,
+        "chordal_reduction_factor": 0.33
+      },
+      "correlative_sparsity": {
+        "num_edges": 1,
+        "num_cliques": 1,
+        "clique_sizes": [
+          2
+        ],
+        "max_clique_size": 2,
+        "is_chordal_decomposable": false,
+        "is_sparse": false,
+        "wall_time_s": 0.0001
+      },
+      "conditioning": {
+        "estimated_cond_before": 5.0,
+        "estimated_cond_after_newton": 5.0,
+        "cond_improvement_ratio": 1.0
+      },
+      "total_wall_time_s": 0.0007
+    },
+    {
+      "name": "BunimovichMeixner",
+      "sparsity_class": "sparse",
+      "nvars": 2,
+      "degree": 8,
+      "relaxation_degree": 2,
+      "moment_degree": 4,
+      "num_constraints": 0,
+      "newton_pruning": {
+        "original_basis_size": 5,
+        "admissible_basis_size": 5,
+        "reduction_ratio": 1.0,
+        "pruned_count": 0,
+        "wall_time_s": 0.0004
+      },
+      "moment_matrix": {
+        "dim_before": 5,
+        "dim_after_newton": 5,
+        "reduction_factor": 1.0,
+        "dim_after_chordal": 15,
+        "chordal_reduction_factor": 0.33
+      },
+      "correlative_sparsity": {
+        "num_edges": 1,
+        "num_cliques": 1,
+        "clique_sizes": [
+          2
+        ],
+        "max_clique_size": 2,
+        "is_chordal_decomposable": false,
+        "is_sparse": false,
+        "wall_time_s": 0.0001
+      },
+      "conditioning": {
+        "estimated_cond_before": 5.0,
+        "estimated_cond_after_newton": 5.0,
+        "cond_improvement_ratio": 1.0
+      },
+      "total_wall_time_s": 0.0005
+    },
+    {
+      "name": "SeparableChain",
+      "sparsity_class": "separable",
+      "nvars": 4,
+      "degree": 4,
+      "relaxation_degree": 2,
+      "moment_degree": 4,
+      "num_constraints": 0,
+      "newton_pruning": {
+        "original_basis_size": 35,
+        "admissible_basis_size": 31,
+        "reduction_ratio": 0.8857142857142857,
+        "pruned_count": 4,
+        "wall_time_s": 0.0022
+      },
+      "moment_matrix": {
+        "dim_before": 35,
+        "dim_after_newton": 31,
+        "reduction_factor": 1.13,
+        "dim_after_chordal": 70,
+        "chordal_reduction_factor": 0.5
+      },
+      "correlative_sparsity": {
+        "num_edges": 6,
+        "num_cliques": 1,
+        "clique_sizes": [
+          4
+        ],
+        "max_clique_size": 4,
+        "is_chordal_decomposable": false,
+        "is_sparse": false,
+        "wall_time_s": 0.0001
+      },
+      "conditioning": {
+        "estimated_cond_before": 35.0,
+        "estimated_cond_after_newton": 31.0,
+        "cond_improvement_ratio": 1.13
+      },
+      "total_wall_time_s": 0.0023
+    },
+    {
+      "name": "BlockDiagonal",
+      "sparsity_class": "separable",
+      "nvars": 4,
+      "degree": 4,
+      "relaxation_degree": 2,
+      "moment_degree": 4,
+      "num_constraints": 0,
+      "newton_pruning": {
+        "original_basis_size": 35,
+        "admissible_basis_size": 31,
+        "reduction_ratio": 0.8857142857142857,
+        "pruned_count": 4,
+        "wall_time_s": 0.0014
+      },
+      "moment_matrix": {
+        "dim_before": 35,
+        "dim_after_newton": 31,
+        "reduction_factor": 1.13,
+        "dim_after_chordal": 70,
+        "chordal_reduction_factor": 0.5
+      },
+      "correlative_sparsity": {
+        "num_edges": 6,
+        "num_cliques": 1,
+        "clique_sizes": [
+          4
+        ],
+        "max_clique_size": 4,
+        "is_chordal_decomposable": false,
+        "is_sparse": false,
+        "wall_time_s": 0.0001
+      },
+      "conditioning": {
+        "estimated_cond_before": 35.0,
+        "estimated_cond_after_newton": 31.0,
+        "cond_improvement_ratio": 1.13
+      },
+      "total_wall_time_s": 0.0015
+    },
+    {
+      "name": "MotzkinConstrained",
+      "sparsity_class": "mixed",
+      "nvars": 2,
+      "degree": 6,
+      "relaxation_degree": 2,
+      "moment_degree": 4,
+      "num_constraints": 2,
+      "newton_pruning": {
+        "original_basis_size": 5,
+        "admissible_basis_size": 3,
+        "reduction_ratio": 0.6,
+        "pruned_count": 2,
+        "wall_time_s": 0.0004
+      },
+      "moment_matrix": {
+        "dim_before": 5,
+        "dim_after_newton": 3,
+        "reduction_factor": 1.67,
+        "dim_after_chordal": 15,
+        "chordal_reduction_factor": 0.33
+      },
+      "correlative_sparsity": {
+        "num_edges": 1,
+        "num_cliques": 1,
+        "clique_sizes": [
+          2
+        ],
+        "max_clique_size": 2,
+        "is_chordal_decomposable": false,
+        "is_sparse": false,
+        "wall_time_s": 0.0001
+      },
+      "conditioning": {
+        "estimated_cond_before": 5.0,
+        "estimated_cond_after_newton": 3.0,
+        "cond_improvement_ratio": 1.67
+      },
+      "total_wall_time_s": 0.0005
+    },
+    {
+      "name": "SparseEquality",
+      "sparsity_class": "mixed",
+      "nvars": 3,
+      "degree": 4,
+      "relaxation_degree": 2,
+      "moment_degree": 4,
+      "num_constraints": 1,
+      "newton_pruning": {
+        "original_basis_size": 15,
+        "admissible_basis_size": 15,
+        "reduction_ratio": 1.0,
+        "pruned_count": 0,
+        "wall_time_s": 0.0019
+      },
+      "moment_matrix": {
+        "dim_before": 15,
+        "dim_after_newton": 15,
+        "reduction_factor": 1.0,
+        "dim_after_chordal": 35,
+        "chordal_reduction_factor": 0.43
+      },
+      "correlative_sparsity": {
+        "num_edges": 3,
+        "num_cliques": 1,
+        "clique_sizes": [
+          3
+        ],
+        "max_clique_size": 3,
+        "is_chordal_decomposable": false,
+        "is_sparse": false,
+        "wall_time_s": 0.0001
+      },
+      "conditioning": {
+        "estimated_cond_before": 15.0,
+        "estimated_cond_after_newton": 15.0,
+        "cond_improvement_ratio": 1.0
+      },
+      "total_wall_time_s": 0.002
+    },
+    {
+      "name": "DenseQuartic",
+      "sparsity_class": "dense",
+      "nvars": 2,
+      "degree": 4,
+      "relaxation_degree": 2,
+      "moment_degree": 4,
+      "num_constraints": 0,
+      "newton_pruning": {
+        "original_basis_size": 5,
+        "admissible_basis_size": 5,
+        "reduction_ratio": 1.0,
+        "pruned_count": 0,
+        "wall_time_s": 0.0005
+      },
+      "moment_matrix": {
+        "dim_before": 5,
+        "dim_after_newton": 5,
+        "reduction_factor": 1.0,
+        "dim_after_chordal": 15,
+        "chordal_reduction_factor": 0.33
+      },
+      "correlative_sparsity": {
+        "num_edges": 1,
+        "num_cliques": 1,
+        "clique_sizes": [
+          2
+        ],
+        "max_clique_size": 2,
+        "is_chordal_decomposable": false,
+        "is_sparse": false,
+        "wall_time_s": 0.0001
+      },
+      "conditioning": {
+        "estimated_cond_before": 5.0,
+        "estimated_cond_after_newton": 5.0,
+        "cond_improvement_ratio": 1.0
+      },
+      "total_wall_time_s": 0.0006
+    },
+    {
+      "name": "Degree8Stress",
+      "sparsity_class": "dense",
+      "nvars": 2,
+      "degree": 8,
+      "relaxation_degree": 2,
+      "moment_degree": 4,
+      "num_constraints": 0,
+      "newton_pruning": {
+        "original_basis_size": 5,
+        "admissible_basis_size": 5,
+        "reduction_ratio": 1.0,
+        "pruned_count": 0,
+        "wall_time_s": 0.0012
+      },
+      "moment_matrix": {
+        "dim_before": 5,
+        "dim_after_newton": 5,
+        "reduction_factor": 1.0,
+        "dim_after_chordal": 15,
+        "chordal_reduction_factor": 0.33
+      },
+      "correlative_sparsity": {
+        "num_edges": 1,
+        "num_cliques": 1,
+        "clique_sizes": [
+          2
+        ],
+        "max_clique_size": 2,
+        "is_chordal_decomposable": false,
+        "is_sparse": false,
+        "wall_time_s": 0.0001
+      },
+      "conditioning": {
+        "estimated_cond_before": 5.0,
+        "estimated_cond_after_newton": 5.0,
+        "cond_improvement_ratio": 1.0
+      },
+      "total_wall_time_s": 0.0013
+    },
+    {
+      "name": "SparseChain5",
+      "sparsity_class": "sparse",
+      "nvars": 5,
+      "degree": 4,
+      "relaxation_degree": 2,
+      "moment_degree": 4,
+      "num_constraints": 0,
+      "newton_pruning": {
+        "original_basis_size": 70,
+        "admissible_basis_size": 53,
+        "reduction_ratio": 0.7571428571428571,
+        "pruned_count": 17,
+        "wall_time_s": 0.003
+      },
+      "moment_matrix": {
+        "dim_before": 70,
+        "dim_after_newton": 53,
+        "reduction_factor": 1.32,
+        "dim_after_chordal": 126,
+        "chordal_reduction_factor": 0.56
+      },
+      "correlative_sparsity": {
+        "num_edges": 10,
+        "num_cliques": 1,
+        "clique_sizes": [
+          5
+        ],
+        "max_clique_size": 5,
+        "is_chordal_decomposable": false,
+        "is_sparse": false,
+        "wall_time_s": 0.0001
+      },
+      "conditioning": {
+        "estimated_cond_before": 70.0,
+        "estimated_cond_after_newton": 53.0,
+        "cond_improvement_ratio": 1.32
+      },
+      "total_wall_time_s": 0.0031
+    },
+    {
+      "name": "DenseTrivariate",
+      "sparsity_class": "dense",
+      "nvars": 3,
+      "degree": 6,
+      "relaxation_degree": 2,
+      "moment_degree": 4,
+      "num_constraints": 0,
+      "newton_pruning": {
+        "original_basis_size": 15,
+        "admissible_basis_size": 13,
+        "reduction_ratio": 0.8666666666666667,
+        "pruned_count": 2,
+        "wall_time_s": 0.001
+      },
+      "moment_matrix": {
+        "dim_before": 15,
+        "dim_after_newton": 13,
+        "reduction_factor": 1.15,
+        "dim_after_chordal": 35,
+        "chordal_reduction_factor": 0.43
+      },
+      "correlative_sparsity": {
+        "num_edges": 3,
+        "num_cliques": 1,
+        "clique_sizes": [
+          3
+        ],
+        "max_clique_size": 3,
+        "is_chordal_decomposable": false,
+        "is_sparse": false,
+        "wall_time_s": 0.0001
+      },
+      "conditioning": {
+        "estimated_cond_before": 15.0,
+        "estimated_cond_after_newton": 13.0,
+        "cond_improvement_ratio": 1.15
+      },
+      "total_wall_time_s": 0.0011
+    }
+  ]
+}
