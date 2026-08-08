@@ -241,3 +241,47 @@ All deliverables met per `plan_master.md`:
 - [x] P2.7 Integration report → `reports/phase_2_integration_report.md`
 
 ### Next Steps: Phase 3 — Advanced Reductions (Border basis, sparsity, unified API)
+
+---
+
+## 2026-08-07 — P3.4 Correlative Sparsity Detection Complete ✅
+
+**Task:** Implement correlative sparsity detection for moment matrix partitioning
+
+**Deliverables:**
+| Item | Status | Details |
+|------|--------|---------|
+| `Irene/sparsity.py` | ✅ 218 lines | UnionFind + CorrelativeSparsity classes |
+| `Irene/tests/test_sparsity.py` | ✅ 16 tests | All passing in 0.51s |
+| Full test suite | ✅ 38/38 passed | No regressions |
+
+**Implementation summary:**
+- **UnionFind**: Path compression + rank-based union; O(α(n)) amortized operations
+- **CorrelativeSparsity**: Builds variable dependency graph from polynomial term co-occurrence; detects connected components via union-find
+- **`moment_matrix_partition(deg)`**: Partitions exponent tuples by sparsity component membership; returns dict mapping component_id → list of basis indices (key `-1` = cross-component block)
+- **`reduction_factor(deg)`**: Estimates moment matrix size reduction from exploiting sparsity: `sum(c²)/n²` where c = component sizes, n = total vars
+- **Integration helpers**: `detect_sparsity_from_problem(prog)` and `detect_sparsity_from_polys(polys, num_vars)` for direct use in relaxation pipeline
+
+**Vikunja update:** ✅ P3.1–P3.5 marked done in project #28 (task IDs 453–457). Duplicate Phase 3 tasks cleaned up.
+
+---
+
+## 2026-08-08 — P3.5 Newton Polytope Monomial Pruning Complete ✅
+
+**Task:** Implement Newton polytope-based moment matrix basis pruning
+
+**Deliverables:**
+| Item | Status | Details |
+|------|--------|---------|
+| `Irene/newton_polytope.py` | ✅ ~310 lines | Polytope extraction, Minkowski sum, ConvexHull half-space pruning |
+| `Irene/tests/test_newton_polytope.py` | ✅ 13 tests | Univariate/bivariate/quadratic, constant edge case, degenerate hull fallback, integration helpers |
+| Full test suite | ✅ 51/51 passed | No regressions across border_basis + sparsity + newton_polytope + relaxation_api modules |
+
+**Implementation summary:**
+- **`newton_polytope(expr)`**: Extracts exponent vectors from SymEngine/SymPy polynomials via `Poly().monoms()`; returns convex hull of support points
+- **`minkowski_sum(polytopes)`**: Combines multiple polytopes for multi-polynomial problems (sum of vertex sets → new hull)
+- **`NewtonPruner` class**: Uses `scipy.spatial.ConvexHull.equations` for half-space point-in-polytope testing; bounding-box fallback for degenerate cases (<3 points, 0 columns)
+- **Degeneracy guards**: Constant polynomials (no generators) → empty polytope, pruning skipped. Low-dim hulls → bbox fallback instead of Qhull crash
+- **Integration helpers**: `prune_basis_from_polys(polys, degree)`, `combined_newton_polytope(polys, vars_list)`, `prune_basis_from_problem(prog, degree)`
+
+**Vikunja update:** ✅ P3.5 (task #457) marked done in project #28. Siyuan block created (`20260808231344-wuaqimd`). Plan master updated locally.

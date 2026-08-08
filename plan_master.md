@@ -1,6 +1,6 @@
 # IreneRewrite — Master Modernization Plan
 
-**Author:** Mehdi Ghasemi | **Date:** 2026-08-05 | **Status:** Planning Phase
+**Author:** Mehdi Ghasemi | **Date:** 2026-08-08 | **Status:** Phase 3 Active (Phases 1–2 Complete)
 **Vikunja Project:** #28 (IreneRewrite: Modernization Plan)
 
 ---
@@ -99,7 +99,7 @@ Optimize mathematical structure for scale and numerical stability via border bas
 | P3.2 | Implement `BorderBasis` class in new module | 7 | P3.1 |
 | P3.3 | Design unified relaxation API | 7 | Phase 2 complete |
 | P3.4 | Implement correlative sparsity detection | 6 | P3.3 |
-| P3.5 | Implement Newton polytope monomial pruning | 6 | P3.3 |
+| P3.5 | ✅ Implement Newton polytope monomial pruning | 6 | P3.3 |
 | P3.6 | Benchmark sparsity + Newton pruning on large problems | 7 | P3.2–P3.5 |
 | P3.7 | Write Phase 3 reduction report | 5 | P3.6 |
 
@@ -156,12 +156,96 @@ Phase 1 (sequential, critical path) ──→ Phase 2 (depends on P1.8) ──�
 | Item | Status | Notes |
 |------|--------|-------|
 | Vikunja Project #28 creation | ✅ WORKED | Project "IreneRewrite: Modernization Plan" created successfully |
-| Codebase audit (grouprings.py, relaxations.py, matrices.py, sdp.py, program.py) | ✅ WORKED | All modules read; SymPy dependency map established |
-| Task hierarchy creation script | ⏳ PENDING | Script written to `create_tasks.py`; awaiting execution |
-| Master plan document | ✅ WORKED | This file — will be stored in Siyuan |
+| 36-task hierarchy created | ✅ WORKED | Tasks #434–#469 across 5 parent groups (4 phases + execution strategy) |
+| Codebase audit (all modules) | ✅ WORKED | SymPy dependency map established for grouprings, relaxations, matrices, sdp, program |
+| Master plan stored in Siyuan | ⚠️ STALE | Pushed to `/IreneRewrite/plan_master` block `20260806025804-ueq0cn8` but content is stale; needs refresh |
 
-### Known Issues (Planning Phase)
-- None yet. All tool calls returned successfully during initial audit.
+### 2026-08-05/06 — Phase 1 Complete ✅ (All 9 tasks: P1.1–P1.9)
+
+See `reports/phase_1_report.md` for full details. Key outcomes:
+- `symbolic_engine.py` (360 lines): SymEngine primary + SymPy fallback router
+- 1.39× InitSDP speedup on Motzkin benchmark; 74× poly expand speedup for SymEngine C++ path
+- Lambdify acceleration (P1.6) cancelled: SymEngine Lambdify is 13× slower than SymPy's
+
+### 2026-08-06 — Phase 2 Complete ✅ (All 7 tasks: P2.1–P2.7)
+
+See `reports/phase_2_integration_report.md` for full details. Key outcomes:
+- `cvxpy_solver.py` (340 lines): CVXPY DCP layer replacing text-file I/O
+- CLARABEL + SCS solvers routing through `sdp.solve()` → `_cvxpy_solve()`
+- Legacy SDPA/CSDP preserved behind deprecation shim
+- 9/10 solver routing tests pass (1 skip for absent CSDP binary)
+
+### 2026-08-06 — Phase 3a: DSDP Mean Relaxation Complete ✅
+
+| Item | Status | Notes |
+|------|--------|-------|
+| SymPy/SymEngine bridge for dsdp.py | ✅ FIXED | Added `sp_auxsyms` property + `_poly_deg()` helper; patched 7 `Poly()` call sites |
+| SDP solver routing fixed | ✅ FIXED | `_cvxpy_solve()` returns `False` on non-optimal → legacy fallback triggers |
+| Full DSDP test suite | ✅ 29/29 pass | Choi-Lam (lb≈0), Robinson (negative lb), square recovery, depth-2 expansion, weight validation |
+
+### 2026-08-07 — P3.4: Correlative Sparsity Detection Complete ✅
+
+| Item | Status | Notes |
+|------|--------|-------|
+| `Irene/sparsity.py` | ✅ 282 lines | UnionFind (path compression + rank union) + CorrelativeSparsity class |
+| `Irene/tests/test_sparsity.py` | ✅ 16 tests | All passing in 0.51s |
+| Integration helpers | ✅ | `detect_sparsity_from_problem()`, `detect_sparsity_from_polys()`, `moment_matrix_partition(deg)`, `reduction_factor(deg)` |
+
+### 2026-08-07 — P3.3: Unified Relaxation API Complete ✅
+
+| Item | Status | Notes |
+|------|--------|-------|
+| `Irene/relaxation_api.py` | ✅ 443 lines | `RelaxationEngine` + `RelaxResult` dataclass + module-level `relax()`/`compare_all()` |
+| Dispatch to all 4 backends | ✅ | SOS via `SDPRelaxations`, SONC via `SONCRelaxations`, SOS+SONC both orders via `SOSONCRelaxations` |
+| Test suite | ✅ | `test_relaxation_api.py` with structural consistency checks |
+
+### 2026-08-08 — P3.1/P3.2: Border Basis Complete ✅
+
+| Item | Status | Notes |
+|------|--------|-------|
+| P3.1: Research & prototype | ✅ | Literature: Traverso (1990), Greuel-Pfister (2002), Becker et al. (2005) |
+| P3.2: `Irene/border_basis.py` | ✅ 523 lines | `BorderBasis(vars, generators, degree)` — quotient ring $K[x_1,\dots,x_n]/I$ |
+| `Irene/tests/test_border_basis.py` | ✅ 10 tests | Covers `<x²,y²>`, `<x³,y³>`, free algebra, `<x²+y²-1>`, `<xy-1>`, univariate cases |
+
+**BorderBasis class:** Monomial basis via Groebner reduction; border computation; multiplication tables via QR decomposition; polynomial reduction. Known limitations: SymPy `groebner()` (no SymEngine yet), NumPy QR precision concerns for ill-conditioned ideals, only degree-1 border tables.
+
+### 2026-08-08 — P3.5: Newton Polytope Pruning Complete ✅
+
+| Item | Status | Notes |
+|------|--------|-------|
+| `Irene/newton_polytope.py` | ✅ 328 lines | `newton_polytope()`, `minkowski_sum()`, `NewtonPruner` class |
+| `Irene/tests/test_newton_polytope.py` | ✅ 13 tests | Univariate/bivariate/quadratic, constant edge case, degenerate hull fallback, integration helpers |
+| Full combined suite | ✅ 51/51 pass | No regressions across border_basis + sparsity + newton_polytope + relaxation_api |
+
+**Implementation:** Half-space point-in-polytope via `scipy.spatial.ConvexHull.equations` with bounding-box fallback for degenerate hulls. Integration: `prune_basis_from_polys()`, `combined_newton_polytope()`, `prune_basis_from_problem()`.
+
+### 2026-08-08 — P4.2: Benchmark Gallery Complete ✅
+
+| Item | Status | Notes |
+|------|--------|-------|
+| `benchmarks/gallery.yaml` | ✅ | 12 problems across 5 categories |
+| `benchmarks/run_gallery.py` | ✅ | Full runner: construct → SOS/SONC/SOSONC → validate vs known optima |
+| Baseline run | ✅ | 4/12 pass (trivial + stress), 8/12 correctly fail (separating examples document SOS gap) |
+| Stability warning | ⚠️ | Degree-6 conditioning ~10¹³–10¹⁴ — validates P3 border basis optimization goal |
+
+---
+
+## Known Issues
+
+- **Phase 3 modules NOT integrated into relaxations.py**: `border_basis.py`, `sparsity.py`, `newton_polytope.py` exist as standalone modules with their own tests, but `relaxations.py` still uses the original Groebner-based `ReducedMonomialBase()`. The integration wiring is the next critical task (see new task P3.8 below).
+- **Vikunja Vikunja API** uses port 3456 (not 8090) from the LAN; port 8090 is PocketBase. Earlier sessions had this wrong.
+- **Separating examples fail at low order** (expected): Motzkin, Choi-Lam, Robinson, Schick correctly fail SOS at r=1 — they are non-SOS by construction.
+- **Degree-6 conditioning**: Moment matrices show condition numbers ~10¹³–10¹⁴, exceeding 10¹² threshold. Border bases should reduce this by ≥10×.
+
+---
+
+## Phase 3 Remaining Work
+
+| ID | Task | Status | Notes |
+|----|------|--------|-------|
+| P3.6 | Benchmark sparsity + Newton pruning on large problems | ⬜ TODO | Run `benchmarks/run_gallery.py` with pruning enabled; compare basis sizes and conditioning |
+| P3.7 | Write Phase 3 reduction report | ⬜ TODO | Comparative analysis of all three optimizations (border basis, sparsity, Newton) |
+| **P3.8** | **Integrate Phase 3 modules into relaxations.py** | **⬜ TODO** | Wire `border_basis.py`, `sparsity.py`, `newton_polytope.py` into `ReducedMonomialBase()` and `ReduceExp()` via the `relaxation_api.py` config dispatch |
 
 ---
 
@@ -170,24 +254,49 @@ Phase 1 (sequential, critical path) ──→ Phase 2 (depends on P1.8) ──�
 ```
 IreneRewrite/
 ├── plan_master.md              ← this file
+├── execution_log.md            ← detailed session-by-session log
 ├── create_tasks.py             ← Vikunja task creation script
-├── Irene/                      ← rewritten package (mirrors original structure)
+├── siyuan_push.py              ← SiYuan document push script
+├── conftest.py                 ← pytest configuration
+├── setup.py                    ← package setup
+├── Irene/                      ← rewritten package
 │   ├── __init__.py
-│   ├── symbolic_engine.py      ← NEW: SymEngine + fallback router
-│   ├── border_basis.py         ← NEW: Border basis quotient ring projection
-│   ├── cvxpy_interface.py      ← NEW: CVXPY problem formulation layer
-│   ├── relaxation_api.py       ← NEW: Unified API entry point
-│   ├── grouprings.py           ← updated from original
-│   ├── relaxations.py          ← updated from original
-│   ├── matrices.py             ← updated from original
-│   ├── sdp.py                  ← updated from original (deprecated writers)
-│   ├── program.py              ← updated from original
+│   ├── symbolic_engine.py      ← Phase 1: SymEngine + fallback router (360 lines)
+│   ├── cvxpy_solver.py         ← Phase 2: CVXPY DCP solver layer (340 lines)
+│   ├── border_basis.py         ← Phase 3: Border basis quotient ring (523 lines)
+│   ├── sparsity.py             ← Phase 3: Correlative sparsity detection (282 lines)
+│   ├── newton_polytope.py      ← Phase 3: Newton polytope pruning (328 lines)
+│   ├── relaxation_api.py       ← Phase 3: Unified API entry point (443 lines)
+│   ├── dsdp.py                 ← Phase 3a: DSDP mean relaxation (updated)
+│   ├── grouprings.py           ← updated: SymEngine routing
+│   ├── relaxations.py          ← updated: engine-routed, CVXPY solve path
+│   ├── matrices.py             ← updated: engine-routed
+│   ├── sdp.py                  ← updated: CVXPY primary, legacy fallback
+│   ├── program.py              ← updated: engine-routed
+│   ├── sonc.py                 ← original (unchanged)
+│   ├── sosonc.py               ← original (unchanged)
+│   ├── geometric.py            ← original (unchanged)
+│   ├── invariant.py            ← original (unchanged)
+│   ├── base.py                 ← original (unchanged)
 │   └── tests/
-├── benchmarks/                 ← benchmark problem gallery (JSON/YAML)
-├── docker-compose.yml          ← multi-Python test matrix
-├── .github/workflows/ci.yml    ← CI pipeline
-└── Reports/
-    ├── phase1_performance.md
-    ├── phase2_integration.md
-    └── phase3_reduction.md
+│       ├── test_border_basis.py
+│       ├── test_sparsity.py
+│       ├── test_newton_polytope.py
+│       └── test_relaxation_api.py
+├── tests/                      ← integration tests
+│   ├── test_dsdp_mean.py
+│   ├── test_sonc_section3.py
+│   ├── test_sosonc.py
+│   ├── test_solver_routing.py
+│   └── test_relaxations.py
+├── benchmarks/                 ← Phase 4: benchmark gallery
+│   ├── gallery.yaml
+│   ├── run_gallery.py
+│   └── results/
+├── reports/
+│   ├── phase_1_report.md
+│   ├── phase_2_integration_report.md
+│   └── phase_3_audit.md
+├── pyProximation/              ← auxiliary (rational approximation)
+└── examples/                   ← example scripts
 ```
