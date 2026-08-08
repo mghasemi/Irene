@@ -221,6 +221,8 @@ def main():
                         help='Per-problem timeout in seconds')
     parser.add_argument('--filter', dest='tag_filter', default=None,
                         help='Only run problems with this tag')
+    parser.add_argument('--quick', action='store_true',
+                        help='Run only quick subset (trivial + classic problems, skip stress/separating)')
     parser.add_argument('--output-dir', default='./benchmarks/results/',
                         help='Output directory for JSON results')
     args = parser.parse_args()
@@ -236,6 +238,13 @@ def main():
     if args.tag_filter:
         problems = [p for p in problems if args.tag_filter in p.get('tags', [])]
         print(f"Filtered to {len(problems)} problem(s) with tag '{args.tag_filter}'")
+
+    # Quick mode — only trivial and classic warm-up problems, skip stress/separating/mean_poly
+    if args.quick:
+        quick_ids = {'quad_1d', 'quartic_1d', 'constrained_1d', 'polynomial_on_sphere'}
+        problems = [p for p in problems if p['id'] in quick_ids]
+        print(f"Quick mode: {len(problems)} problem(s)")
+
     else:
         print(f"Running full gallery: {len(problems)} problems")
 
