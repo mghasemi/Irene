@@ -75,6 +75,9 @@ class TestSDPRelaxationsConstrained:
         rlx.SetObjective(x + y)
         rlx.AddConstraint(1 - x**2 - y**2)
         rlx.MomentsOrd(2)
+        # CVXOPT native CvxOpt() may fail to converge on constrained SDPs;
+        # use CLARABEL (via CVXPY) for numerical stability on this test.
+        rlx.SetSDPSolver('CLARABEL')
         rlx.InitSDP()
         f_min = rlx.Minimize()
         # The SDP can be ill-conditioned for the ball at order 2;

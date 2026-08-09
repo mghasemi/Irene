@@ -123,6 +123,21 @@ def combined_newton_polytope(polynomials, vars_list=None):
     for pts in polytopes[1:]:
         result = minkowski_sum(result, pts)
 
+    # Ensure the origin (constant monomial) is included.
+    # The constant term 1 = x^0 is always in the moment matrix basis,
+    # even when no polynomial explicitly contains a constant term.
+    # Without this, polynomials like Choi-Lam whose Newton polytope
+    # lacks (0,...,0) would have their entire basis pruned away.
+    ncols = result.shape[1]
+    include_origin = True
+    for row in result:
+        if np.all(row == 0):
+            include_origin = False
+            break
+    if include_origin:
+        origin = np.zeros((1, ncols), dtype=int)
+        result = np.vstack([result, origin])
+
     # Scale by 2 (for degree-2d moment matrix)
     result = scale_polytope(result, 2)
 
@@ -242,6 +257,15 @@ class NewtonPruner:
         self.pruned_basis_size = len(pruned)
         self.reduction_ratio = self.pruned_basis_size / max(self.full_basis_size, 1)
 
+        # Safety: if pruning eliminated every monomial, fall back to full basis.
+        # An empty basis is always pathological — it means the Newton polytope
+        # (even with origin-inclusion) is too tight for the degree bound.
+        # Conservative fallback: no pruning is better than zero monomials.
+        if self.pruned_basis_size == 0 and self.full_basis_size > 0:
+            self.pruned_basis_size = self.full_basis_size
+            self.reduction_ratio = 1.0
+            pruned = [tuple(np.array(e, dtype=int)) for e in all_monos]
+
         return pruned
 
     def moment_matrix_dimension_reduction(self) -> Dict:
@@ -284,8 +308,15 @@ def prune_basis_from_polys(polynomials, num_vars: int, max_degree: int) -> Newto
     Returns:
         Configured NewtonPruner with pruned basis computed.
     """
-    # Compute combined Newton polytope
-    vertices = combined_newton_polytope(polynomials)
+    # Build a canonical variable list so all polynomials use the same
+    # variable ordering and dimension. Without this, polynomials that
+    # reference different subsets of variables produce polytopes with
+    # mismatched column counts, crashing minkowski_sum().
+    from sympy import symbols
+    canonical_vars = symbols(f'x0:{num_vars}')
+
+    # Compute combined Newton polytope with shared variable list
+    vertices = combined_newton_polytope(polynomials, vars_list=canonical_vars)
 
     pruner = NewtonPruner(num_vars, max_degree, vertices)
     pruner.compute_pruned_basis()

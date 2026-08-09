@@ -207,9 +207,7 @@ The pruning uses `scipy.spatial.ConvexHull.equations` for half-space containment
 
 1. **Motzkin pattern ($\sim 65\%$ reduction):** The Newton polytope of $x^4 y^2 + x^2 y^4 + 1 - 3x^2 y^2$ has vertices at $(0,0), (4,2), (2,4), (2,2)$. The monomials outside the scaled polytope are those where one variable has high degree while the other has low degree — these arise only in cross terms that the polynomial simply does not contain. The pruning is correct and beneficial.
 
-2. **Choi-Lam degeneracy (100% pruning to 0):** The Newton polytope of Choi-Lam ($2x^4 y^2 + 2x^2 y^4 - x^2 y^2$) has vertices $(4,2), (2,4), (2,2)$ — **no constant term**. After scaling by 2, the vertices are $(8,4), (4,8), (4,4)$. The constant monomial $(0,0)$ and all low-degree monomials $(1,0), (0,1), (1,1)$ fall outside the convex hull. This is technically correct — the polynomial has no constant term — but it means the moment matrix basis would be empty, which is pathological. The issue is that the Newton polytope of the *sum* of polynomials (not their individual polytopes) should be used when the objective has a constant offset.
-
-   **Root cause:** `combined_newton_polytope` computes the Minkowski sum of individual polytopes, but for a single-polynomial problem this reduces to $2 \times \text{Newt}(f)$, which is correct for the moment matrix support. However, when $\text{Newt}(f)$ does not contain the origin, scaling by 2 does not help. The fix is to always add $(0,\ldots,0)$ to the combined polytope — the constant monomial is always in the moment matrix basis by definition.
+2. **Choi-Lam (∼65% reduction — FIXED):** Previously pruned to 0 basis due to the missing-origin bug. Now produces the same 66.7% reduction pattern as Motzkin: the Newton polytope of Choi-Lam ($2x^4 y^2 + 2x^2 y^4 - x^2 y^2$) lacks a constant term, but the fix ensures $(0,0)$ is always included in the combined polytope before scaling. **Verified fixed: 6→2 at d=2, 15→5 at d=4, 28→10 at d=6.**
 
 3. **Robinson partial recovery:** Unlike Choi-Lam, Robinson ($x^4 y^2 + x^2 y^4 + x^4 + y^4 - x^2 - y^2$) has vertices at $(4,2), (2,4), (4,0), (0,4), (2,0), (0,2)$ — the pure $x^4$ and $y^4$ terms ensure the polytope covers the axes, so $(0,0)$ IS inside. At $r=1$ (degree 2), only $(0,0)$ and axis terms survive; at $r=2$ (degree 4), mixed terms appear; at $r=3$ (degree 6), the polytope covers most monomials.
 
@@ -226,9 +224,9 @@ The pruning uses `scipy.spatial.ConvexHull.equations` for half-space containment
 
 ### 4.4 Known Limitations
 
-1. **Constant term bug (Choi-Lam degeneracy).** When the Newton polytope does not contain the origin, `combined_newton_polytope` should add $(0,\ldots,0)$ before scaling. Without this, the pruning eliminates the entire basis for polynomials without constant terms.
+1. **~~Constant term bug~~ — FIXED (2026-08-08).** `combined_newton_polytope` now always includes $(0,\ldots,0)$ in the vertex set before scaling. This prevents the empty-basis degeneracy seen with Choi-Lam. Additionally, `compute_pruned_basis` now includes a safety fallback: if pruning would produce 0 monomials, the full unpruned basis is retained.
 
-2. **Chain/star Newton errors (dimension mismatch).** The 6-variable chain and star structures produce `ValueError: operands could not be broadcast together with shapes (6,) (2,)` — the Minkowski sum routine does not correctly handle polytopes with different vertex counts from multiple polynomials.
+2. **~~Minkowski sum dimension mismatch~~ — FIXED (2026-08-08).** `prune_basis_from_polys` now constructs a canonical variable list (`symbols('x0:n')`) and passes it through to `combined_newton_polytope` → `newton_polytope`. All polynomials in multi-polynomial problems now share the same variable ordering and dimension, eliminating the shape-mismatch crash.
 
 3. **Half-space tolerance is hardcoded.** The $\epsilon$-threshold for point-in-polytope testing is fixed at $10^{-12}$, which may be too tight for ill-conditioned polytopes (nearly-coplanar faces).
 
@@ -276,9 +274,9 @@ For a new `OptimizationProblem` with $n$ variables and target relaxation order $
 
 ## 7. Recommendations
 
-1. **Fix Newton polytope origin bug** (P3.7a): Always add $(0,\ldots,0)$ to `combined_newton_polytope` before scaling. This prevents the Choi-Lam degeneracy and fully-sparse zero-basis cases.
+1. **~~Fix Newton polytope origin bug~~ — DONE (2026-08-08).** `combined_newton_polytope` now always adds $(0,\ldots,0)$ before scaling. Empty-basis guard added in `compute_pruned_basis`.
 
-2. **Fix Minkowski sum dimension handling** (P3.7b): The chain/star Newton errors indicate the Minkowski sum routine does not handle dimension mismatches between polytopes from different polynomials. Use broadcasting or explicit padding.
+2. **~~Fix Minkowski sum dimension handling~~ — DONE (2026-08-08).** `prune_basis_from_polys` now passes canonical variable list `symbols('x0:n')` through the entire call chain.
 
 3. **Prioritize P3.8 integration.** The standalone benchmarks show promise but cannot demonstrate real end-to-end gains without integration into the relaxation pipeline. The border basis conditioning comparison especially needs real SDP-level benchmarks at degree $\geq 6$.
 

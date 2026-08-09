@@ -15,7 +15,8 @@ class TestSolverRouting:
     """Test that solver selection routes correctly through the CVXPY layer."""
 
     def test_default_solver_uses_cvxpy(self):
-        """Default solver (CVXOPT) should route through CVXPY with CLARABEL/SCS backend."""
+        """Default solver (CVXOPT) routes through native CvxOpt() when available,
+        falling back to CVXPY with CLARABEL/SCS. Both paths produce correct results."""
         x = Symbol('x')
         rlx = SDPRelaxations([x])
         rlx.SetObjective(x**2)
@@ -27,7 +28,9 @@ class TestSolverRouting:
         assert lb is not None
         assert abs(lb) < 1e-6, f"Expected ~0, got {lb}"
         solver_name = rlx.Info.get('solver', '')
-        assert 'CVXPY' in solver_name, f"Expected CVXPY routing, got {solver_name}"
+        # Accept either CVXPY routing (CLARABEL/SCS) or native CVXOPT path
+        valid = 'CVXPY' in solver_name or 'CVXOPT' in solver_name
+        assert valid, f"Expected CVXPY or CVXOPT routing, got {solver_name}"
 
     def test_clarabel_solver(self):
         """Explicit CLARABEL solver should work and produce correct results."""
@@ -59,13 +62,17 @@ class TestSolverRouting:
         # SCS is first-order, allow wider tolerance
         assert abs(lb) < 1e-2, f"Expected ~0, got {lb}"
 
-    def test_constrained_problem_consistency(self):
-        """Different solvers should produce consistent lower bounds on the same problem."""
+    def test_constrained_problem_consistency(self, ci_solver):
+        """Different solvers should produce consistent lower bounds on the same problem.
+        
+        When IRENE_CI_SOLVER is set (GitHub Actions CI), tests only that solver.
+        Otherwise runs both CLARABEL and SCS for local validation."""
         x, y = Symbol('x'), Symbol('y')
         expected_lb = 0.5
         tolerance = 1e-2
 
-        for solver_name in ['CLARABEL', 'SCS']:
+        solvers_to_test = [ci_solver] if ci_solver else ['CLARABEL', 'SCS']
+        for solver_name in solvers_to_test:
             rlx = SDPRelaxations([x, y])
             rlx.SetObjective(x**2 + y**2)
             rlx.AddConstraint(x + y >= 1)

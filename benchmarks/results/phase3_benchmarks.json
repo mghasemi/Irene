@@ -295,11 +295,11 @@
       "degree": 2,
       "order_1": {
         "full_basis": 3,
-        "pruned_basis": 0,
+        "pruned_basis": 3,
         "full_mm_entries": 6,
-        "pruned_mm_entries": 0,
-        "reduction_ratio": 0.0,
-        "entries_saved": 9
+        "pruned_mm_entries": 6,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
       }
     },
     {
@@ -309,19 +309,19 @@
       "degree": 4,
       "order_1": {
         "full_basis": 3,
-        "pruned_basis": 0,
+        "pruned_basis": 3,
         "full_mm_entries": 6,
-        "pruned_mm_entries": 0,
-        "reduction_ratio": 0.0,
-        "entries_saved": 9
+        "pruned_mm_entries": 6,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
       },
       "order_2": {
         "full_basis": 5,
-        "pruned_basis": 1,
+        "pruned_basis": 5,
         "full_mm_entries": 15,
-        "pruned_mm_entries": 1,
-        "reduction_ratio": 0.2,
-        "entries_saved": 24
+        "pruned_mm_entries": 15,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
       }
     },
     {
@@ -361,41 +361,11 @@
       "degree": 6,
       "order_1": {
         "full_basis": 6,
-        "pruned_basis": 0,
+        "pruned_basis": 2,
         "full_mm_entries": 21,
-        "pruned_mm_entries": 0,
-        "reduction_ratio": 0.0,
-        "entries_saved": 36
-      },
-      "order_2": {
-        "full_basis": 15,
-        "pruned_basis": 0,
-        "full_mm_entries": 120,
-        "pruned_mm_entries": 0,
-        "reduction_ratio": 0.0,
-        "entries_saved": 225
-      },
-      "order_3": {
-        "full_basis": 28,
-        "pruned_basis": 0,
-        "full_mm_entries": 406,
-        "pruned_mm_entries": 0,
-        "reduction_ratio": 0.0,
-        "entries_saved": 784
-      }
-    },
-    {
-      "id": "robinson",
-      "name": "Robinson Polynomial",
-      "num_vars": 2,
-      "degree": 6,
-      "order_1": {
-        "full_basis": 6,
-        "pruned_basis": 0,
-        "full_mm_entries": 21,
-        "pruned_mm_entries": 0,
-        "reduction_ratio": 0.0,
-        "entries_saved": 36
+        "pruned_mm_entries": 3,
+        "reduction_ratio": 0.3333,
+        "entries_saved": 32
       },
       "order_2": {
         "full_basis": 15,
@@ -407,11 +377,41 @@
       },
       "order_3": {
         "full_basis": 28,
-        "pruned_basis": 18,
+        "pruned_basis": 10,
         "full_mm_entries": 406,
-        "pruned_mm_entries": 171,
-        "reduction_ratio": 0.6429,
-        "entries_saved": 460
+        "pruned_mm_entries": 55,
+        "reduction_ratio": 0.3571,
+        "entries_saved": 684
+      }
+    },
+    {
+      "id": "robinson",
+      "name": "Robinson Polynomial",
+      "num_vars": 2,
+      "degree": 6,
+      "order_1": {
+        "full_basis": 6,
+        "pruned_basis": 6,
+        "full_mm_entries": 21,
+        "pruned_mm_entries": 21,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      },
+      "order_2": {
+        "full_basis": 15,
+        "pruned_basis": 15,
+        "full_mm_entries": 120,
+        "pruned_mm_entries": 120,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      },
+      "order_3": {
+        "full_basis": 28,
+        "pruned_basis": 28,
+        "full_mm_entries": 406,
+        "pruned_mm_entries": 406,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
       }
     },
     {
@@ -451,11 +451,11 @@
       "degree": 2,
       "order_1": {
         "full_basis": 6,
-        "pruned_basis": 0,
+        "pruned_basis": 6,
         "full_mm_entries": 21,
-        "pruned_mm_entries": 0,
-        "reduction_ratio": 0.0,
-        "entries_saved": 36
+        "pruned_mm_entries": 21,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
       }
     },
     {
@@ -495,19 +495,19 @@
       "degree": 4,
       "order_1": {
         "full_basis": 6,
-        "pruned_basis": 0,
+        "pruned_basis": 6,
         "full_mm_entries": 21,
-        "pruned_mm_entries": 0,
-        "reduction_ratio": 0.0,
-        "entries_saved": 36
+        "pruned_mm_entries": 21,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
       },
       "order_2": {
         "full_basis": 15,
-        "pruned_basis": 0,
+        "pruned_basis": 15,
         "full_mm_entries": 120,
-        "pruned_mm_entries": 0,
-        "reduction_ratio": 0.0,
-        "entries_saved": 225
+        "pruned_mm_entries": 120,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
       }
     },
     {
@@ -623,7 +623,7 @@
           "groebner_condition": 1.0,
           "condition_ratio": "inf",
           "border_time_ms": 0.68,
-          "groebner_time_ms": 0.46,
+          "groebner_time_ms": 0.45,
           "groebner_num_gens": 2
         },
         "d3": {
@@ -664,8 +664,8 @@
           "border_basis_condition": "inf",
           "groebner_condition": 1.0,
           "condition_ratio": "inf",
-          "border_time_ms": 0.38,
-          "groebner_time_ms": 0.14,
+          "border_time_ms": 0.39,
+          "groebner_time_ms": 0.13,
           "groebner_num_gens": 2
         }
       }
@@ -694,8 +694,8 @@
           "border_basis_condition": 1.0,
           "groebner_condition": 1.0,
           "condition_ratio": 1.0,
-          "border_time_ms": 0.88,
-          "groebner_time_ms": 0.37,
+          "border_time_ms": 0.92,
+          "groebner_time_ms": 0.11,
           "groebner_num_gens": 1
         }
       }
@@ -712,7 +712,7 @@
           "border_basis_condition": 1.0,
           "groebner_condition": 1.0,
           "condition_ratio": 1.0,
-          "border_time_ms": 0.44,
+          "border_time_ms": 0.42,
           "groebner_time_ms": 0.1,
           "groebner_num_gens": 1
         },
@@ -724,8 +724,8 @@
           "border_basis_condition": 1.0,
           "groebner_condition": 1.0,
           "condition_ratio": 1.0,
-          "border_time_ms": 0.81,
-          "groebner_time_ms": 0.11,
+          "border_time_ms": 0.78,
+          "groebner_time_ms": 0.1,
           "groebner_num_gens": 1
         }
       }
@@ -742,8 +742,8 @@
           "border_basis_condition": "inf",
           "groebner_condition": 1.0,
           "condition_ratio": "inf",
-          "border_time_ms": 0.59,
-          "groebner_time_ms": 0.42,
+          "border_time_ms": 0.56,
+          "groebner_time_ms": 0.38,
           "groebner_num_gens": 4
         }
       }
@@ -770,9 +770,9 @@
       },
       "newton": {
         "full_basis": 210,
-        "pruned_basis": 0,
-        "reduction_ratio": 0.0,
-        "entries_saved": 44100
+        "pruned_basis": 210,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
       }
     },
     {
@@ -793,7 +793,10 @@
         "reduction_factor_d3": 0.0563
       },
       "newton": {
-        "error": "operands could not be broadcast together with shapes (6,) (2,) "
+        "full_basis": 210,
+        "pruned_basis": 210,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
       }
     },
     {
@@ -814,7 +817,10 @@
         "reduction_factor_d3": 0.0563
       },
       "newton": {
-        "error": "operands could not be broadcast together with shapes (6,) (2,) "
+        "full_basis": 210,
+        "pruned_basis": 210,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
       }
     },
     {

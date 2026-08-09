@@ -1,6 +1,7 @@
 import warnings as _warnings
 
 from .base import base
+from .telemetry import timed, TelemetryContext
 
 from numpy import array, zeros, matrix, float64
 from time import time
@@ -593,11 +594,12 @@ class sdp(base):
             if not len(available_solvers()):
                 return False
 
-            # Prefer CLARABEL/SCS over CVXOPT backend; fall back to None (auto)
-            # when self.solver is a legacy name that maps to the CVXPY CVXOPT backend
+            # CVXOPT and DSDP use the native C solver path (legacy CvxOpt).
+            # Skipping CVXPY for these restores correct SOS infeasibility
+            # detection and matches original Irene's solver behavior.
             if self.solver in ('CVXOPT', 'DSDP'):
-                cvx_solver = None  # auto-pick CLARABEL/SCS
-            elif self.solver in self.CvxpySolvers:
+                return False  # fall through to legacy CvxOpt() in solve()
+            if self.solver in self.CvxpySolvers:
                 cvx_solver = self.solver
             else:
                 cvx_solver = None
@@ -624,6 +626,7 @@ class sdp(base):
         except (ImportError, Exception):
             return False
 
+    @timed("sdp_solve")
     def solve(self):
         r"""
         Solves the initiated semidefinite program.
@@ -631,18 +634,40 @@ class sdp(base):
         Tries CVXPY first (no text I/O, direct DCP formulation). Falls back to
         the legacy solver specified by ``self.solver`` if CVXPY is unavailable
         or fails.
-        """
-        # Fast path: CVXPY when available
-        if self._cvxpy_solve():
-            return
 
-        # Legacy dispatch
-        if self.solver in ['CVXOPT', 'DSDP']:
-            self.CvxOpt()
-        elif self.solver == 'SDPA':
-            self.sdpa()
-        elif self.solver == 'CSDP':
-            self.csdp()
+        Telemetry: when enabled, records wall-clock solve time, block dimensions,
+        variable count, and solver name in a structured dict accessible via
+        ``Irene.telemetry.get_telemetry()``.
+        """
+        ctx = TelemetryContext(
+            "sdp_solve",
+            num_variables=len(self.C),
+            num_constraints=len(self.A),
+            block_dims=self.BlockStruct,
+            solver=self.solver,
+        )
+        ctx.__enter__()
+        try:
+            # Fast path: CVXPY when available
+            if self._cvxpy_solve():
+                return
+
+            # Legacy dispatch
+            if self.solver in ['CVXOPT', 'DSDP']:
+                self.CvxOpt()
+            elif self.solver == 'SDPA':
+                self.sdpa()
+            elif self.solver == 'CSDP':
+                self.csdp()
+        finally:
+            # Record outcome metadata
+            if 'Status' in self.Info:
+                ctx.set("status", self.Info['Status'])
+            if 'PObj' in self.Info and self.Info['PObj'] is not None:
+                ctx.set("primal_objective", float(self.Info['PObj']))
+            if 'DObj' in self.Info and self.Info['DObj'] is not None:
+                ctx.set("dual_objective", float(self.Info['DObj']))
+            ctx.__exit__(None, None, None)
 
     def __str__(self):
         out_text = "Semidefinite program with\n"

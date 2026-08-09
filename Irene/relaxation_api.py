@@ -131,6 +131,9 @@ class RelaxationEngine:
         Log level: 0 = silent, 1 = normal, 2+ = verbose.
     use_local_solve : bool
         Use signomial GP local solver for the SONC portion.
+    config : RelaxationConfig, optional
+        Phase 3 reduction pipeline configuration (Newton polytope pruning,
+        border basis, correlative sparsity).  Defaults to no reduction.
 
     Examples
     --------
@@ -152,6 +155,7 @@ class RelaxationEngine:
         error_bound: float = 1e-10,
         verbosity: int = 1,
         use_local_solve: bool = True,
+        config=None,
     ) -> None:
         self.prog = prog
         self.order = order
@@ -159,6 +163,9 @@ class RelaxationEngine:
         self.error_bound = error_bound
         self.verbosity = verbosity
         self.use_local_solve = use_local_solve
+        # Phase 3: relaxation configuration (reduction pipeline)
+        from .relaxations import RelaxationConfig
+        self.config = config if config is not None else RelaxationConfig()
 
     # ── public API ────────────────────────────────────────
 
@@ -237,7 +244,7 @@ class RelaxationEngine:
         t0 = time.time()
 
         try:
-            sdp_relax = SDPRelaxations.from_problem(self.prog)
+            sdp_relax = SDPRelaxations.from_problem(self.prog, config=self.config)
             sdp_relax.MomentsOrd(order if order is not None else self.order)
             sdp_relax.SetSDPSolver(solver or self.solver)
             sdp_relax.InitSDP()
@@ -248,6 +255,19 @@ class RelaxationEngine:
 
             if sol is None:
                 raise RuntimeError("SDPRelaxations returned no solution object")
+
+            # ── Check infeasibility BEFORE primal_val guard ──
+            # CVXOPT may return None primal for infeasible SDPs.
+            status_msg = str(getattr(sol, "Message", "")) + str(
+                getattr(sol, "Status", "")
+            )
+            if any(kw in status_msg.lower() for kw in ("infeasib", "-inf", "unknown")):
+                result.status = "infeasible"
+                result.error_code = 1
+                result.value = -float("inf")
+                result.message = f"SOS relaxation infeasible (solver={solver or self.solver})"
+                result.runtime = time.time() - t0
+                return result
 
             primal_val = getattr(sol, "Primal", None)
             if primal_val is None:
@@ -262,16 +282,6 @@ class RelaxationEngine:
                 "order": order or self.order,
                 "status_str": str(getattr(sol, "Status", "")),
             }
-
-            # Check for infeasibility keywords
-            status_msg = str(getattr(sol, "Message", "")) + str(
-                getattr(sol, "Status", "")
-            )
-            if any(kw in status_msg.lower() for kw in ("infeasib", "-inf")):
-                result.status = "infeasible"
-                result.error_code = 1
-                result.value = -float("inf")
-                result.message = "SOS relaxation declared infeasible"
 
         except Exception as exc:
             result.status = "error"

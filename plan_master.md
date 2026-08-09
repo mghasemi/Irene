@@ -1,6 +1,7 @@
 # IreneRewrite — Master Modernization Plan
 
-**Author:** Mehdi Ghasemi | **Date:** 2026-08-08 | **Status:** Phase 3 Active (Phases 1–2 Complete)
+**Author:** Mehdi Ghasemi | **Date:** 2026-08-08 | **Updated:** 2026-08-08 (Phase 5 plan added)  
+**Status:** Phase 4 Active — Phase 5 planned (Phases 1–3 Complete)  
 **Vikunja Project:** #28 (IreneRewrite: Modernization Plan)
 
 ---
@@ -9,7 +10,13 @@
 
 The Irene package — a scientific Python toolkit for polynomial optimization via SOS/SONC/SDP hierarchies — suffers from exponential slowdown during symbolic matrix generation due to SymPy's pure-Python implementation. This plan outlines a four-phase modernization strategy targeting the symbolic engine, solver interface, algebraic reductions, and CI/CD infrastructure.
 
-**Core thesis:** Push polynomial arithmetic into C++ (SymEngine), unify solver routing through CVXPY, exploit structural sparsity via border bases + Newton polytope pruning, and validate everything through automated benchmarking.
+**Core thesis (revised):** The SymEngine migration proved ineffective for Irene's hot path —
+`Poly()` and `groebner()` always fall back to SymPy and the conversion tax dominates.
+Instead, performance gains come from: (1) using CVXOPT's native solver (bypassing CVXPY
+for SOS), (2) eliminating the engine dispatch layer on hot-path Poly calls, (3) structural
+reductions via Newton polytope pruning and correlative sparsity. The gap vs original Irene
+is now **+4.6%** (closed from +15%). Phase 5 targets the remaining overhead plus CI/Docker
+infrastructure.
 
 ---
 
@@ -245,58 +252,131 @@ See `reports/phase_2_integration_report.md` for full details. Key outcomes:
 |----|------|--------|-------|
 | P3.6 | Benchmark sparsity + Newton pruning on large problems | ⬜ TODO | Run `benchmarks/run_gallery.py` with pruning enabled; compare basis sizes and conditioning |
 | P3.7 | Write Phase 3 reduction report | ⬜ TODO | Comparative analysis of all three optimizations (border basis, sparsity, Newton) |
-| **P3.8** | **Integrate Phase 3 modules into relaxations.py** | **⬜ TODO** | Wire `border_basis.py`, `sparsity.py`, `newton_polytope.py` into `ReducedMonomialBase()` and `ReduceExp()` via the `relaxation_api.py` config dispatch |
+| ~~P3.8~~ | ~~Integrate Phase 3 modules into relaxations.py~~ | ✅ DONE | `relaxation_api.py` + `relaxations.py` dispatch wired; 51/51 tests pass |
 
 ---
 
-## File Structure for IreneRewrite
+## Phase 4 Remaining Work (CI/CD)
 
-```
-IreneRewrite/
-├── plan_master.md              ← this file
-├── execution_log.md            ← detailed session-by-session log
-├── create_tasks.py             ← Vikunja task creation script
-├── siyuan_push.py              ← SiYuan document push script
-├── conftest.py                 ← pytest configuration
-├── setup.py                    ← package setup
-├── Irene/                      ← rewritten package
-│   ├── __init__.py
-│   ├── symbolic_engine.py      ← Phase 1: SymEngine + fallback router (360 lines)
-│   ├── cvxpy_solver.py         ← Phase 2: CVXPY DCP solver layer (340 lines)
-│   ├── border_basis.py         ← Phase 3: Border basis quotient ring (523 lines)
-│   ├── sparsity.py             ← Phase 3: Correlative sparsity detection (282 lines)
-│   ├── newton_polytope.py      ← Phase 3: Newton polytope pruning (328 lines)
-│   ├── relaxation_api.py       ← Phase 3: Unified API entry point (443 lines)
-│   ├── dsdp.py                 ← Phase 3a: DSDP mean relaxation (updated)
-│   ├── grouprings.py           ← updated: SymEngine routing
-│   ├── relaxations.py          ← updated: engine-routed, CVXPY solve path
-│   ├── matrices.py             ← updated: engine-routed
-│   ├── sdp.py                  ← updated: CVXPY primary, legacy fallback
-│   ├── program.py              ← updated: engine-routed
-│   ├── sonc.py                 ← original (unchanged)
-│   ├── sosonc.py               ← original (unchanged)
-│   ├── geometric.py            ← original (unchanged)
-│   ├── invariant.py            ← original (unchanged)
-│   ├── base.py                 ← original (unchanged)
-│   └── tests/
-│       ├── test_border_basis.py
-│       ├── test_sparsity.py
-│       ├── test_newton_polytope.py
-│       └── test_relaxation_api.py
-├── tests/                      ← integration tests
-│   ├── test_dsdp_mean.py
-│   ├── test_sonc_section3.py
-│   ├── test_sosonc.py
-│   ├── test_solver_routing.py
-│   └── test_relaxations.py
-├── benchmarks/                 ← Phase 4: benchmark gallery
-│   ├── gallery.yaml
-│   ├── run_gallery.py
-│   └── results/
-├── reports/
-│   ├── phase_1_report.md
-│   ├── phase_2_integration_report.md
-│   └── phase_3_audit.md
-├── pyProximation/              ← auxiliary (rational approximation)
-└── examples/                   ← example scripts
-```
+| ID | Task | Status | Notes |
+|----|------|--------|-------|
+| P4.1 | Design Docker Compose stack for multi-Python testing | ⬜ TODO | Python 3.10/3.11/3.12 + CVXOPT/MOSEK/CLARABEL |
+| P4.3 | Implement GitHub Actions CI pipeline | ⬜ TODO | Auto-benchmark on PR, test matrix |
+| ~~P4.2~~ | ~~Benchmark gallery~~ | ✅ DONE | `gallery.yaml` (12 problems), `run_gallery.py` |
+| ~~P4.4~~ | ~~Execution telemetry~~ | ✅ DONE | `telemetry.py` (257 lines), `@timed` decorator |
+| ~~P4.5~~ | ~~Full pipeline validation~~ | ✅ DONE | Phase 4 validation report |
+| ~~P4.6~~ | ~~Cross-version comparison benchmark~~ | ✅ DONE | `compare_irene_vs_rewrite.py`, report |
+
+---
+
+## Phase 5: Performance Optimization & Cleanup (NEW — 2026-08-08)
+
+### Goal
+Close the remaining 4.6% performance gap vs original Irene, eliminate dead code,
+and integrate Phase 3 structural reductions into the relaxation hot path.
+
+### Background
+Instrumented traces revealed that the SymEngine migration provides zero benefit
+on Irene's hot path: 99% of engine time is in `Poly()` which always falls back to
+SymPy. The gap was closed from +15% to +4.6% by (a) routing CVXOPT through native
+`CvxOpt()` instead of CVXPY/CLARABEL, (b) bypassing `engine.Poly()` with a direct
+`_poly()` helper, and (c) fixing infeasibility detection order in `_solve_sos()`.
+This phase targets the remaining overhead plus CI/Docker infrastructure.
+
+### Task Breakdown
+
+| ID | Task | Priority | Effort | Expected Gain |
+|----|------|----------|--------|---------------|
+| **P5.1** | Remove dead `engine` import from `grouprings.py` | 8 | 1 line | ~5 ms module load |
+| **P5.2** | Eliminate `engine.sympify()` — use `_sp.sympify()` | 7 | 62 call sites | ~80 µs/relax |
+| **P5.3** | Hoist `import symengine` out of `_poly()` hot loop | 7 | 2 lines | ~1.3 ms/relax |
+| **P5.4** | Cache SDPRelaxations across SOS/SONC/SOSONC calls | 6 | Medium | ~15% fewer Poly calls |
+| **P5.5** | Benchmark + integrate Phase 3 reductions (P3.6–P3.7) | 6 | 2 sessions | 20–60% matrix reduction |
+| **P5.6** | Route large expansions through SymEngine in `LocalizedMoment()` | 5 | Medium | Variable (sparse→large) |
+| **P5.7** | SymPy Lambdify for moment matrix numerical evaluation | 5 | Medium | 2–5× numerical phase |
+| **P5.8** | Wire correlative sparsity blocks into `InitSDP()` | 5 | Medium | Up to 3× on separable |
+| **P5.9** | Docker CI + GitHub Actions (P4.1 + P4.3) | 4 | 2 sessions | Regression catching |
+
+### Task Details
+
+**P5.1 — Remove dead `engine` import**  
+`grouprings.py:27` imports `engine` from `symbolic_engine` but never uses it.
+Every import of `grouprings` loads `symengine` unnecessarily. One-line fix.
+
+**P5.2 — Eliminate `engine.sympify()`**  
+`relaxations.py` calls `engine.sympify()` 62× per relaxation. This always
+falls back to `sp.sympify()` via `to_sympy()`. Replace with direct `_sp.sympify()`.
+
+**P5.3 — Hoist `import symengine` out of `_poly()`**  
+The `_poly()` helper (added in 2026-08-08 speed fixes) does `import symengine as _se`
+inside the function body on every call. With generators now SymPy-native, this
+import is always wasted. Move to module level with a try/except guard.
+
+**P5.4 — Cache SDPRelaxations across method calls**  
+`RelaxationEngine.solve(method)` creates a new `SDPRelaxations.from_problem()` for
+each method. The Groebner basis and `AuxSyms` are identical across SOS/SONC/SOSONC
+for the same order. Cache the `SDPRelaxations` instance and reuse it, resetting only
+the objective/constraints between methods.
+
+**P5.5 — Phase 3 reduction integration**  
+`border_basis.py`, `sparsity.py`, `newton_polytope.py` are implemented and tested
+but not benchmarked on the full gallery. Run `bench_phase3_reductions.py` on all
+12 problems, wire the best-performing reduction into `RelaxationConfig`, and measure
+end-to-end speedup.
+
+**P5.6 — SymEngine for large expansions**  
+`LocalizedMoment()` computes $p \cdot m \cdot m^T$ symbolically — these are large
+polynomial products where SymEngine's C++ `expand()` could help. Route ONLY these
+products through `se.expand()` while keeping `Poly`/`groebner` on SymPy.
+
+**P5.7 — Lambdify moment matrix evaluation**  
+P1.6 was cancelled because SymEngine Lambdify is 13× slower than SymPy's. But
+SymPy Lambdify is fast and could accelerate the numerical SDP solve phase by
+compiling moment matrix entries to numpy functions.
+
+**P5.8 — Correlative sparsity SDP decomposition**  
+`sparsity.py` detects variable dependency cliques. If the problem is block-separable,
+split the single large SDP into multiple smaller independent SDPs, each solved
+separately. This can yield superlinear speedups on problems like BlockDiagonal
+and SeparableChain from the gallery.
+
+**P5.9 — Docker CI + GitHub Actions**  
+Multi-version Python Docker Compose stack (3.10/3.11/3.12) with CVXOPT, CLARABEL,
+SCS. GitHub Actions workflow that runs the benchmark gallery on every PR and fails
+if any bound deviates from known optima or timing regresses >10%.
+
+---
+
+## Updated Success Criteria
+
+| Phase | Criterion | Target | Status |
+|-------|-----------|--------|--------|
+| P1 | Matrix gen ≥3× faster | 3.0× | ✗ (SymEngine ineffective for Poly/groebner) |
+| P2 | CVXPY solves within 10⁻⁴ | ✓ | Met |
+| P3 | Newton pruning ≥20% | 20% | ✓ Met on sparse problems |
+| P3 | Border basis conditioning ≤10× Groebner | 10× | ? Not benchmarked |
+| **P5** | **Gap vs original Irene ≤ 0%** | **0%** | **⬜ 4.6% remaining** |
+| **P5** | **Phase 3 reductions integrated** | **Benchmarked** | **⬜** |
+| P4 | CI on Python 3.10/3.11/3.12 | — | ✗ |
+
+---
+
+## Execution Log (continued)
+
+### 2026-08-08 — Cross-Version Benchmark + Speed Investigation
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Cross-version benchmark script | ✅ | `benchmarks/compare_irene_vs_rewrite.py` — runs both codebases, 10 problems |
+| Initial gap: RW 8.50s vs OG 7.36s (+15%) | ⚠️ | SymEngine overhead investigation launched |
+| Instrumented trace (255 Poly calls, 34.9ms) | ✅ | `benchmarks/instrument_relaxation_v2.py` |
+| Root cause: engine.Poly() 99% of engine time | ✅ | Always SymPy fallback; expand() only 2 calls |
+| **Fix 1:** `to_sympy()` sp.Basic short-circuit | ✅ | 704→100 conversions (−86%) |
+| **Fix 2:** AuxSyms as SymPy symbols | ✅ | Eliminates per-call generator conversion |
+| **Fix 3:** `from_problem()` gens as SymPy symbols | ✅ | Eliminates per-call generator conversion |
+| **Solution A:** CVXOPT native path (bypass CLARABEL) | ✅ | `sdp.py:599` returns False → legacy `CvxOpt()` |
+| **Solution B:** `_poly()` bypasses `engine.Poly()` | ✅ | 21 call sites in relaxations.py → direct `_sp.Poly()` |
+| **Solution B.1:** Infeasibility check before primal guard | ✅ | Motzkin/Choi-Lam/Schick now correctly report `infeasible` |
+| After all fixes: RW 7.36s vs OG 7.09s (+4.6%) | ✅ | Gap closed from +15% to +3.8% avg |
+| SOS infeasibility restored | ✅ | All three separating examples correctly infeasible |
+| Phase 5 plan created | ✅ | 9 tasks covering remaining gap + CI/Docker |

@@ -33,6 +33,9 @@ def to_sympy(obj):
     """Cast a SymEngine object (or list/matrix of them) to SymPy."""
     if obj is None:
         return None
+    # Short-circuit: already a SymPy object — skip expensive _sympy_() tree conversion
+    if isinstance(obj, sp.Basic) and not isinstance(obj, se.Basic):
+        return obj
     if isinstance(obj, se.Basic):
         try:
             return obj._sympy_()
