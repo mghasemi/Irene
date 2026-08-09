@@ -1,59 +1,96 @@
 # ============================================================================
-# IreneRewrite — Docker Compose for multi-Python CI testing
+# IreneRewrite — Local CI via Docker Compose (P5.9)
 # ============================================================================
 # Usage:
-#   docker compose up --build          # run all three Python versions in parallel
-#   docker compose up --build python310  # test only Python 3.10
-#   docker compose run --rm python311  # one-shot run on Python 3.11
+#   docker compose up          # Run all 6 jobs (3 Python × 2 solvers)
+#   docker compose up py311-clarabel  # Single job only
+#   docker compose run py311-test     # Interactive shell for debugging
 # ============================================================================
-
-x-common: &common
-  build:
-    context: .
-    dockerfile: Dockerfile
-  volumes:
-    - ./benchmarks/results:/app/benchmarks/results
-    - coverage-results:/app/coverage-results
-  environment:
-    PYTHONDONTWRITEBYTECODE: "1"
-    PYTHONUNBUFFERED: "1"
 
 services:
-  # -----------------------------------------------------------------------
-  # Python 3.10 — oldest supported (EOL Oct 2026, still in support window)
-  # -----------------------------------------------------------------------
-  python310:
-    <<: *common
+  # ------------------------------------------------------------------
+  # Python 3.10 jobs
+  # ------------------------------------------------------------------
+  py310-clarabel:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.ci
       args:
         PYTHON_VERSION: "3.10"
+    environment:
+      - IRENE_CI_SOLVER=CLARABEL
+      - CI_PYTHON_VERSION=3.10
+    volumes:
+      - ./benchmarks/results:/code/benchmarks/results
+    command: ["test"]
 
-  # -----------------------------------------------------------------------
-  # Python 3.11 — current stable, primary development target
-  # -----------------------------------------------------------------------
-  python311:
-    <<: *common
+  py310-scs:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.ci
+      args:
+        PYTHON_VERSION: "3.10"
+    environment:
+      - IRENE_CI_SOLVER=SCS
+      - CI_PYTHON_VERSION=3.10
+    volumes:
+      - ./benchmarks/results:/code/benchmarks/results
+    command: ["test"]
+
+  # ------------------------------------------------------------------
+  # Python 3.11 jobs (primary dev version)
+  # ------------------------------------------------------------------
+  py311-clarabel:
+    build:
+      context: .
+      dockerfile: Dockerfile.ci
       args:
         PYTHON_VERSION: "3.11"
+    environment:
+      - IRENE_CI_SOLVER=CLARABEL
+      - CI_PYTHON_VERSION=3.11
+    volumes:
+      - ./benchmarks/results:/code/benchmarks/results
+    command: ["test"]
 
-  # -----------------------------------------------------------------------
-  # Python 3.12 — newest supported, forward-compat check
-  # -----------------------------------------------------------------------
-  python312:
-    <<: *common
+  py311-scs:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.ci
+      args:
+        PYTHON_VERSION: "3.11"
+    environment:
+      - IRENE_CI_SOLVER=SCS
+      - CI_PYTHON_VERSION=3.11
+    volumes:
+      - ./benchmarks/results:/code/benchmarks/results
+    command: ["test"]
+
+  # ------------------------------------------------------------------
+  # Python 3.12 jobs (forward-compat check)
+  # ------------------------------------------------------------------
+  py312-clarabel:
+    build:
+      context: .
+      dockerfile: Dockerfile.ci
       args:
         PYTHON_VERSION: "3.12"
+    environment:
+      - IRENE_CI_SOLVER=CLARABEL
+      - CI_PYTHON_VERSION=3.12
+    volumes:
+      - ./benchmarks/results:/code/benchmarks/results
+    command: ["test"]
 
-# ============================================================================
-# Volumes — persist coverage XML and benchmark results across runs
-# ============================================================================
-volumes:
-  coverage-results:
+  py312-scs:
+    build:
+      context: .
+      dockerfile: Dockerfile.ci
+      args:
+        PYTHON_VERSION: "3.12"
+    environment:
+      - IRENE_CI_SOLVER=SCS
+      - CI_PYTHON_VERSION=3.12
+    volumes:
+      - ./benchmarks/results:/code/benchmarks/results
+    command: ["test"]

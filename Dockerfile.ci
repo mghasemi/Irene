@@ -1,0 +1,47 @@
+# ============================================================================
+# IreneRewrite — CI Dockerfile (P5.9)
+# ============================================================================
+# Multi-stage build for polynomial optimization SDP testing.
+# Build args: PYTHON_VERSION (3.10, 3.11, or 3.12)
+# Entrypoint scripts handle: test, benchmark, shell
+# ============================================================================
+
+ARG PYTHON_VERSION=3.11
+FROM python:${PYTHON_VERSION}-slim AS base
+
+# System dependencies for CVXOPT (lapack, blas, glpk) and build tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    libopenblas-dev \
+    liblapack-dev \
+    libglpk-dev \
+    libgmp-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /code
+
+# Copy dependency manifests first (layer caching)
+COPY requirements.txt pyproject.toml setup.py ./
+
+# Install Python dependencies — pinned versions from requirements.txt
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir clarabel scs pytest pytest-timeout pytest-cov pyyaml && \
+    pip install --no-cache-dir -e .
+
+# Copy source tree (invalidates cache on code change)
+COPY . .
+
+# Validate solver availability at build time
+RUN python -c "\
+import cvxpy as cp; \
+avail = cp.installed_solvers(); \
+print('Installed solvers:', [s for s in ['CLARABEL','SCS','CVXOPT'] if s in avail]); \
+assert 'CLARABEL' in avail or 'SCS' in avail, 'No solver available'"
+
+# Entrypoint: dispatch to test/benchmark/shell
+COPY ci_entrypoint.sh /usr/local/bin/ci_entrypoint.sh
+RUN chmod +x /usr/local/bin/ci_entrypoint.sh
+ENTRYPOINT ["ci_entrypoint.sh"]
+CMD ["test"]
