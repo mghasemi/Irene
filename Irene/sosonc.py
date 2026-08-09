@@ -24,9 +24,9 @@ from typing import Any, Optional
 from .program import OptimizationProblem
 
 
-# ──────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 # Result container
-# ──────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 
 
 class SOSONCRelaxSol(object):
@@ -80,9 +80,9 @@ class SOSONCRelaxSol(object):
         )
 
 
-# ──────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 # SOS+SONC relaxation engine
-# ──────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 
 
 class SOSONCRelaxations(object):
@@ -90,9 +90,9 @@ class SOSONCRelaxations(object):
 
     Implements the algorithms from Schick's SOS+SONC toolbox:
 
-    - ``globalMinSOS``   — pure SOS relaxation (SDP via Gram matrix)
-    - ``globalMinSONC``  — pure SONC relaxation (signomial GP)
-    - ``globalMinSOSPSONC`` — two-step SOS+SONC (Algorithms 4 & 5)
+    - ``globalMinSOS``   -- pure SOS relaxation (SDP via Gram matrix)
+    - ``globalMinSONC``  -- pure SONC relaxation (signomial GP)
+    - ``globalMinSOSPSONC`` -- two-step SOS+SONC (Algorithms 4 & 5)
 
     Parameters
     ----------
@@ -130,8 +130,30 @@ class SOSONCRelaxations(object):
         self.solver = kwargs.get("solver", "cvxopt")
         self.use_local_solve = kwargs.get("use_local_solve", True)
         self.relaxation_order = kwargs.get("relaxation_order", 1)
+        # P5.4: cache SDPRelaxations per problem to avoid repeated Groebner basis
+        self._sdp_relax_cache = None
+        self._sdp_relax_prog_id = None
 
-    # ── Utility ──────────────────────────────────────────
+    def _get_sdp_relax(self, problem: OptimizationProblem):
+        """Return a cached SDPRelaxations for *problem*.
+
+        The expensive Groebner-basis + AuxSyms setup in ``SDPRelaxations.__init__``
+        is done only once per distinct ``OptimizationProblem``.  Subsequent calls
+        reuse the same instance and just reset ``MomentsOrd`` / ``SetSDPSolver``
+        before each solve.
+
+        The cache is keyed by object identity so that residual problems (which have
+        a shifted objective) correctly get their own SDPRelaxations instance while
+        repeated SOS calls on ``self.prog`` reuse the cached one.
+        """
+        from .relaxations import SDPRelaxations
+
+        if self._sdp_relax_cache is None or id(problem) != self._sdp_relax_prog_id:
+            self._sdp_relax_cache = SDPRelaxations.from_problem(problem)
+            self._sdp_relax_prog_id = id(problem)
+        return self._sdp_relax_cache
+
+    # -- Utility ------------------------------------------
 
     def _is_sdp_infeasible(self, status: Optional[str], message: str) -> bool:
         """Heuristic check for SDP infeasibility."""
@@ -183,12 +205,10 @@ class SOSONCRelaxations(object):
         """Solve Irene SDP relaxation for an ``OptimizationProblem``.
 
         The canonical pipeline in Irene is:
-        ``from_problem`` -> ``MomentsOrd`` -> ``SetSDPSolver`` ->
+        ``_get_sdp_relax`` -> ``MomentsOrd`` -> ``SetSDPSolver`` ->
         ``InitSDP`` -> ``Minimize``.
         """
-        from .relaxations import SDPRelaxations
-
-        sdp_relax = SDPRelaxations.from_problem(problem)
+        sdp_relax = self._get_sdp_relax(problem)
         sdp_relax.MomentsOrd(int(self.relaxation_order))
         sdp_relax.SetSDPSolver(str(self.solver))
         sdp_relax.InitSDP()
@@ -207,7 +227,7 @@ class SOSONCRelaxations(object):
         out.f_sonc = None  # could extract from SONCRelaxations.solution
         return out
 
-    # ── Algorithm 1: Pure SOS ─────────────────────────────
+    # -- Algorithm 1: Pure SOS -----------------------------
 
     def globalMinSOS(self) -> SOSONCRelaxSol:
         """Compute a lower bound using the SOS relaxation.
@@ -243,7 +263,7 @@ class SOSONCRelaxations(object):
 
         return self._wrap_sos_result(sos_sol, runtime)
 
-    # ── Algorithm 2: Pure SONC ────────────────────────────
+    # -- Algorithm 2: Pure SONC ----------------------------
 
     def globalMinSONC(self) -> SOSONCRelaxSol:
         """Compute a lower bound using the SONC relaxation.
@@ -279,7 +299,7 @@ class SOSONCRelaxations(object):
         runtime = time.time() - t0
         return self._wrap_sonc_result(sonc_val, runtime)
 
-    # ── Preprocessing helpers ─────────────────────────────
+    # -- Preprocessing helpers -----------------------------
 
     @staticmethod
     def _coefficient_distance(
@@ -306,7 +326,7 @@ class SOSONCRelaxations(object):
             coeffs[key] = float(coeff)
         return coeffs
 
-    # ── Algorithm 3: Two-step SOS+SONC ────────────────────
+    # -- Algorithm 3: Two-step SOS+SONC --------------------
 
     def globalMinSOSPSONC(
         self,
@@ -340,13 +360,13 @@ class SOSONCRelaxations(object):
         return out
 
     def _two_step_sos_first(self) -> SOSONCRelaxSol:
-        """Algorithm 4: SOS preprocessing → SONC relaxation.
+        """Algorithm 4: SOS preprocessing -> SONC relaxation.
 
-        1. Solve SOS → λ_sos with certificate g* = f - λ_sos ∈ Σ.
-        2. Build residual h = f - λ_sos (constant shift of the
-           objective) and solve SONC on h → μ*.
-        3. Combined bound: λ_sos + μ*.
-           Certificate: f - (λ_sos + μ*) = (h - μ*) + (λ_sos + μ*).
+        1. Solve SOS -> \\lambda_sos with certificate g* = f - \\lambda_sos \\in \\Sigma.
+        2. Build residual h = f - \\lambda_sos (constant shift of the
+           objective) and solve SONC on h -> \\mu*.
+        3. Combined bound: \\lambda_sos + \\mu*.
+           Certificate: f - (\\lambda_sos + \\mu*) = (h - \\mu*) + (\\lambda_sos + \\mu*).
         """
         out = SOSONCRelaxSol()
         out.method = "sos-first"
@@ -360,12 +380,12 @@ class SOSONCRelaxations(object):
 
         lambda_sos = sos_result.val
         if self.verbosity > 0:
-            print(f"[SOS+SONC] SOS preprocess: λ_sos = {lambda_sos}")
+            print(f"[SOS+SONC] SOS preprocess: \\lambda_sos = {lambda_sos}")
 
-        # Step 2: Build residual h = f - λ_sos
+        # Step 2: Build residual h = f - \\lambda_sos
         try:
             f_obj = self.prog.objective
-            # Copy the SGA element and subtract λ_sos from the constant term
+            # Copy the SGA element and subtract \\lambda_sos from the constant term
             h_coeffs = [(c, m) for c, m in f_obj.content]
             identity = self.prog.semigroup.identity()
             found = False
@@ -402,7 +422,7 @@ class SOSONCRelaxations(object):
             out.status = "optimal"
             out.error_code = 0
             out.message = (
-                f"SOS-first: λ_sos={lambda_sos:.6f}, μ*={mu_star:.6f}, "
+                f"SOS-first: \\lambda_sos={lambda_sos:.6f}, \\mu*={mu_star:.6f}, "
                 f"combined={out.val:.6f}"
             )
         except Exception:
@@ -413,8 +433,8 @@ class SOSONCRelaxations(object):
                 out.status = "optimal"
                 out.error_code = 0
                 out.message = (
-                    f"SOS-first (fallback — max): λ_sos={lambda_sos:.6f}, "
-                    f"λ_sonc={sonc_result.val:.6f}"
+                    f"SOS-first (fallback -- max): \\lambda_sos={lambda_sos:.6f}, "
+                    f"\\lambda_sonc={sonc_result.val:.6f}"
                 )
             else:
                 out.val = lambda_sos
@@ -422,18 +442,18 @@ class SOSONCRelaxations(object):
                 out.error_code = 0
                 out.message = (
                     "SOS-first residual SONC failed; returning SOS bound "
-                    f"λ_sos={lambda_sos:.6f}"
+                    f"\\lambda_sos={lambda_sos:.6f}"
                 )
 
         out.f_sos = sos_result.f_sos
         return out
 
     def _two_step_sonc_first(self) -> SOSONCRelaxSol:
-        """Algorithm 5: SONC preprocessing → SOS relaxation.
+        """Algorithm 5: SONC preprocessing -> SOS relaxation.
 
-        1. Solve SONC → λ_sonc with certificate g* = f - λ_sonc ∈ C.
-        2. Build residual h = f - λ_sonc and solve SOS on h → μ*.
-        3. Combined bound: λ_sonc + μ*.
+        1. Solve SONC -> \\lambda_sonc with certificate g* = f - \\lambda_sonc \\in C.
+        2. Build residual h = f - \\lambda_sonc and solve SOS on h -> \\mu*.
+        3. Combined bound: \\lambda_sonc + \\mu*.
         """
         out = SOSONCRelaxSol()
         out.method = "sonc-first"
@@ -447,9 +467,9 @@ class SOSONCRelaxations(object):
 
         lambda_sonc = sonc_result.val
         if self.verbosity > 0:
-            print(f"[SOS+SONC] SONC preprocess: λ_sonc = {lambda_sonc}")
+            print(f"[SOS+SONC] SONC preprocess: \\lambda_sonc = {lambda_sonc}")
 
-        # Step 2: Build residual h = f - λ_sonc
+        # Step 2: Build residual h = f - \\lambda_sonc
         try:
             f_obj = self.prog.objective
             identity = self.prog.semigroup.identity()
@@ -486,7 +506,7 @@ class SOSONCRelaxations(object):
                 out.status = "optimal"
                 out.error_code = 0
                 out.message = (
-                    f"SONC-first: λ_sonc={lambda_sonc:.6f}, μ*={mu_star:.6f}, "
+                    f"SONC-first: \\lambda_sonc={lambda_sonc:.6f}, \\mu*={mu_star:.6f}, "
                     f"combined={out.val:.6f}"
                 )
             else:
@@ -495,7 +515,7 @@ class SOSONCRelaxations(object):
                 out.error_code = 0
                 out.message = (
                     "SONC-first residual SOS infeasible; returning SONC bound "
-                    f"λ_sonc={lambda_sonc:.6f}"
+                    f"\\lambda_sonc={lambda_sonc:.6f}"
                 )
         except Exception:
             sos_result = self.globalMinSOS()
@@ -504,8 +524,8 @@ class SOSONCRelaxations(object):
                 out.status = "optimal"
                 out.error_code = 0
                 out.message = (
-                    f"SONC-first (fallback — max): λ_sonc={lambda_sonc:.6f}, "
-                    f"λ_sos={sos_result.val:.6f}"
+                    f"SONC-first (fallback -- max): \\lambda_sonc={lambda_sonc:.6f}, "
+                    f"\\lambda_sos={sos_result.val:.6f}"
                 )
             else:
                 out.val = lambda_sonc
@@ -513,16 +533,16 @@ class SOSONCRelaxations(object):
                 out.error_code = 0
                 out.message = (
                     "SONC-first residual SOS failed; returning SONC bound "
-                    f"λ_sonc={lambda_sonc:.6f}"
+                    f"\\lambda_sonc={lambda_sonc:.6f}"
                 )
 
         out.f_sonc = sonc_result.f_sonc
         return out
 
 
-# ──────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 # Module-level convenience
-# ──────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 
 
 def sosonc_bounds(

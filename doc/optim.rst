@@ -6,13 +6,11 @@ Let :math:`X` be a nonempty topological space and :math:`A` be a unital sub-alge
 which separates points of :math:`X`. We consider the following optimization problem:
 
 .. math::
-	\left\lbrace
-	\begin{array}{lll}
-		\min & f(x) & \\
-		\textrm{subject to} & & \\
+	\begin{aligned}
+		\min & f(x) & \
+		\textrm{subject to} & & \
 		& g_i(x)\ge 0 & i=1,\dots,m.
-	\end{array}
-	\right.
+	\end{aligned}
 
 Denote the feasibility set of the above program by :math:`K` (i.e., :math:`K=\{x\in X:g_i(x)\ge 0,~ i=1,\dots,m\}`).
 Let :math:`\rho` be the optimum value of the above program and :math:`\mathcal{M}_1^+(K)` be the space of all probability Borel 
@@ -39,28 +37,26 @@ Since :math:`Q` is Archimedean, :math:`K` is compact and this implies that if a 
 then it is :math:`K`-positive and hence admits an integral representation. Therefore:
 
 .. math::
-	\rho = \inf_{\tiny\begin{array}{c}L(Q)\ge 0\\ L(1)=1\end{array}}L(f).
+	\rho = \inf_{\tiny L(Q)\ge 0\ L(1)=1}L(f).
 
 Let :math:`Q=Q_{\bf g}` and :math:`L(Q)\subseteq[0,\infty)`. Then clearly :math:`L(\sum A^2)\subseteq[0,\infty)` which means :math:`L` is
 positive semidefinite. Moreover, for each :math:`i=1,\dots,m`, :math:`L(g_i\sum A^2)\subseteq[0,\infty)` which means the maps
 
 .. math::
-	\begin{array}{rcl}
-		L_{g_i}:A & \longrightarrow & \mathbb{R}\\
-		h & \mapsto & L(g_i h)
-	\end{array}
+	\begin{aligned}
+	L_{g_i}:A & \longrightarrow & \mathbb{R}\
+	h & \mapsto & L(g_i h)
+	\end{aligned}
 
 are positive semidefinite. So the optimum value of the following program is still equal to :math:`\rho`:
 
 .. math::
-	\left\lbrace
-	\begin{array}{lll}
-		\min & L(f) & \\
-		\textrm{subject to} & & \\
-		& L\succeq 0 & \\
-		& L_{g_i}\succeq0 & i=1,\dots,m.
-	\end{array}
-	\right.
+	\begin{aligned}
+	\min & L(f) & \
+	\textrm{subject to} & & \
+	& L\succeq 0 & \
+	& L_{g_i}\succeq0 & i=1,\dots,m.
+	\end{aligned}
 	:label: infsdp
 
 This is still not a semidefinite program, since each constraint is infinite dimensional. One plausible idea is to consider functionals on
@@ -78,7 +74,8 @@ Now taking :math:`B` to be a finite dimensional linear space containing :math:`f
 above theorem,  turns :eq:`infsdp` into a semidefinite program. Note that this does not imply that the optimum value of the resulting 
 SDP is equal to :math:`\rho` since
 
-	+ :math:`Q_{\bf g}\cap B\neq Psd_{B}(K)` and,
+	+ :math:`Q_{\bf g}\cap B
+eq Psd_{B}(K)` and,
 	+ there may not exist a decomposition of :math:`f-\rho` as in :eq:`sosdecomp` inside :math:`B` (i.e., the summands may not belong to :math:`B`).
 
 Thus, the optimum value gives only a lower bound for :math:`\rho`. However,
@@ -157,26 +154,22 @@ variable as a Python dictionary.
 **Example** Solve the following polynomial optimization problem:
 
 .. math::
-	\left\lbrace
-	\begin{array}{ll}
-		\min & -2x+y-z\\
-		\textrm{subject to} & 24-20x+9y-13z+4x^2-4xy \\
-		& +4xz+2y^2-2yz+2z^2\ge0\\
-		& x+y+z\leq 4\\
-		& 3y+z\leq 6\\
-		& 0\leq x\leq 2\\
-		& y\ge 0\\
-		& 0\leq z\leq 3.
-	\end{array}\right.
+	\begin{aligned}
+	\min & -2x+y-z\
+	\textrm{subject to} & 24-20x+9y-13z+4x^2-4xy \
+	& +4xz+2y^2-2yz+2z^2\ge0\
+	& x+y+z\leq 4\
+	& 3y+z\leq 6\
+	& 0\leq x\leq 2\
+	& y\ge 0\
+	& 0\leq z\leq 3.
+	\end{aligned}
 
 The following program uses relaxation of degree 3 and `sdpa` to solve the above problem::
 
-	from sympy import *
-	from Irene import *
-	# introduce variables
-	x = Symbol('x')
-	y = Symbol('y')
-	z = Symbol('z')
+	from sympy import symbols
+	import Irene
+	# introduce variables\n	x, y, z = symbols('x y z')
 	# initiate the Relaxation object
 	Rlx = SDPRelaxations([x, y, z])
 	# set the objective
@@ -200,7 +193,7 @@ The following program uses relaxation of degree 3 and `sdpa` to solve the above 
 	# solve the SDP
 	Rlx.Minimize()
 	# output
-	print Rlx.Solution
+	print(Rlx.Solution)
 
 The output looks like::
 	
@@ -219,12 +212,9 @@ Initially the only constraints forced on the moments are those  in :eq:`infsdp`.
 by calling ``MomentConstraint`` on a ``Mom`` object. The following adds two constraints :math:`\int xy~d\mu\ge\frac{1}{2}` and 
 :math:`\int yz~d\mu + \int z~d\mu\ge 1` to the previous example::
 
-	from sympy import *
-	from Irene import *
-	# introduce variables
-	x = Symbol('x')
-	y = Symbol('y')
-	z = Symbol('z')
+	from sympy import symbols
+	import Irene
+	# introduce variables\n	x, y, z = symbols('x y z')
 	# initiate the Relaxation object
 	Rlx = SDPRelaxations([x, y, z])
 	# set the objective
@@ -251,9 +241,9 @@ by calling ``MomentConstraint`` on a ``Mom`` object. The following adds two cons
 	# solve the SDP
 	Rlx.Minimize()
 	# output
-	print Rlx.Solution
-	print "Moment of x*y:", Rlx.Solution[x * y]
-	print "Moment of y*z + z:", Rlx.Solution[y * z] + Rlx.Solution[z]
+	print(Rlx.Solution)
+ print("Moment of x*y:", Rlx.Solution[x * y])
+ print("Moment of y*z + z:", Rlx.Solution[y * z] + Rlx.Solution[z])
 
 Solution is::
 
@@ -285,15 +275,15 @@ moment problem over polynomials as described in [JNie]_.
 **Example** Find the support of a measure :math:`\mu` whose support is a subset of :math:`[-1,1]^2` and the followings hold:
 
 .. math::
-	\begin{array}{cc}
-		\int x^2d\mu=\int y^2d\mu=\frac{1}{3} & \int x^2yd\mu=\int xy^2d\mu=0\\
+	\begin{aligned}
+		\int x^2d\mu=\int y^2d\mu=\frac{1}{3} & \int x^2yd\mu=\int xy^2d\mu=0\
 		\int x^2y^2d\mu=\frac{1}{9} & \int x^4y^2d\mu=\int x^2y^4d\mu=\frac{1}{15}.
-	\end{array}
+	\end{aligned}
 
 The following code does the job::
 
 	from sympy import *
-	from Irene import *
+ import Irene
 	# introduce variables
 	x = Symbol('x')
 	y = Symbol('y')
@@ -318,7 +308,7 @@ The following code does the job::
 	Rlx.Minimize()
 	# output
 	Rlx.Solution.ExtractSolution('lh', 2)
-	print Rlx.Solution
+	print(Rlx.Solution)
 
 and the result is::
 
@@ -346,14 +336,12 @@ Given two polynomials :math:`p(X), q(X), g_1(X),\dots,g_m(X)`, the minimum of :m
 :math:`K=\{x:g_i(x)\ge0,~i=1,\dots,m\}` is equal to 
 
 .. math::
-
-	\left\lbrace
-	\begin{array}{ll}
+	\begin{aligned}
 		\min & \int p(X)~d\mu \\
 		\textrm{subject to} & \\
-			& \int q(X)~d\mu = 1, \\
-			& \mu\in\mathcal{M}^+(K).
-	\end{array}\right.
+		& \int q(X)~d\mu = 1, \\
+		& \mu\in\mathcal{M}^+(K).
+	\end{aligned}
 
 Note that in this case :math:`\mu` is not taken to be a probability measure, but instead :math:`\int q(X)~d\mu = 1`.
 We can use ``SDPRelaxations.Probability = False`` to relax the probability condition on :math:`\mu` and use moment
@@ -362,7 +350,7 @@ constraints to enforce :math:`\int q(X)~d\mu = 1`. The following example explain
 **Example:** Find the minimum of :math:`\frac{x^2-2x}{x^2+2x+1}`::
 
 	from sympy import *
-	from Irene import *
+ import Irene
 	# define the symbolic variable
 	x = Symbol('x')
 	# initiate the SDPRelaxations object
@@ -379,7 +367,7 @@ constraints to enforce :math:`\int q(X)~d\mu = 1`. The following example explain
 	Rlx.InitSDP()
 	# solve the SDP
 	Rlx.Minimize()
-	print Rlx.Solution
+	print(Rlx.Solution)
 
 The result is::
 
@@ -413,7 +401,7 @@ employ ``scipy.optimize.minimize`` with two solvers ``COBYLA`` and ``COBYLA`` as
 Optimizer` and `Non Sorting Genetic Algorithm II` from `pyOpt <http://www.pyopt.org/>`_::
 
 	from sympy import *
-	from Irene import *
+ import Irene
 	# introduce variables
 	x = Symbol('x')
 	y = Symbol('y')
@@ -436,7 +424,7 @@ Optimizer` and `Non Sorting Genetic Algorithm II` from `pyOpt <http://www.pyopt.
 	# solve the SDP
 	Rlx.Minimize()
 	# output
-	print Rlx.Solution
+	print(Rlx.Solution)
 	# using scipy
 	from numpy import power
 	from scipy.optimize import minimize
@@ -445,16 +433,11 @@ Optimizer` and `Non Sorting Genetic Algorithm II` from `pyOpt <http://www.pyopt.
 	    {'type': 'ineq', 'fun': lambda x: 9 - x[0]**2 - x[1]**2})
 	sol1 = minimize(fun, (0, 0), method='COBYLA', constraints=cons)
 	sol2 = minimize(fun, (0, 0), method='SLSQP', constraints=cons)
-	print "solution according to 'COBYLA'"
-	print sol1
-	print "solution according to 'SLSQP'"
-	print sol2
+	print("solution according to 'COBYLA'")
+ print(sol1)
+	print("solution according to 'SLSQP'")
+ print(sol2)
 
-	# pyOpt
-	from pyOpt import *
-
-	def objfunc(x):
-		from numpy import power
 		f = power(x[0]**2 * x[1]**2, 1. / 3.) - x[0] + x[1]**2
 		g = [x[0]**2 + x[1]**2 - 9]
 		fail = 0
@@ -468,11 +451,11 @@ Optimizer` and `Non Sorting Genetic Algorithm II` from `pyOpt <http://www.pyopt.
 	# Augmented Lagrangian Particle Swarm Optimizer
 	alpso = ALPSO()
 	alpso(opt_prob)
-	print opt_prob.solution(0)
+ print(opt_prob.solution(0))
 	# Non Sorting Genetic Algorithm II
 	nsg2 = NSGA2()
 	nsg2(opt_prob)
-	print opt_prob.solution(1)
+ print(opt_prob.solution(1))
 
 The output will be::
 	
@@ -571,32 +554,33 @@ Let us walk through the procedure by solving some examples.
 **Example 1.** Find the optimum value of the following program:
 
 .. math::
-	\left\lbrace
-	\begin{array}{ll}
-		\min & -(\sin(x)-1)^3-(\sin(x)-\cos(y))^4-(\cos(y)-3)^2\\
-		\textrm{subject to } & \\
-		& 10 - (\sin(x) - 1)^2\ge 0,\\
-		& 10 - (\sin(x) - \cos(y))^2\ge 0,\\
-		& 10 - (\cos(y) - 3)^2\ge 0.
-	\end{array}
-	\right.
+	\begin{aligned}
+	\min & -(\sin(x)-1)^3-(\sin(x)-\cos(y))^4-(\cos(y)-3)^2\
+	\textrm{subject to } & \
+	& 10 - (\sin(x) - 1)^2\ge 0,\
+	& 10 - (\sin(x) - \cos(y))^2\ge 0,\
+	& 10 - (\cos(y) - 3)^2\ge 0.
+	\end{aligned}
 
 Let us introduce four symbols to represent trigonometric functions:
 
-.. math::
-	\begin{array}{|cc|cc|}
-		\hline
-		f : & \sin(x) & g : & \cos(x)\\
-		\hline
-		h : & \sin(y) & k : & \cos(y)\\
-		\hline
-	\end{array}
+.. list-table::
+   :widths: 25 25 25 25
+
+   * - $f$
+     - $\sin(x)$
+     - $g$
+     - $\cos(x)$
+   * - $h$
+     - $\sin(y)$
+     - $k$
+     - $\cos(y)$
 
 Then the quotient algebra :math:`\frac{\mathbb{R}[f,g,h,k]}{I}` where :math:`I=\langle f^2+g^2-1, h^2+k^2-1\rangle` is the right framework to solve 
 the optimization problem. We also compare the outcome of ``SDPRelaxations`` with ``scipy`` and ``pyswarm``::
 
 	from sympy import *
-	from Irene import *
+ import Irene
 	# introduce variables
 	x = Symbol('x')
 	f = Function('f')(x)
@@ -622,7 +606,7 @@ the optimization problem. We also compare the outcome of ``SDPRelaxations`` with
 	# solve the SDP
 	Rlx.Minimize()
 	# output
-	print Rlx.Solution
+	print(Rlx.Solution)
 	# using scipy
 	from scipy.optimize import minimize
 	fun = lambda x: -(sin(x[0]) - 1)**3 - (sin(x[0]) -
@@ -633,16 +617,10 @@ the optimization problem. We also compare the outcome of ``SDPRelaxations`` with
 	    {'type': 'ineq', 'fun': lambda x: 10 - (cos(x[1]) - 3)**2})
 	sol1 = minimize(fun, (0, 0), method='COBYLA', constraints=cons)
 	sol2 = minimize(fun, (0, 0), method='SLSQP', constraints=cons)
-	print "solution according to 'COBYLA':"
-	print sol1
-	print "solution according to 'SLSQP':"
-	print sol2
-	# pyOpt
-	from pyOpt import *
-
-
-	def objfunc(x):
-	    from numpy import sin, cos
+	print("solution according to 'COBYLA':")
+ print(sol1)
+	print("solution according to 'SLSQP':")
+ print(sol2)
 	    f = -(sin(x[0]) - 1)**3 - (sin(x[0]) - cos(x[1]))**4 - (cos(x[1]) - 3)**2
 	    g = [
 	        (sin(x[0]) - 1)**2 - 10,
@@ -662,11 +640,11 @@ the optimization problem. We also compare the outcome of ``SDPRelaxations`` with
 	# Augmented Lagrangian Particle Swarm Optimizer
 	alpso = ALPSO()
 	alpso(opt_prob)
-	print opt_prob.solution(0)
+ print(opt_prob.solution(0))
 	# Non Sorting Genetic Algorithm II
 	nsg2 = NSGA2()
 	nsg2(opt_prob)
-	print opt_prob.solution(1)
+ print(opt_prob.solution(1))
 
 Solutions are::
 
@@ -788,7 +766,7 @@ The following example shows how to employ this functionality::
 	Rlx.InitSDP()
 	# solve the SDP
 	Rlx.Minimize()
-	print Rlx.Solution
+	print(Rlx.Solution)
 	# extract decomposition
 	V = Rlx.Decompose()
 	# test the decomposition
@@ -804,7 +782,7 @@ The following example shows how to employ this functionality::
 	sos = sos.subs(Rlx.RevSymDict)
 	pln = Poly(sos).as_dict()
 	pln = {ex:round(pln[ex],5) for ex in pln}
-	print Poly(pln, (x,y,z)).as_expr()
+	print(Poly(pln, (x,y,z)).as_expr())
 
 The output looks like this::
 
@@ -873,7 +851,7 @@ Two methods are implemented for extracting solutions:
 **Example 1.** Solve and find minimizers of :math:`x^2+y^2+z^4` where :math:`x+y+z=4`::
 
 	from sympy import *
-	from Irene import *
+ import Irene
 
 	x, y, z = symbols('x,y,z')
 
@@ -886,13 +864,8 @@ Two methods are implemented for extracting solutions:
 	Rlx.Minimize()
 	# extract support
 	Rlx.Solution.ExtractSolution('LH', 1)
-	print Rlx.Solution
+	print(Rlx.Solution)
 
-	# pyOpt
-	from pyOpt import *
-
-	def objfunc(x):
-		f = x[0]**2 + x[1]**2 + x[2]**4
 		g = [x[0] + x[1] + x[2] - 4]
 		fail = 0
 		return f, g, fail
@@ -906,7 +879,7 @@ Two methods are implemented for extracting solutions:
 	# Augmented Lagrangian Particle Swarm Optimizer
 	alpso = ALPSO()
 	alpso(opt_prob)
-	print opt_prob.solution(0)
+ print(opt_prob.solution(0))
 
 The output is::
 
@@ -955,7 +928,7 @@ The output is::
 :math:`(2, 3), (1, 2)`, and :math:`(2, 2)`::
 
 	from sympy import *
-	from Irene import *
+ import Irene
 
 	x, y = symbols('x, y')
 
@@ -971,14 +944,8 @@ The output is::
 	Rlx.Minimize()
 	# extract support
 	Rlx.Solution.ExtractSolution('LH')
-	print Rlx.Solution
+	print(Rlx.Solution)
 
-	# pyOpt
-	from pyOpt import *
-
-
-	def objfunc(x):
-	    f = -(x[0] - 1)**2 - (x[0] - x[1])**2 - (x[1] - 3)**2
 	    g = [
 	        (x[0] - 1)**2 - 1,
 	        (x[0] - x[1])**2 - 1,
@@ -997,11 +964,11 @@ The output is::
 	# Augmented Lagrangian Particle Swarm Optimizer
 	alpso = ALPSO()
 	alpso(opt_prob)
-	print opt_prob.solution(0)
+ print(opt_prob.solution(0))
 	# Non Sorting Genetic Algorithm II
 	nsg2 = NSGA2()
 	nsg2(opt_prob)
-	print opt_prob.solution(1)
+ print(opt_prob.solution(1))
 
 which results in::
 

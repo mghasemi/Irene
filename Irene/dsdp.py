@@ -24,6 +24,7 @@ from functools import reduce
 from operator import mul
 from itertools import product
 
+import sympy as _sp
 from sympy import Symbol, Poly, groebner, QQ
 
 from .base import base
@@ -32,7 +33,7 @@ from .relaxations import SDPRelaxations, SDRelaxSol, Mom
 from .symbolic_engine import engine, to_sympy
 
 # Aliases for engine-routed polynomial operations
-sympify = engine.sympify
+sympify = _sp.sympify
 expand = engine.expand
 zeros = engine.zeros
 Matrix = engine.Matrix
@@ -83,7 +84,7 @@ class DSDPRelaxations(SDPRelaxations):
                 - p: Power mean parameter p (default: 0).
                 - depth: Product depth d for hierarchy (default: 1).
                   At depth d, the certificate expands d mean forms into
-                  2^d alternating-sign posynomial terms (§3.2).
+                  2^d alternating-sign posynomial terms (Sect.3.2).
                 - weights: Weight vector for mean certificates (default: uniform).
                 - use_diff_kkt: Enable differential KKT injection (default: False).
                 - kkt_order: Order of differential KKT conditions (default: 1).
@@ -132,7 +133,7 @@ class DSDPRelaxations(SDPRelaxations):
 
     @property
     def sp_auxsyms(self):
-        """Return AuxSyms converted to pure SymPy (engine.Symbol → sympy.Symbol)."""
+        """Return AuxSyms converted to pure SymPy (engine.Symbol -> sympy.Symbol)."""
         return [to_sympy(s) for s in self.AuxSyms]
 
     def _poly_deg(self, expr):
@@ -157,6 +158,70 @@ class DSDPRelaxations(SDPRelaxations):
             assert key in self.Generators, f"Derivation key {key} not in generators"
         self.diff_map = diff_map
         self.derivation_registered = True
+
+    def build_ade_relations(self, diff_map: dict, prefix="d", wrt=None):
+        r"""
+        Build ADE relations from a derivation map by introducing derivative symbols.
+
+        For each generator g in diff_map, creates a new symbol d_g representing
+        d_x(g), then adds the relation d_g - expr to the quotient ring. This
+        encodes the ADE constraint algebraically via Groebner reduction.
+
+        CRITICAL: Derivative symbols MUST be prepended to the generator list
+        so they become leading terms in the lex-ordered Groebner basis. Without
+        this, ReduceExp() cannot substitute them back to polynomial expressions.
+
+        Args:
+            diff_map: Dictionary mapping generators to their derivative expressions.
+            prefix: Prefix for generated derivative symbols (default: "d").
+            wrt: Derivation variable name for symbol prefix. When provided,
+                 symbols are named "{prefix}{wrt}_{gen}" (e.g., "dx_y", "dy_v").
+                 When None, uses "{prefix}_{gen}" (backward compatible).
+
+        Returns:
+            Tuple (derivative_syms, relations, new_gens):
+                - derivative_syms: Dict mapping original generators to their derivative symbols.
+                - relations: List of relation expressions (d_g - expr).
+                - new_gens: Updated generator list with derivative symbols prepended.
+
+        Example:
+            >>> # tan(x) ADE: D_x(u) = 1 + u^2
+            >>> dm = {x: 1, u: 1 + u**2}
+            >>> dsyms, rels, gens = dsdp.build_ade_relations(dm)
+            >>> # dsyms = {x: dx, u: du}
+            >>> # rels = [dx - 1, du - (1 + u**2)]
+            >>> # gens = [dx, du, x, u]  (derivatives first!)
+
+            >>> # Multi-derivation: D_y(L) = v, D_y(v) = -v^2
+            >>> dsyms, rels, gens = dsdp.build_ade_relations({y:1, L:v, v:-v**2}, wrt='y')
+            >>> # dsyms = {y: dy_y, L: dy_L, v: dy_v}
+        """
+        assert isinstance(diff_map, dict), self.DiffMapError
+        for key in diff_map:
+            assert key in self.Generators, f"Derivation key {key} not in generators"
+
+        derivative_syms = {}
+        relations = []
+
+        # Build symbol prefix: "d" for backward compat, "dx_" / "dy_" for multi-derivation
+        if wrt is not None:
+            full_prefix = f"{prefix}{wrt}_"
+        else:
+            full_prefix = f"{prefix}_"
+
+        for gen, deriv_expr in diff_map.items():
+            # Create derivative symbol with appropriate prefix (SymPy symbols --
+            # the rewrite works natively in SymPy generator space)
+            sym_name = f"{full_prefix}{gen}"
+            d_sym = _sp.Symbol(sym_name)
+            derivative_syms[gen] = d_sym
+            # Relation: d_sym - deriv_expr = 0
+            relations.append(d_sym - _sp.sympify(deriv_expr))
+
+        # Prepend derivative symbols to generators (leading terms in Groebner)
+        new_gens = list(derivative_syms.values()) + list(self.Generators)
+
+        return derivative_syms, relations, new_gens
 
     def differentiate(self, expr, var=None):
         r"""
@@ -250,7 +315,7 @@ class DSDPRelaxations(SDPRelaxations):
 
         CRITICAL: Differentiate ORIGINAL expressions (in generator space) before
         reduction to AuxSym space. The derivation map keys are generators, not
-        AuxSyms — differentiating reduced expressions yields zero because AuxSyms
+        AuxSyms -- differentiating reduced expressions yields zero because AuxSyms
         are never found in diff_map and fall through to expr.diff(var) = 0.
 
         Returns:
@@ -370,7 +435,7 @@ class DSDPRelaxations(SDPRelaxations):
         r"""
         Build depth-d product expansion of mean forms.
 
-        Per §3.2 (product-depth truncation): a depth-d certificate is
+        Per Sect.3.2 (product-depth truncation): a depth-d certificate is
         a product of d mean forms, each M_{q_k, p_k} = Q_k - P_k.
         The expansion yields 2^d alternating-sign posynomial terms:
 
@@ -389,7 +454,7 @@ class DSDPRelaxations(SDPRelaxations):
         if n == 0:
             return []
 
-        # Theory (§2.1): M_{q,p} is PSD iff q > p.
+        # Theory (Sect.2.1): M_{q,p} is PSD iff q > p.
         if self.q <= self.p:
             if self.verbosity > 0:
                 print(f"Warning: q={self.q} <= p={self.p}, "
@@ -432,7 +497,7 @@ class DSDPRelaxations(SDPRelaxations):
 
         For depth=1, this is a single mean form M_{q,p} = Q - P.
         For depth>=2, this expands a product of d mean forms into
-        2^d alternating-sign posynomial terms (§3.2 product-depth truncation).
+        2^d alternating-sign posynomial terms (Sect.3.2 product-depth truncation).
 
         Returns:
             List of (reduced_expr, rhs) tuples for moment constraints.
@@ -442,7 +507,7 @@ class DSDPRelaxations(SDPRelaxations):
         if n == 0:
             return []
 
-        # Theory (§2.1): M_{q,p} is PSD iff q > p (monotonicity of power means).
+        # Theory (Sect.2.1): M_{q,p} is PSD iff q > p (monotonicity of power means).
         # If q <= p, the form is indefinite/negative and cannot certify nonnegativity.
         if self.q <= self.p:
             if self.verbosity > 0:
@@ -549,18 +614,18 @@ class DSDPRelaxations(SDPRelaxations):
             String: SOLVER_SDP, SOLVER_GP, or SOLVER_SONC.
         """
         if self.depth >= 2:
-            # Depth-d expansions produce 2^d alternating terms — SDP required
+            # Depth-d expansions produce 2^d alternating terms -- SDP required
             return SOLVER_SDP
 
         if self._is_posynomial(cert):
-            # Pure posynomial — GP/SONC is efficient and exact
+            # Pure posynomial -- GP/SONC is efficient and exact
             # Use SONC for p=0 (geometric mean case), GP otherwise
             if self.p == 0:
                 return SOLVER_SONC
             else:
                 return SOLVER_GP
 
-        # Mixed-sign certificate — SDP is the general solver
+        # Mixed-sign certificate -- SDP is the general solver
         return SOLVER_SDP
 
     def _solve_via_sdp(self):
@@ -609,9 +674,9 @@ class DSDPRelaxations(SDPRelaxations):
 
         Builds the relaxation and routes to the appropriate solver based on
         certificate structure:
-        - Posynomial certificates → GP/SONC (convex log-domain optimization)
-        - Mixed-sign certificates → SDP (general moment hierarchy)
-        - Depth >= 2 → SDP (alternating-sign expansion terms)
+        - Posynomial certificates -> GP/SONC (convex log-domain optimization)
+        - Mixed-sign certificates -> SDP (general moment hierarchy)
+        - Depth >= 2 -> SDP (alternating-sign expansion terms)
 
         Args:
             order: Relaxation order (default: auto from problem degree).

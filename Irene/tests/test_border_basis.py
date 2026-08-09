@@ -30,7 +30,7 @@ def test_basis_ideal_x2_y2():
 def test_basis_ideal_x3_y3():
     """Ideal <x^3, y^3> with degree=3.
 
-    Quotient has basis {1, x, y, x², xy, y², x²y, xy²} (8 elements).
+    Quotient has basis {1, x, y, x^2, xy, y^2, x^2y, xy^2} (8 elements).
     """
     x, y = symbols("x y")
     bb = BorderBasis([x, y], [x**3, y**3], degree=3)
@@ -40,7 +40,7 @@ def test_basis_ideal_x3_y3():
 
 
 def test_free_algebra():
-    """No generators — all monomials of degree ≤ d form the basis."""
+    """No generators -- all monomials of degree \\leqslant d form the basis."""
     x, y = symbols("x y")
     bb = BorderBasis([x, y], [], degree=2)
 
@@ -49,7 +49,7 @@ def test_free_algebra():
 
 
 def test_reduce_in_ideal():
-    """x² ∈ <x², y²> should reduce to 0."""
+    """x^2 \\in <x^2, y^2> should reduce to 0."""
     x, y = symbols("x y")
     bb = BorderBasis([x, y], [x**2, y**2], degree=2)
 
@@ -58,7 +58,7 @@ def test_reduce_in_ideal():
 
 
 def test_reduce_basis_element():
-    """xy ∉ <x², y²> should reduce to xy (it's in the basis)."""
+    """xy \\notin <x^2, y^2> should reduce to xy (it's in the basis)."""
     x, y = symbols("x y")
     bb = BorderBasis([x, y], [x**2, y**2], degree=2)
 
@@ -68,7 +68,7 @@ def test_reduce_basis_element():
 
 
 def test_reduce_higher_power():
-    """x³ mod <x², y²> should be 0 (x³ = x·x² ∈ I)."""
+    """x^3 mod <x^2, y^2> should be 0 (x^3 = x\\cdotx^2 \\in I)."""
     x, y = symbols("x y")
     bb = BorderBasis([x, y], [x**2, y**2], degree=2)
 
@@ -77,7 +77,7 @@ def test_reduce_higher_power():
 
 
 def test_reduce_circle_ideal():
-    """x³ mod <x²+y²-1> should be x (since x² ≡ 1-y²)."""
+    """x^3 mod <x^2+y^2-1> should be x (since x^2 \\equiv 1-y^2)."""
     x, y = symbols("x y")
     bb = BorderBasis([x, y], [x**2 + y**2 - 1], degree=2)
 
@@ -99,7 +99,7 @@ def test_mult_table_xy_minus_one():
     x, y = symbols("x y")
     bb = BorderBasis([x, y], [x * y - 1], degree=2)
 
-    # xy is a border element; its table should reduce to 1·(0,0)
+    # xy is a border element; its table should reduce to 1\\cdot(0,0)
     assert (1, 1) in bb.mult_tables
     coeffs = bb.mult_tables[(1, 1)]
     # The basis includes (0,0); check that one coefficient is ~1.0
@@ -107,11 +107,11 @@ def test_mult_table_xy_minus_one():
 
 
 def test_univariate():
-    """Univariate ideal <x³ - 1> with degree=2."""
+    """Univariate ideal <x^3 - 1> with degree=2."""
     x = symbols("x")
     bb = BorderBasis([x], [x**3 - 1], degree=2)
 
-    # Basis should be {1, x, x²} (degree ≤ 2, no reduction at this level)
+    # Basis should be {1, x, x^2} (degree \\leqslant 2, no reduction at this level)
     expected_basis = {(0,), (1,), (2,)}
     assert set(bb.basis) == expected_basis
 
@@ -135,10 +135,10 @@ if __name__ == "__main__":
     for test in tests:
         try:
             test()
-            print(f"✓ {test.__name__}")
+            print(f"[OK] {test.__name__}")
             passed += 1
         except Exception as e:
-            print(f"✗ {test.__name__}: {e}")
+            print(f"[FAIL] {test.__name__}: {e}")
             failed += 1
 
     print(f"\n{passed}/{passed + failed} tests passed")

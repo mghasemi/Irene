@@ -3,16 +3,16 @@ Execution telemetry for IreneRewrite SDP pipeline.
 
 Provides zero-overhead phase timing, structured diagnostics collection,
 and JSON export for benchmarking.  Controlled by the environment variable
-``IRENE_TELEMETRY`` (default ``"1"`` — enabled).  Set to ``"0"`` to disable
+``IRENE_TELEMETRY`` (default ``"1"`` -- enabled).  Set to ``"0"`` to disable
 all telemetry with no runtime cost.
 
 Public API
 ----------
-- ``@timed(phase)`` — decorator that logs wall-clock time for a named phase.
-- ``TelemetryContext`` — context manager that collects structured metrics.
-- ``get_telemetry()`` — retrieve the current session's telemetry dict.
-- ``clear_telemetry()`` — reset the session state.
-- ``export_json(path)`` — write telemetry to a JSON file.
+- ``@timed(phase)`` -- decorator that logs wall-clock time for a named phase.
+- ``TelemetryContext`` -- context manager that collects structured metrics.
+- ``get_telemetry()`` -- retrieve the current session's telemetry dict.
+- ``clear_telemetry()`` -- reset the session state.
+- ``export_json(path)`` -- write telemetry to a JSON file.
 
 Usage example
 -------------
@@ -34,7 +34,7 @@ from typing import Any, Callable, Dict, Optional
 
 
 # ---------------------------------------------------------------------------
-# Environment gating — zero overhead when disabled
+# Environment gating -- zero overhead when disabled
 # ---------------------------------------------------------------------------
 
 _TELEMETRY_ENABLED: bool = os.environ.get("IRENE_TELEMETRY", "1") != "0"
@@ -76,7 +76,7 @@ class TelemetryRecord:
         return result
 
 
-# Module-level singleton — holds the current session's telemetry.
+# Module-level singleton -- holds the current session's telemetry.
 _session_records: list[TelemetryRecord] = []
 _active_record: Optional[TelemetryRecord] = None
 
@@ -87,7 +87,7 @@ def _ensure_enabled() -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Decorator — @timed(phase_name)
+# Decorator -- @timed(phase_name)
 # ---------------------------------------------------------------------------
 
 def timed(phase: str):
@@ -145,7 +145,7 @@ def _record_timing(phase: str, wall_s: float):
 
 
 # ---------------------------------------------------------------------------
-# Context manager — TelemetryContext
+# Context manager -- TelemetryContext
 # ---------------------------------------------------------------------------
 
 class TelemetryContext:

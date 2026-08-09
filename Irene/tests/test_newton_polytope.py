@@ -80,11 +80,11 @@ class TestNewtonPruner:
         """For a sparse polynomial, pruning should reduce the basis."""
         from Irene.newton_polytope import prune_basis_from_polys
         x, y = symbols('x y')
-        # Motzkin-like: x^4 + y^4 - 3*x^2*y^2 — all terms degree 4
+        # Motzkin-like: x^4 + y^4 - 3*x^2*y^2 -- all terms degree 4
         polys = [expand(x**4 + y**4 - 3*x**2*y**2)]
         pruner = prune_basis_from_polys(polys, num_vars=2, max_degree=4)
         # The Newton polytope of this polynomial has vertices at (4,0), (0,4), (2,2)
-        # Scaled by 2: (8,0), (0,8), (4,4) — but degree bound is 4
+        # Scaled by 2: (8,0), (0,8), (4,4) -- but degree bound is 4
         # So pruning should still include all degree-<=4 monos inside the hull
         assert pruner.pruned_basis_size > 0
 

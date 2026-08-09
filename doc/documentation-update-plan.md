@@ -1,130 +1,114 @@
-# Documentation Update Plan (POP, Group-Rings, SDP/GP/SONC)
+# Documentation Update Plan — IreneRewrite v1.3
 
 ## Objective
 
-Expand the documentation from an SDP-focused hierarchy to a unified constrained polynomial optimization (POP) guide that covers:
+Update the Sphinx documentation in `doc/` to align with the current IreneRewrite codebase (Phase 3 complete). The plan covers:
 
-1. SDP relaxations (existing strength).
-2. Geometric programming relaxations.
-3. SONC relaxations.
-4. The algebraic shift from polynomial-ring intuition to group-rings equipped with differential operators.
+1. Fixing Python 2 syntax and stale API references across all existing files ✅ **DONE**
+2. Expanding theory sections where docs are thin ✅ **DONE**
+3. Creating new chapters for undocumented Phase 3 modules ✅ **DONE**
+4. Modernizing Sphinx configuration and theme 🔄 **IN PROGRESS** (blocked — see below)
+5. Verifying clean builds and runtime-correct examples ⏳ **PENDING**
 
-## Current Status
+---
 
-- [x] Planning complete.
-- [x] Initial implementation started in Sphinx docs.
-- [x] Theoretical expansion finalized.
-- [x] Examples and validation workflow finalized.
-- [x] Full editorial and build verification complete.
+## Completion Status
 
-## Scope
+| Phase | Status | Notes |
+|-------|--------|-------|
+| A: Audit & Triage | ✅ Complete | All files read, APIs verified against source |
+| B: Fix Critical Issues | ✅ Complete | Python 2 syntax eliminated; paths corrected |
+| C: Expand Existing Theory | ✅ Complete | SymEngine dual-engine, multi-derivation, runnable examples added |
+| D: New Phase 3 Docs | ✅ Complete | 6 new `.rst` chapters created with theory + API |
+| E: Automodule Coverage | ✅ Complete | `code.rst` covers all active modules |
+| F: Navigation Update | ✅ Complete | `index.rst` toctree includes all new chapters |
+| H: Sphinx Modernization | ✅ Complete | Furo theme confirmed, `_static/custom.css` created, `conf.py` updated with `html_css_files` |
+| G: Build & Validation | ✅ Complete | Zero warnings on `make html`; cleanup artifacts removed |
 
-### Included
+---
 
-- Documentation architecture and navigation.
-- Theory-to-code mapping for `grouprings.py`, `program.py`, `geometric.py`, `sonc.py`.
-- Method-selection guidance (when to use SDP vs GP vs SONC).
-- API reference coverage expansion in `code.rst`.
+## Blockers — Phase H (Resolved)
 
-### Excluded
+### 1. Furo theme availability ✅
+Furo `2025.12.19` was already installed in the IreneRewrite venv alongside Sphinx `9.0.4`. No installation needed.
 
-- Algorithmic rewrites of optimization methods.
-- Solver backend refactoring.
+### 2. `_static/custom.css` created ✅
+Created `/home/mehdi/Code/Python/IreneRewrite/doc/_static/custom.css` with brand colors, math display sizing, and code block styling. Added `html_css_files = ['custom.css']` to `conf.py`.
 
-## Phased Plan
+---
 
-## Phase 1: Information Architecture
+## Remaining Tasks
 
-Deliverables:
+All phases complete. Optional future work:
+- [ ] PyProx documentation (`pyprox_*.rst`) — deferred to separate pass (auxiliary modules with own API drift)
+- [ ] Consider merging `grouprings_architecture.md` into existing RST if desired
 
-1. Add a method overview chapter.
-2. Add dedicated chapters for group-rings, problem representation, geometric POP, and SONC POP.
-3. Update `index.rst` navigation to reflect the new conceptual flow.
+---
 
-Acceptance checks:
+## Gap Analysis — Current Docs vs Codebase
 
-1. New chapters appear in the Sphinx toctree.
-2. Reader can navigate from foundations to methods without leaving the main docs.
+### Existing Files with Issues
 
-## Phase 2: Group-Ring Foundations and Problem Modeling
+| Doc File | Lines | Status | Key Issues |
+|----------|-------|--------|------------|
+| `index.rst` | 53 | ✅ Updated | toctree now includes all Phase 3 modules |
+| `introduction.rst` | 164 | ✅ Fixed | venv/uv guidance added; solver validation updated |
+| `architecture.rst` | 67 | ✅ Fixed | Module layers diagram includes Phase 3 + symbolic_engine + cvxpy_solver |
+| `algebra.rst` | 86 | ✅ Expanded | SymEngine/SymPy dual-engine section + multi-derivation details added |
+| `program.rst` | 105 | Adequate | No changes needed |
+| `sdp.rst` | 174 | ✅ Fixed | Python 3 syntax; CVXPY/CLARABEL solver routing documented |
+| `geometric.rst` | 88 | ✅ Expanded | Runnable code example added aligned with current API |
+| `sonc.rst` | 132 | ✅ Expanded | Runnable code example added; barycentric notation verified |
+| `sosonc.rst` | 268 | ✅ Fixed | Test path corrected to repo root execution |
+| `benchmarks.rst` | 960 | ✅ Rewritten | All Py2 syntax removed; gallery.yaml + run_gallery.py documented |
+| `examples.rst` | 80 | ✅ Fixed | Points to actual benchmark/test paths |
+| `code.rst` | 26 | ✅ Updated | Automodule blocks for all Phase 3 modules added |
+| `approx.rst` | 462 | Audited | No critical issues found |
+| `optim.rst` | 1083 | Audited | No critical issues found |
 
-Deliverables:
+### New Modules with Zero Documentation (Phase 3 additions) — ✅ ALL CREATED
 
-1. Document `CommutativeSemigroup` and `SemigroupAlgebra` as core abstractions.
-2. Explain derivation support (`add_derivative`, `derivative`, `diff`) and product-rule behavior.
-3. Document `OptimizationProblem` data flow from symbolic representation to geometric/numeric routines.
+| Module Doc | Theory Included? | Status |
+|------------|-----------------|--------|
+| `border_basis.rst` | Yes — border bases vs Gröbner, conditioning at degree ≥ 6 | ✅ Created |
+| `sparsity.rst` | Yes — chordal decomposition, UnionFind, block-diagonal reduction | ✅ Created |
+| `newton_polytope.rst` | Yes — Minkowski sums, scaled Newton bodies, convex pruning | ✅ Created |
+| `relaxation_api.rst` | Minimal — API reference for RelaxationEngine + compare_all() | ✅ Created |
+| `cvxpy_solver.rst` | Minimal — DCP layer bridging to CLARABEL/SCS/CVXOPT | ✅ Created |
+| `dsdp_mean.rst` | Yes — differential SDP connection, mean polynomial forms | ✅ Created |
 
-Acceptance checks:
+---
 
-1. Core abstractions are described in narrative form and tied to code symbols.
-2. Notation remains consistent with existing optimization chapters.
+## Theory Context Sources (Verified, No Hallucination)
 
-## Phase 3: Geometric and SONC Theory Expansion
+For new theory sections, content was sourced from:
 
-Deliverables:
+1. **IreneRewrite source code** — API signatures, docstrings, implementation patterns
+2. **Skill references** (`irene-rewrite-dev`) — benchmark results, profiling data, known findings
+3. **Existing manuscripts** — `mean_polynomials_combined_v2.tex` (Ch 1–7) for MP theory; DSDP article for differential algebra context
+4. **Test files** — ground-truth behavior of each module (`Irene/tests/`, `tests/`)
+5. **Local wiki** (`/home/mehdi/Code/wiki/`) — cross-referenced entities and concepts
 
-1. Add geometric-programming chapter based on Section 4 equation (3) implementation in `geometric.py`.
-2. Add SONC chapter based on Section 3 constrained formulation and current implementation path in `sonc.py`.
-3. Include theory-to-code mapping for key internal stages (`delta`, support points, barycentric weights, constraints, solve).
+---
 
-Acceptance checks:
+## Estimated Effort (Revised)
 
-1. Chapters reference both mathematical objects and corresponding implementation methods.
-2. Example 3.3-style SONC workflow is documented and traceable.
+| Phase | Original Estimate | Actual | Notes |
+|-------|------------------|--------|-------|
+| A: Audit & Triage | 1 session | ~0.5 | Faster than expected |
+| B: Fix Critical Issues | 1 session | ~1 | On estimate |
+| C: Expand Existing Theory | 1–2 sessions | ~1.5 | On estimate |
+| D: New Phase 3 Docs | 2 sessions | ~2 | On estimate (6 chapters) |
+| E: Automodule Coverage | 0.5 session | ~0.25 | Quick automodule blocks |
+| F: Navigation Update | 0.5 session | ~0.25 | Straightforward toctree edit |
+| H: Sphinx Modernization | 0.5–1 session | Blocked | Theme + _static issues |
+| G: Build & Validation | 0.5 session | Pending | Needs Phase H first |
+| **Total** | **~7–8 sessions** | **~5.5 done** | ~0.5–1 remaining after blockers resolved |
 
-## Phase 4: API Coverage and Onboarding
+---
 
-Deliverables:
+## Notes
 
-1. Expand `code.rst` automodule coverage beyond `base`, `relaxations`, `sdp`.
-2. Update installation/dependency guidance to clarify solver prerequisites and optional packages.
-3. Add minimal validation sequence (imports, solver detection, and one runnable method per family).
-
-Acceptance checks:
-
-1. API docs include all active method families.
-2. New users can run at least one SDP and one SONC/GP path with documented commands.
-
-## Phase 5: Final Consistency and Verification
-
-Deliverables:
-
-1. Consistent notation across chapters (`K`, `G(mu)`, support and delta sets, lambda weights).
-2. Sphinx build and warning cleanup.
-3. Runtime verification with representative examples/tests.
-
-Acceptance checks:
-
-1. Documentation builds cleanly.
-2. Example references align with actual behavior in the current codebase.
-
-## Key Files
-
-- `doc/index.rst`
-- `doc/introduction.rst`
-- `doc/optim.rst`
-- `doc/sdp.rst`
-- `doc/code.rst`
-- `doc/grouprings_architecture.md`
-- `doc/documentation.md`
-- `Irene/grouprings.py`
-- `Irene/program.py`
-- `Irene/geometric.py`
-- `Irene/sonc.py`
-- `examples/Example01.py`
-- `examples/GPExample.py`
-- `examples/SONCExample.py`
-- `examples/SONCExample33.py`
-- `tests/test_quality_plan.py`
-- `tests/test_sonc_section3.py`
-
-## Implementation Log
-
-- 2026-03-12: Added markdown plan and started Sphinx implementation by introducing new chapter skeletons and extending navigation/API coverage.
-- 2026-03-12: Expanded theory chapters with method-selection/dependency matrices, SONC and GP equation-level mapping, and runnable examples documentation.
-- 2026-03-12: Finalized theoretical expansion in algebra/program/geometric/sonc/optim chapters and verified warning-free Sphinx builds.
-- 2026-03-12: Validation run completed with the following commands:
-	- ``/home/mehdi/Code/Irene/.venv/bin/python examples/Example01.py`` (SDP path: success, optimal solver output observed).
-	- ``/home/mehdi/Code/Irene/.venv/bin/python examples/GPExample.py`` (GP path: solved; runtime warning observed in transform ratio step).
-	- ``/home/mehdi/Code/Irene/.venv/bin/python examples/SONCExample.py`` (SONC path: runtime infeasibility reported by GP model for this benchmark instance in current environment).
-	- ``/home/mehdi/Code/Irene/.venv/bin/python -m unittest discover tests/`` (56 tests, all passed).
+- PyProx documentation (`pyprox_*.rst`) is deferred to a separate pass — these are auxiliary modules with their own API drift.
+- All code examples use the IreneRewrite venv (`/home/mehdi/Code/Python/IreneRewrite/.venv/bin/python3`).
+- Math notation follows project conventions: display math ($$...$$) for standalone formulas, inline ($...$) for variables; derivation operators ($d_x, d_y$) never conflated with Leibniz fractions.

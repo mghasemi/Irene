@@ -5,12 +5,12 @@ A single entry point for all relaxation methods (SOS, SONC, SOS+SONC).
 
 Design goals
 ------------
-1. **One constructor** — ``RelaxationEngine(prog)`` wraps any ``OptimizationProblem``.
-2. **Consistent return type** — every solve call returns a ``RelaxResult`` with the
+1. **One constructor** -- ``RelaxationEngine(prog)`` wraps any ``OptimizationProblem``.
+2. **Consistent return type** -- every solve call returns a ``RelaxResult`` with the
    same attributes (value, status, timing, solver metadata).
-3. **Method dispatch** — the user picks ``'sos'``, ``'sonc'``, or ``'sosonc'``;
+3. **Method dispatch** -- the user picks ``'sos'``, ``'sonc'``, or ``'sosonc'``;
    the engine routes to the correct backend class internally.
-4. **Backward compatibility** — the old classes (``SDPRelaxations``, etc.) still work;
+4. **Backward compatibility** -- the old classes (``SDPRelaxations``, etc.) still work;
    this module is additive, not destructive.
 
 Usage
@@ -39,9 +39,9 @@ from typing import Any, Literal, Optional
 from .program import OptimizationProblem
 
 
-# ──────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 # Method enumeration and result type
-# ──────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 
 
 class RelaxMethod(str, Enum):
@@ -53,7 +53,7 @@ class RelaxMethod(str, Enum):
     SOSPSONC_SONC_FIRST = "sosonc_sonc_first"
 
 
-# Alias for convenience — users can pass strings directly
+# Alias for convenience -- users can pass strings directly
 RelaxMethodStr = Literal["sos", "sonc", "sosonc_sos_first", "sosonc_sonc_first"]
 
 
@@ -93,7 +93,7 @@ class RelaxResult:
     certificate: Any = None
     solver_info: dict = field(default_factory=dict)
 
-    # ── convenience ────────────────────────────────────────
+    # -- convenience ----------------------------------------
 
     def __repr__(self) -> str:
         return (
@@ -107,9 +107,9 @@ class RelaxResult:
         return self.error_code == 0 and self.value > -float("inf")
 
 
-# ──────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 # Unified engine
-# ──────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 
 
 class RelaxationEngine:
@@ -164,10 +164,28 @@ class RelaxationEngine:
         self.verbosity = verbosity
         self.use_local_solve = use_local_solve
         # Phase 3: relaxation configuration (reduction pipeline)
-        from .relaxations import RelaxationConfig
-        self.config = config if config is not None else RelaxationConfig()
+        from .relaxations import RelaxationConfig, _default_config
+        self.config = config if config is not None else _default_config()
+        # P5.4: cached SDPRelaxations instance -- Groebner basis + AuxSyms
+        # are identical across methods for the same problem, so we reuse it.
+        self._sdp_relax_cache = None
 
-    # ── public API ────────────────────────────────────────
+    def _get_sdp_relax(self):
+        """Return a cached SDPRelaxations instance for ``self.prog``.
+
+        The expensive Groebner basis computation in ``SDPRelaxations.__init__``
+        is done only once; subsequent calls reuse the same instance and just
+        reset ``MomentsOrd`` / ``SetSDPSolver`` before each solve.
+        """
+        from .relaxations import SDPRelaxations
+
+        if self._sdp_relax_cache is None:
+            self._sdp_relax_cache = SDPRelaxations.from_problem(
+                self.prog, config=self.config
+            )
+        return self._sdp_relax_cache
+
+    # -- public API ----------------------------------------
 
     def solve(
         self,
@@ -182,10 +200,10 @@ class RelaxationEngine:
         method : str or RelaxMethod
             Which relaxation to use.  Accepted values::
 
-                'sos'                  — pure SOS (Gram-matrix SDP)
-                'sonc'                 — pure SONC (signomial GP)
-                'sosonc_sos_first'     — two-step: SOS → SONC residual
-                'sosonc_sonc_first'    — two-step: SONC → SOS residual
+                'sos'                  -- pure SOS (Gram-matrix SDP)
+                'sonc'                 -- pure SONC (signomial GP)
+                'sosonc_sos_first'     -- two-step: SOS -> SONC residual
+                'sosonc_sonc_first'    -- two-step: SONC -> SOS residual
 
         order : int, optional
             Override the hierarchy order for this call.
@@ -222,7 +240,7 @@ class RelaxationEngine:
         """Run all four relaxation variants and return results keyed by method.
 
         Parameters are the same as ``solve()``.  Returns a dict mapping
-        method name → ``RelaxResult``.
+        method name -> ``RelaxResult``.
         """
         methods: list[RelaxMethodStr] = [
             "sos",
@@ -232,19 +250,17 @@ class RelaxationEngine:
         ]
         return {m: self.solve(m, order=order, solver=solver) for m in methods}
 
-    # ── internal dispatchers ──────────────────────────────
+    # -- internal dispatchers ------------------------------
 
     def _solve_sos(
         self, *, order: Optional[int] = None, solver: Optional[str] = None
     ) -> RelaxResult:
         """Route to SDPRelaxations backend."""
-        from .relaxations import SDPRelaxations
-
         result = RelaxResult(method="sos")
         t0 = time.time()
 
         try:
-            sdp_relax = SDPRelaxations.from_problem(self.prog, config=self.config)
+            sdp_relax = self._get_sdp_relax()
             sdp_relax.MomentsOrd(order if order is not None else self.order)
             sdp_relax.SetSDPSolver(solver or self.solver)
             sdp_relax.InitSDP()
@@ -256,7 +272,7 @@ class RelaxationEngine:
             if sol is None:
                 raise RuntimeError("SDPRelaxations returned no solution object")
 
-            # ── Check infeasibility BEFORE primal_val guard ──
+            # -- Check infeasibility BEFORE primal_val guard --
             # CVXOPT may return None primal for infeasible SDPs.
             status_msg = str(getattr(sol, "Message", "")) + str(
                 getattr(sol, "Status", "")
@@ -333,7 +349,7 @@ class RelaxationEngine:
     def _solve_sosonc_sos_first(
         self, *, order: Optional[int] = None, solver: Optional[str] = None
     ) -> RelaxResult:
-        """Two-step: SOS preprocess → SONC on residual."""
+        """Two-step: SOS preprocess -> SONC on residual."""
         from .sosonc import SOSONCRelaxations
 
         result = RelaxResult(method="sosonc_sos_first")
@@ -370,7 +386,7 @@ class RelaxationEngine:
     def _solve_sosonc_sonc_first(
         self, *, order: Optional[int] = None, solver: Optional[str] = None
     ) -> RelaxResult:
-        """Two-step: SONC preprocess → SOS on residual."""
+        """Two-step: SONC preprocess -> SOS on residual."""
         from .sosonc import SOSONCRelaxations
 
         result = RelaxResult(method="sosonc_sonc_first")
@@ -405,9 +421,9 @@ class RelaxationEngine:
         return result
 
 
-# ──────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 # Module-level convenience function (mirrors sosonc.sosonc_bounds)
-# ──────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 
 
 def relax(

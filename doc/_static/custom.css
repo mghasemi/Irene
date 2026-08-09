@@ -1,0 +1,34 @@
+/* IreneRewrite brand styling */
+
+/* Primary accent color for links and highlights */
+a {
+    color: #2563eb;
+}
+
+a:hover {
+    color: #1d4ed8;
+}
+
+/* Math display sizing — prevent overflow on wide equations */
+div.math p {
+    text-align: center;
+    margin: 0.8em 0;
+}
+
+div.math {
+    overflow-x: auto;
+    max-width: 100%;
+    padding: 0.5em 0;
+}
+
+/* Code blocks with subtle border */
+pre.literal-block, pre.code {
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+/* Section headings — tighter spacing for dense math docs */
+h1, h2, h3, h4 {
+    margin-top: 1.2em;
+    margin-bottom: 0.6em;
+}

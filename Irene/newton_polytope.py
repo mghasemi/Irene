@@ -2,8 +2,8 @@
 
 For a polynomial optimization problem, the Newton polytope of the objective
 and constraints defines which monomials can actually appear in the relaxation.
-Monomials outside 2·Newt(f) are provably unnecessary, reducing the moment
-matrix size — sometimes by orders of magnitude for sparse problems.
+Monomials outside 2\\cdotNewt(f) are provably unnecessary, reducing the moment
+matrix size -- sometimes by orders of magnitude for sparse problems.
 
 Key references:
     - Parrilo (2000), "Structured Semidefinite Programs and Semialgebraic Geometry"
@@ -37,7 +37,7 @@ def newton_polytope(expr, vars_list=None):
     try:
         poly = engine.Poly(expr)
     except Exception:
-        # Constant or unsupported expression — return zero vector
+        # Constant or unsupported expression -- return zero vector
         if vars_list is not None:
             return np.zeros((1, len(vars_list)), dtype=int)
         return np.zeros((1, 0), dtype=int)
@@ -65,7 +65,7 @@ def newton_polytope(expr, vars_list=None):
 def minkowski_sum(polytope_a, polytope_b):
     """Compute the Minkowski sum of two point sets.
 
-    A ⊕ B = {a + b | a ∈ A, b ∈ B}
+    A \\oplus B = {a + b | a \\in A, b \\in B}
 
     Args:
         polytope_a, polytope_b: Arrays of shape (n, d) and (m, d).
@@ -91,7 +91,7 @@ def scale_polytope(polytope, factor):
 def combined_newton_polytope(polynomials, vars_list=None):
     """Compute the Minkowski sum of Newton polytopes of multiple polynomials.
 
-    For moment matrix construction, we need 2·(Newt(f_0) ⊕ Newt(g_1) ⊕ ...),
+    For moment matrix construction, we need 2\\cdot(Newt(f_0) \\oplus Newt(g_1) \\oplus ...),
     where f_0 is the objective and g_i are constraint polynomials.
 
     Args:
@@ -149,12 +149,12 @@ class NewtonPruner:
 
     Given the combined Newton polytope of an optimization problem's
     polynomials, this class filters the full monomial basis to only those
-    exponent vectors that lie within the convex hull of 2·Newt(f).
+    exponent vectors that lie within the convex hull of 2\\cdotNewt(f).
 
     Args:
         num_vars: Number of variables in the problem.
         max_degree: Maximum degree for moment matrix construction.
-        polytope_vertices: Precomputed vertices of 2·combined Newton polytope.
+        polytope_vertices: Precomputed vertices of 2\\cdotcombined Newton polytope.
             If None, will be computed from polynomials later.
 
     Attributes:
@@ -190,7 +190,7 @@ class NewtonPruner:
                     self._hull = ConvexHull(self.polytope_vertices)
                     return True
                 except Exception:
-                    pass  # Degenerate hull (e.g., collinear points) → bbox fallback
+                    pass  # Degenerate hull (e.g., collinear points) -> bbox fallback
         except ImportError:
             pass
 
@@ -215,7 +215,7 @@ class NewtonPruner:
 
         # Full ConvexHull check via half-space inequalities
         try:
-            # hull.equations: each row is [normal..., offset], point p inside iff A·p <= b
+            # hull.equations: each row is [normal..., offset], point p inside iff A\\cdotp <= b
             for eq in self._hull.equations:
                 normal = eq[:-1]
                 offset = -eq[-1]
@@ -258,7 +258,7 @@ class NewtonPruner:
         self.reduction_ratio = self.pruned_basis_size / max(self.full_basis_size, 1)
 
         # Safety: if pruning eliminated every monomial, fall back to full basis.
-        # An empty basis is always pathological — it means the Newton polytope
+        # An empty basis is always pathological -- it means the Newton polytope
         # (even with origin-inclusion) is too tight for the degree bound.
         # Conservative fallback: no pruning is better than zero monomials.
         if self.pruned_basis_size == 0 and self.full_basis_size > 0:
@@ -271,8 +271,8 @@ class NewtonPruner:
     def moment_matrix_dimension_reduction(self) -> Dict:
         """Estimate the moment matrix size reduction from Newton pruning.
 
-        The moment matrix has dimension R×R where R is the basis size.
-        Pruning reduces this to R'×R', so the reduction factor is (R'/R)².
+        The moment matrix has dimension R\\timesR where R is the basis size.
+        Pruning reduces this to R'\\timesR', so the reduction factor is (R'/R)^2.
 
         Returns:
             Dict with full_size, pruned_size, matrix_reduction, and savings.

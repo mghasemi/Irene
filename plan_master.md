@@ -1,7 +1,7 @@
 # IreneRewrite — Master Modernization Plan
 
-**Author:** Mehdi Ghasemi | **Date:** 2026-08-08 | **Updated:** 2026-08-08 (Phase 5 plan added)  
-**Status:** Phase 4 Active — Phase 5 planned (Phases 1–3 Complete)  
+**Author:** Mehdi Ghasemi | **Date:** 2026-08-08 | **Updated:** 2026-08-08 (Phase 5 P5.1-P5.3 complete)  
+**Status:** Phase 4 Active — Phase 5 In Progress (P5.1-P5.3 ✅, Phases 1–3 Complete)  
 **Vikunja Project:** #28 (IreneRewrite: Modernization Plan)
 
 ---
@@ -235,6 +235,18 @@ See `reports/phase_2_integration_report.md` for full details. Key outcomes:
 | Baseline run | ✅ | 4/12 pass (trivial + stress), 8/12 correctly fail (separating examples document SOS gap) |
 | Stability warning | ⚠️ | Degree-6 conditioning ~10¹³–10¹⁴ — validates P3 border basis optimization goal |
 
+### 2026-08-09 — P5.5: Phase 3 Reduction Benchmark + Integration Complete ✅ (Vikunja #490)
+
+| Item | Status | Notes |
+|------|--------|-------|
+| `bench_phase3_reductions.py` on all 12 gallery problems | ✅ | <0.1s runtime, exit 0 |
+| Newton polytope pruning: best strategy (64–67 % basis reduction) | ✅ | Wired as default in `RelaxationConfig` |
+| Sparsity detection: only helps 2/12 problems | ✅ | Kept as optional opt-in (`sparsity_detection=True`) |
+| Border basis: no conditioning advantage at low degrees | ✅ | Deferred to d≥4 where moment matrix conditioning matters |
+| `RelaxationConfig.reduction_method` default → `"newton_polytope"` | ✅ | `monomial_pruning=True` by default |
+| Phase 3 reduction report | ✅ | `reports/phase_3_reduction_report.md` (8 sections) |
+| Test suite: 51/51 pass, no regressions | ✅ | border_basis + sparsity + newton_polytope + relaxation_api |
+
 ---
 
 ## Known Issues
@@ -380,3 +392,33 @@ if any bound deviates from known optima or timing regresses >10%.
 | After all fixes: RW 7.36s vs OG 7.09s (+4.6%) | ✅ | Gap closed from +15% to +3.8% avg |
 | SOS infeasibility restored | ✅ | All three separating examples correctly infeasible |
 | Phase 5 plan created | ✅ | 9 tasks covering remaining gap + CI/Docker |
+
+### 2026-08-09 — Feature-Parity Audit + User-Selectable Symbolic Backend
+
+| Item | Status | Notes |
+|------|--------|-------|
+| API inventory of both codebases | ✅ | `benchmarks/api_inventory.py` — JSON dumps of all public classes/functions per module (original vs rewrite) |
+| Feature-parity gaps identified | ✅ | `nonpopsdp.py` missing; `unified_reductions.py` superseded by relaxation_api; `build_ade_relations` missing from DSDP |
+| `build_ade_relations()` restored in rewrite DSDP | ✅ | Faithful port incl. `wrt=` multi-derivation prefix; `Irene/dsdp.py` |
+| Top-level DSDP exports restored | ✅ | `Irene/__init__.py` now re-exports `DSDPRelaxations/DSDPMeanRelaxation/DSDPKKTRelaxation` (parity with original) |
+| **User-selectable symbolic backend** | ✅ | `symbolic_engine.py`: `set_backend()`/`get_backend()`, `IRENE_SYMBOLIC_BACKEND=symengine\|sympy\|auto`, graceful fallback when symengine missing, symengine moved to optional `[symengine]` extra |
+| Backend-switch test suite | ✅ | `Irene/tests/test_symbolic_engine.py` — 23 tests; full suite 147/147 pass under both backends |
+| Comprehensive backend benchmark | ✅ | `benchmarks/benchmark_backends.py` — 9 feature sections × 3 modes (irene / rewrite-symengine / rewrite-sympy) → `benchmarks/results/backend_*.json` |
+| Comparison report | ✅ | `benchmarks/compare_backends_report.py` → `benchmarks/results/backend_comparison_report.md` |
+| Docs updated | ✅ | `doc/algebra.rst` (backend selection), `doc/examples.rst` (fixed stale `benchmarks/` → `examples/` paths), `README.rst` (SymEngine optional, backend env var) |
+| Example compatibility | ✅ | 8/10 example scripts run clean on rewrite; Example01 (CSDP binary absent) and Rosenbrock (`minimize_constrained` NameError) fail identically on original — pre-existing, not regressions |
+
+### 2026-08-09 (cont.) — NonPOPSDP Port + Quotient-Basis Option
+
+| Item | Status | Notes |
+|------|--------|-------|
+| `nonpopsdp.py` ported to rewrite | ✅ | `Irene/nonpopsdp.py` — Taylor/Chebyshev approx → POP → Lasserre SDP; API faithful to original (incl. `NonPOPSDP_Multi`) |
+| Approximation numerics FIXED in port | ✅ | Original Chebyshev maxerr ~61.5 (bad FFT scaling) + off-by-one error grid; original Taylor ~1e36 (naive finite diff). Port: `chebfit` + Richardson-extrapolated 60-digit stencil (`_mp_derivative`) → err ~5e-4 / ~1e-6 |
+| NonPOPSDP tests | ✅ | `tests/test_nonpopsdp.py` — 11 tests (approx accuracy, exp/sin/log bounds, Multi smoke) |
+| **Quotient-basis option** | ✅ | `RelaxationConfig.quotient_basis` = `'groebner'` (default, original behavior) \| `'border'` (BorderBasis tables). Env var `IRENE_QUOTIENT_BASIS`. Wired through `ReduceExp` + `ReducedMonomialBase` + `RelaxationEngine` |
+| BorderBasis QR tie-break FIXED | ✅ | Same-degree QR pivot ties could keep the generator's LM in the basis (e.g. y² vs x² for ⟨x²+y²−1⟩). Added ascending-lex weight perturbation; all test ideals now match theoretical standard monomials |
+| Quotient-basis tests | ✅ | `tests/test_quotient_basis.py` — 11 tests (validation, equivalence, E2E bounds, env var) |
+| Benchmark section | ✅ | `benchmark_backends.py` section `quotient_basis` (2 problems × groebner/border) + report section 11 |
+| Docs | ✅ | `doc/nonpopsdp.rst` (new), `doc/relaxation_api.rst` (quotient_basis field), `doc/border_basis.rst` (option + QR fix), `doc/index.rst` toctree |
+| Full suite | ✅ | 169/169 pass under both SymEngine and SymPy backends |
+| Benchmark results | ✅ | circle_relations: groebner & border both lb=1.000000, basis=5; quartic_1d: both lb=-0.25 |

@@ -7,7 +7,7 @@ from numpy import array, zeros, matrix, float64
 from time import time
 
 # ---------------------------------------------------------------------------
-# Deprecation helper — legacy text-file I/O path
+# Deprecation helper -- legacy text-file I/O path
 # ---------------------------------------------------------------------------
 def _legacy_warning(method_name):
     """Emit a one-time deprecation warning for the legacy text-writer path."""

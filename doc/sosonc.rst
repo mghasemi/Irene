@@ -58,7 +58,7 @@ Two-Step Preprocessing (Algorithms 4 & 5)
 Schick's thesis introduces two complementary strategies that avoid solving
 the full SDP-plus-exponential-cone feasibility problem.
 
-**Algorithm 4 — SOS-first (SOS preprocessing → SONC relaxation)**
+**Algorithm 4 — SOS-first (SOS preprocessing \\rightarrow SONC relaxation)**
 
 1. Find :math:`g^* \in \Sigma_{n,2d}` minimising a convex distance
    :math:`\varphi(f, g^*)` (e.g., the :math:`\ell_2`-norm of the
@@ -77,7 +77,7 @@ the full SDP-plus-exponential-cone feasibility problem.
 
    with the decomposition :math:`f - \mu^* = g^* + (h - \mu^*) \in \Sigma + C`.
 
-**Algorithm 5 — SONC-first (SONC preprocessing → SOS relaxation)**
+**Algorithm 5 — SONC-first (SONC preprocessing \\rightarrow SOS relaxation)**
 
 The roles of SOS and SONC are swapped: first find :math:`g^* \in C`
 minimising :math:`\psi(f, g^*)`, then solve the SOS relaxation on
@@ -145,8 +145,8 @@ Detailed Method Reference
 :meth:`~Irene.sosonc.SOSONCRelaxations.globalMinSOSPSONC`
    Implements the two-step SOS+SONC lower bound.
 
-   - ``first='sos'`` → Algorithm 4 (SOS preprocessing → SONC residual)
-   - ``first='sonc'`` → Algorithm 5 (SONC preprocessing → SOS residual)
+   - ``first='sos'`` \\rightarrow Algorithm 4 (SOS preprocessing \\rightarrow SONC residual)
+   - ``first='sonc'`` \\rightarrow Algorithm 5 (SONC preprocessing \\rightarrow SOS residual)
 
    The residual :math:`h = f - \lambda^*` is constructed by shifting the
    constant term of the :class:`~Irene.grouprings.SemigroupAlgebraElement`.
@@ -176,13 +176,13 @@ Implementation Pipeline
 The internal pipeline of ``globalMinSOSPSONC`` when called with
 ``first='sos'`` is:
 
-1. **Solve** SOS relaxation on the original problem → :math:`\lambda_{\text{SOS}}`.
+1. **Solve** SOS relaxation on the original problem \\rightarrow :math:`\lambda_{\text{SOS}}`.
 2. **Build residual** :math:`h = f - \lambda_{\text{SOS}}` by cloning the
    objective's coefficient-content list and subtracting
    :math:`\lambda_{\text{SOS}}` from the identity monomial's coefficient.
 3. **Construct** a new :class:`~Irene.program.OptimizationProblem` with
    :math:`h` as the objective and the same constraints (if any).
-4. **Solve** SONC on the residual → :math:`\mu^*`.
+4. **Solve** SONC on the residual \\rightarrow :math:`\mu^*`.
 5. **Combine** :math:`\lambda_{\text{SOS}} + \mu^*` as the final lower bound.
 6. **Fallback:** if any step raises an exception, return
    :math:`\max\{\lambda_{\text{SOS}}, \lambda_{\text{SONC}}\}`.
@@ -247,7 +247,8 @@ The test file ``tests/test_sosonc.py`` exercises the module with:
 
 Run with::
 
-   cd Irene && python -m pytest tests/test_sosonc.py -v
+   source .venv/bin/activate
+   python -m pytest tests/test_sosonc.py -v
 
 
 Further Reading

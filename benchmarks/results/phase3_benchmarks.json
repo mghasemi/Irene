@@ -623,7 +623,7 @@
           "groebner_condition": 1.0,
           "condition_ratio": "inf",
           "border_time_ms": 0.68,
-          "groebner_time_ms": 0.45,
+          "groebner_time_ms": 0.47,
           "groebner_num_gens": 2
         },
         "d3": {
@@ -634,8 +634,8 @@
           "border_basis_condition": "inf",
           "groebner_condition": 1.0,
           "condition_ratio": "inf",
-          "border_time_ms": 0.79,
-          "groebner_time_ms": 0.16,
+          "border_time_ms": 0.81,
+          "groebner_time_ms": 0.17,
           "groebner_num_gens": 2
         }
       }
@@ -664,7 +664,7 @@
           "border_basis_condition": "inf",
           "groebner_condition": 1.0,
           "condition_ratio": "inf",
-          "border_time_ms": 0.39,
+          "border_time_ms": 0.38,
           "groebner_time_ms": 0.13,
           "groebner_num_gens": 2
         }
@@ -682,7 +682,7 @@
           "border_basis_condition": 1.0,
           "groebner_condition": 1.0,
           "condition_ratio": 1.0,
-          "border_time_ms": 0.42,
+          "border_time_ms": 0.43,
           "groebner_time_ms": 0.11,
           "groebner_num_gens": 1
         },
@@ -694,8 +694,8 @@
           "border_basis_condition": 1.0,
           "groebner_condition": 1.0,
           "condition_ratio": 1.0,
-          "border_time_ms": 0.92,
-          "groebner_time_ms": 0.11,
+          "border_time_ms": 0.94,
+          "groebner_time_ms": 0.12,
           "groebner_num_gens": 1
         }
       }
@@ -712,7 +712,7 @@
           "border_basis_condition": 1.0,
           "groebner_condition": 1.0,
           "condition_ratio": 1.0,
-          "border_time_ms": 0.42,
+          "border_time_ms": 0.41,
           "groebner_time_ms": 0.1,
           "groebner_num_gens": 1
         },
@@ -724,7 +724,7 @@
           "border_basis_condition": 1.0,
           "groebner_condition": 1.0,
           "condition_ratio": 1.0,
-          "border_time_ms": 0.78,
+          "border_time_ms": 0.79,
           "groebner_time_ms": 0.1,
           "groebner_num_gens": 1
         }
@@ -742,8 +742,8 @@
           "border_basis_condition": "inf",
           "groebner_condition": 1.0,
           "condition_ratio": "inf",
-          "border_time_ms": 0.56,
-          "groebner_time_ms": 0.38,
+          "border_time_ms": 0.57,
+          "groebner_time_ms": 0.39,
           "groebner_num_gens": 4
         }
       }

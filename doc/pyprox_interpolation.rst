@@ -28,24 +28,28 @@ If for some :math:`m>0`, we have :math:`\rho={{m+n}\choose{m}}`, then the number
 degree at most `m` in the polynomial basis. Denote the exponents of these monomials by :math:`{\bf e}_i`, :math:`i=1,\dots,\rho` and let
 
 .. math::
-	D=\left(\begin{array}{ccc}
-		x_1^{{\bf e}_1} & \dots & x_1^{{\bf e}_{\rho}}\\
-		\vdots & & \vdots \\
-		x_{\rho}^{{\bf e}_1} & \dots & x_{\rho}^{{\bf e}_{\rho}}\\
-	\end{array}\right)
+	\begin{aligned}
+		D=(
+		x_1^{{\bf e}_1} & \dots & x_1^{{\bf e}_{\rho}}\
+		\vdots & & \vdots \
+		x_{\rho}^{{\bf e}_1} & \dots & x_{\rho}^{{\bf e}_{\rho}}\
+		)
+	\end{aligned}
 
 and for :math:`1\leq j\leq\rho`:
 
 .. math::
-	D_j=\left(\begin{array}{ccc}
-		x_1^{{\bf e}_1} & \dots & x_1^{{\bf e}_{\rho}}\\
-		\vdots & \vdots & \vdots \\
-		x_{j-1}^{{\bf e}_1} & \dots & x_{j-1}^{{\bf e}_{\rho}}\\
-		{\bf X}^{{\bf e}_1} & \dots & {\bf X}^{{\bf e}_{\rho}}\\
-		x_{j+1}^{{\bf e}_1} & \dots & x_{j+1}^{{\bf e}_{\rho}}\\
-		\vdots & \vdots & \vdots \\
-		x_{\rho}^{{\bf e}_1} & \dots & x_{\rho}^{{\bf e}_{\rho}}\\
-	\end{array}\right).
+	\begin{aligned}
+		D_j=(
+		x_1^{{\bf e}_1} & \dots & x_1^{{\bf e}_{\rho}}\
+		\vdots & \vdots & \vdots \
+		x_{j-1}^{{\bf e}_1} & \dots & x_{j-1}^{{\bf e}_{\rho}}\
+		{\bf X}^{{\bf e}_1} & \dots & {\bf X}^{{\bf e}_{\rho}}\
+		x_{j+1}^{{\bf e}_1} & \dots & x_{j+1}^{{\bf e}_{\rho}}\
+		\vdots & \vdots & \vdots \
+		x_{\rho}^{{\bf e}_1} & \dots & x_{\rho}^{{\bf e}_{\rho}}\
+		).
+	\end{aligned}
 
 Then the polynomial
 

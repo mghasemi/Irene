@@ -6,10 +6,12 @@ import numpy as np
 from scipy import optimize
 from scipy.spatial import ConvexHull, Delaunay, QhullError
 from .symbolic_engine import engine
-# Runtime reference for SymPy Symbol (used in type hints)
+# Runtime reference for SymPy Symbol (used in type hints) + direct sympify access
 try:
+    import sympy as _sp
     from sympy import Symbol as _SymbolType
 except ImportError:
+    _sp = None
     _SymbolType = None
 
 # Alias for type hint compatibility; use Any to avoid LSP issues with possibly-unbound vars
@@ -660,9 +662,9 @@ class OptimizationProblem(object):
             sympy.Expr: A SymPy expression algebraically equivalent to the input, using the
                 symbols provided in sym_map.
         """
-        sympy_expr = engine.sympify(0)
+        sympy_expr = _sp.sympify(0)
         for coeff, mono in expr.content:
-            term = engine.sympify(coeff)
+            term = _sp.sympify(coeff)
             if not mono.array_form:  # constant term
                 sympy_expr += term
                 continue

@@ -48,15 +48,15 @@ Basic usage:
 `pyOpt` is design to solve general constrained nonlinear optimization problems:
 
 .. math::
-	\left\lbrace
-	\begin{array}{lll}
-		\min & f(x) & \\
-		\textrm{Subject to} & & \\
-		& g_j(x) = 0 & j=1,\dots,m_e\\
-		& g_j(x)\leq0 & j=m_e+1,\dots,m\\
+	\begin{aligned}
+		
+		\min & f(x) & \
+		\textrm{Subject to} & & \
+		& g_j(x) = 0 & j=1,\dots,m_e\
+		& g_j(x)\leq0 & j=m_e+1,\dots,m\
 		& l_i\leq x_i\leq u_i & i=1,\dots,n,
-	\end{array}
-	\right.
+		
+	\end{aligned}
 
 where:
 	+ :math:`x` is the vector of design variables

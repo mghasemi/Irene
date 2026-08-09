@@ -2,6 +2,7 @@ import numpy as np
 import cvxpy as cp
 from sympy.polys.monomials import itermonomials
 from sympy.polys.orderings import monomial_key
+import sympy as _sp
 from .symbolic_engine import engine
 
 
@@ -19,7 +20,7 @@ def get_gram_matrix(polynomial):
         Q_np (np.ndarray): The Gram matrix as float64 array.
         Q_sym: The symbolic Gram matrix.
     """
-    # 1. Extract variables and ensure it is a polynomial — Poly always falls back to SymPy
+    # 1. Extract variables and ensure it is a polynomial -- Poly always falls back to SymPy
     poly = engine.Poly(polynomial)
     vars_list = poly.gens
     degree = poly.total_degree()
@@ -53,7 +54,7 @@ def get_gram_matrix(polynomial):
 
     for monom, coeff in terms.items():
         if monom == 1:
-            monom = engine.sympify(1)
+            monom = _sp.sympify(1)
 
         if monom in product_map:
             pairs = product_map[monom]
@@ -64,7 +65,7 @@ def get_gram_matrix(polynomial):
             for (i, j) in pairs:
                 Q[i, j] += value
 
-    # Convert to numpy — engine handles the .evalf() path via SymPy fallback
+    # Convert to numpy -- engine handles the .evalf() path via SymPy fallback
     from Irene.symbolic_engine import to_sympy
     Q_sp = to_sympy(Q)
     return np.array(Q_sp.evalf(), dtype=np.float64), Q_sp
@@ -110,7 +111,7 @@ def find_psd_gram_matrix(polynomial):
     Uses Convex Optimization (SDP) to find a Positive Semidefinite (PSD)
     Gram matrix for the given polynomial.
     """
-    # 1. Setup polynomial and Basis — engine.Poly routes through SymPy fallback
+    # 1. Setup polynomial and Basis -- engine.Poly routes through SymPy fallback
     poly = engine.Poly(polynomial)
     vars_list = poly.gens
     degree = poly.total_degree()

@@ -9,6 +9,7 @@ Validates:
 """
 
 import pytest
+import sympy as _sp
 from Irene.sparsity import (
     UnionFind,
     CorrelativeSparsity,
@@ -175,3 +176,164 @@ class TestDetectSparsityFromPolys:
         polys = [x * y + 1]
         sp = detect_sparsity_from_polys(polys, num_vars=2)
         assert not sp.is_sparse
+
+
+# ---------------------------------------------------------------------------
+# P5.8: Sparsity-block SDP decomposition tests
+# ---------------------------------------------------------------------------
+
+class TestSparsityBlockSDP:
+    """Test that sparsity_block_sdp routes through _sInitSDP_sparse and solves correctly."""
+
+    def test_block_diagonal_decomposition(self):
+        """Block-diagonal objective should decompose into independent clique SDPs.
+
+        min x1^2 + x2^2  (no cross terms, no constraints)
+        Variables {x1} and {x2} are in separate cliques.
+        Expected lower bound: 0 (achieved at origin).
+        """
+        from Irene.relaxations import SDPRelaxations, RelaxationConfig
+
+        x1, x2 = _sp.symbols('x1 x2')
+        config = RelaxationConfig(
+            reduction_method="none",
+            sparsity_block_sdp=True,
+            verbose_reduction=False,
+        )
+        rlx = SDPRelaxations([x1, x2], config=config)
+        rlx.SetObjective(x1**2 + x2**2)
+        rlx.MmntOrd = 2
+
+        # Run the sparse path directly
+        rlx._sInitSDP_sparse()
+
+        # Should find lower bound close to 0 (feasible at origin)
+        assert rlx.f_min is not None
+        assert rlx.f_min <= 1e-3  # within tolerance of true minimum 0
+
+    def test_separable_with_constraints(self):
+        """Separable objective with per-clique constraints.
+
+        min x1^2 + x2^2
+        s.t. (x1 - 1)^2 >= 0, (x2 - 1)^2 >= 0
+        Both constraints are clique-local; decomposition should still work.
+        """
+        from Irene.relaxations import SDPRelaxations, RelaxationConfig
+
+        x1, x2 = _sp.symbols('x1 x2')
+        config = RelaxationConfig(
+            reduction_method="none",
+            sparsity_block_sdp=True,
+            verbose_reduction=False,
+        )
+        rlx = SDPRelaxations([x1, x2], config=config)
+        rlx.SetObjective(x1**2 + x2**2)
+        rlx.AddConstraint((x1 - 1)**2 >= 0)
+        rlx.AddConstraint((x2 - 1)**2 >= 0)
+        rlx.MmntOrd = 2
+
+        rlx._sInitSDP_sparse()
+
+        assert rlx.f_min is not None
+        # Lower bound should be <= true minimum (0 at origin, constraints satisfied)
+        assert rlx.f_min + 1e-6 <= 0.1
+
+    def test_dense_problem_fallback(self):
+        """Dense problem (Motzkin-like) should fall back to monolithic SDP."""
+        from Irene.relaxations import SDPRelaxations, RelaxationConfig
+
+        x, y = _sp.symbols('x y')
+        config = RelaxationConfig(
+            reduction_method="none",
+            sparsity_block_sdp=True,
+            verbose_reduction=False,
+        )
+        rlx = SDPRelaxations([x, y], config=config)
+        # Motzkin polynomial -- dense in both variables
+        rlx.SetObjective(x**4 * y**2 + x**2 * y**4 - 3 * x**2 * y**2 + 1)
+        rlx.MmntOrd = 2
+
+        # Should fall back gracefully (no decomposition for dense problem)
+        rlx._sInitSDP_sparse()
+
+        assert rlx.f_min is not None
+        # Motzkin is non-negative, so lower bound should be >= -tolerance
+        assert rlx.f_min >= -1e-3
+
+    def test_init_sdp_dispatches_sparse_path(self):
+        """InitSDP() should route through _sInitSDP_sparse when config enables it."""
+        from Irene.relaxations import SDPRelaxations, RelaxationConfig
+
+        x1, x2 = _sp.symbols('x1 x2')
+        config = RelaxationConfig(
+            reduction_method="none",
+            sparsity_block_sdp=True,
+            verbose_reduction=False,
+        )
+        rlx = SDPRelaxations([x1, x2], config=config)
+        rlx.SetObjective(x1**2 + x2**2)
+        rlx.MmntOrd = 2
+        rlx.Parallel = False
+
+        # Patch _sInitSDP_sparse to verify it was called
+        original_sparse = rlx._sInitSDP_sparse
+        called = [False]
+
+        def spy_sparse():
+            called[0] = True
+            return original_sparse()
+
+        rlx._sInitSDP_sparse = spy_sparse
+
+        rlx.InitSDP()
+        assert called[0], "InitSDP should have dispatched to _sInitSDP_sparse"
+
+    def test_reduction_method_sparsity_triggers_decomposition(self):
+        """reduction_method='sparsity' should also trigger the sparse path."""
+        from Irene.relaxations import SDPRelaxations, RelaxationConfig
+
+        x1, x2 = _sp.symbols('x1 x2')
+        config = RelaxationConfig(
+            reduction_method="sparsity",
+            sparsity_block_sdp=False,  # explicit False -- but reduction_method should still trigger
+            verbose_reduction=False,
+        )
+        rlx = SDPRelaxations([x1, x2], config=config)
+        rlx.SetObjective(x1**2 + x2**2)
+        rlx.MmntOrd = 2
+        rlx.Parallel = False
+
+        original_sparse = rlx._sInitSDP_sparse
+        called = [False]
+
+        def spy_sparse():
+            called[0] = True
+            return original_sparse()
+
+        rlx._sInitSDP_sparse = spy_sparse
+        rlx.InitSDP()
+        assert called[0], "reduction_method='sparsity' should dispatch to sparse path"
+
+    def test_fallback_when_sparsity_module_unavailable(self):
+        """Graceful degradation when detect_sparsity is None."""
+        import Irene.relaxations as rlx_mod
+        from Irene.relaxations import SDPRelaxations, RelaxationConfig
+
+        original = rlx_mod.detect_sparsity
+        rlx_mod.detect_sparsity = None
+        try:
+            x1, x2 = _sp.symbols('x1 x2')
+            config = RelaxationConfig(
+                reduction_method="none",
+                sparsity_block_sdp=True,
+                verbose_reduction=False,
+            )
+            rlx = SDPRelaxations([x1, x2], config=config)
+            rlx.SetObjective(x1**2 + x2**2)
+            rlx.MmntOrd = 2
+
+            # Should fall back to sInitSDP without raising
+            rlx._sInitSDP_sparse()
+            assert rlx.f_min is not None
+        finally:
+            rlx_mod.detect_sparsity = original

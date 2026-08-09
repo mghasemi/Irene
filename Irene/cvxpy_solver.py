@@ -40,18 +40,18 @@ def available_solvers() -> list[str]:
 # ---------------------------------------------------------------------------
 
 _SOLVER_OPTION_MAP = {
-    # Clarabel — interior point defaults
+    # Clarabel -- interior point defaults
     'CLARABEL': {
         'verbose': False,
         'tol_gap_abs': 1e-7,
         'tol_gap_rel': 1e-6,
     },
-    # SCS — first-order (approximate) solver
+    # SCS -- first-order (approximate) solver
     'SCS': {
         'verbose': False,
         'eps': 1e-5,
     },
-    # CVXOPT — legacy interior point
+    # CVXOPT -- legacy interior point
     'CVXOPT': {
         'verbose': False,
         'maxiters': 100,
@@ -63,7 +63,7 @@ _SOLVER_OPTION_MAP = {
 
 
 # ---------------------------------------------------------------------------
-# SDPResult — structured return type (mirrors sdp.Info dict)
+# SDPResult -- structured return type (mirrors sdp.Info dict)
 # ---------------------------------------------------------------------------
 
 class SDPResult:
@@ -145,7 +145,7 @@ class CvxpySDPSolver:
                 f"Available: {avail}"
             )
 
-        # Internal storage — mirrors legacy sdp class attributes
+        # Internal storage -- mirrors legacy sdp class attributes
         self.b: Optional[np.ndarray] = None       # objective coefficients
         self.A: list[list[np.ndarray]] = []       # A[i][j] for var i, block j
         self.C: list[np.ndarray] = []             # C[j] constant blocks
@@ -312,7 +312,7 @@ class CvxpySDPSolver:
         return result
 
     def CvxOpt(self):
-        """Legacy compatibility — delegates to ``solve()``."""
+        """Legacy compatibility -- delegates to ``solve()``."""
         warnings.warn(
             "CvxOpt() is deprecated; use solve() instead.",
             DeprecationWarning, stacklevel=2,
