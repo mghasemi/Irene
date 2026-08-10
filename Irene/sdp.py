@@ -3,7 +3,7 @@ import warnings as _warnings
 from .base import base
 from .telemetry import timed, TelemetryContext
 
-from numpy import array, zeros, matrix, float64
+from numpy import array, zeros, float64
 from time import time
 
 # ---------------------------------------------------------------------------
@@ -491,7 +491,7 @@ class sdp(base):
         Acvxopt = []
         for blk_no in range(self.num_blocks):
             Ablock = [self.VEC(constraint[blk_no]) for constraint in self.A]
-            Acvxopt.append(-Mtx(matrix(Ablock).transpose(), tc='d'))
+            Acvxopt.append(-Mtx(array(Ablock, dtype=float64).transpose(), tc='d'))
         
         # Build acvxopt: objective vector using direct numpy approach
         b_coerced = [self._coerce_float(elmnt) for elmnt in self.b]
