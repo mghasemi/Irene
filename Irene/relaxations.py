@@ -93,10 +93,74 @@ class SDPRelaxations(base):
     PSDMoment = True
     Probability = True
     Parallel = True
+    # Adaptive parallelism controller (Improvement A)
+    AdaptiveParallel = False          # When True, auto-select parallel/serial
+    AdaptiveTimeout = 120             # Seconds before fallback to serial
+    AdaptiveLogPath = None            # JSON file for results database (None = disabled)
+    _AdaptiveConfig = {}              # Cached adaptive decision config
 
     def __init__(self, gens, relations=(), name="SDPRlx"):
+        r"""
+        Construct an SDP relaxation object.
+
+        Two calling conventions are supported:
+
+        1. **OptimizationProblem (preferred):** Pass a single ``OptimizationProblem``
+           instance as ``gens``. The constructor extracts generators, relations,
+           the objective function, and constraints automatically.
+
+        2. **Legacy (gens, relations):** Pass a list of SymPy symbols/functions
+           as ``gens`` and an iterable of relation expressions as ``relations``.
+           The objective and constraints must be set later via
+           ``SetObjective()`` / ``AddConstraint()``.
+
+        Args:
+            gens: Either an ``OptimizationProblem`` instance or a list of
+                  SymPy symbols/functions.
+            relations: (Legacy mode only) Iterable of relation expressions.
+            name: Human-readable name used for state-persistence files.
+        """
+        # ------------------------------------------------------------------ #
+        #  Unified constructor: accept OptimizationProblem OR legacy args      #
+        # ------------------------------------------------------------------ #
+        if isinstance(gens, OptimizationProblem):
+            optim_prob = gens
+            relations = relations  # ignored when optim_prob is passed
+
+            sga = optim_prob.sga
+            gen_names = sga.gens
+            sympy_gens = [Symbol(g) for g in gen_names]
+            sym_map = {n: s for n, s in zip(gen_names, sympy_gens)}
+
+            # Convert relations from SGA element to SymPy expression
+            # Note: optim_prob.relations stores the objective (f - c), NOT algebraic
+            # relations among generators. Passing it as a relation would cause
+            # ReduceExp to reduce the objective to zero via Groebner basis.
+            rel_exprs = []
+
+            # Initialize with extracted generators and relations
+            self.__init_from_gens(sympy_gens, rel_exprs, name)
+
+            # Set objective and constraints from the problem definition
+            # OptimizationProblem stores the objective in .relations by default;
+            # .objective is only populated after set_objective() is called.
+            obj_expr = optim_prob.objective if optim_prob.objective is not None else optim_prob.relations
+            if obj_expr is not None:
+                self.SetObjective(optim_prob.to_sympy(obj_expr, sym_map))
+            for const in optim_prob.constraints:
+                self.AddConstraint(optim_prob.to_sympy(const, sym_map) >= 0)
+            return
+
+        # Legacy mode: validate inputs explicitly
         assert type(gens) is list, self.GensError
-        assert type(gens) is list, self.RelsError
+        assert type(relations) in (list, tuple), self.RelsError
+        self.__init_from_gens(gens, relations, name)
+
+    def __init_from_gens(self, gens, relations, name):
+        r"""
+        Internal initialization from validated generator and relation lists.
+        Called by ``__init__`` after input dispatch.
+        """
         super(SDPRelaxations, self).__init__()
         self.NumCores = mp.cpu_count()
         self.EQ = Equality
@@ -174,11 +238,18 @@ class SDPRelaxations(base):
 
     @classmethod
     def from_problem(cls, optim_prob: OptimizationProblem, name="SDPRlx"):
-        """
+        r"""
         Creates an SDPRelaxations instance from an OptimizationProblem.
 
-        This method acts as an alternative constructor to bridge compatibility
-        with problems defined using SemigroupAlgebra.
+        This is now a thin wrapper around the unified constructor which
+        accepts ``OptimizationProblem`` directly. Both calling conventions
+        are equivalent::
+
+            # Preferred (direct):
+            rlx = SDPRelaxations(optim_prob)
+
+            # Legacy alias:
+            rlx = SDPRelaxations.from_problem(optim_prob)
 
         Args:
             optim_prob (OptimizationProblem): The optimization problem defined
@@ -188,20 +259,7 @@ class SDPRelaxations(base):
         Returns:
             An instance of SDPRelaxations.
         """
-        sga = optim_prob.sga
-        gen_names = sga.gens
-        sympy_gens = [Symbol(g) for g in gen_names]
-        sym_map = {name: sym for name, sym in zip(gen_names, sympy_gens)}
-
-        # Convert relations if they exist
-        relations = [optim_prob.to_sympy(rel, sym_map) for rel in optim_prob.relations] if optim_prob.relations else []
-
-        rlx = cls(sympy_gens, relations, name)
-
-        rlx.SetObjective(optim_prob.to_sympy(optim_prob.objective, sym_map))
-        for const in optim_prob.constraints:
-            rlx.AddConstraint(optim_prob.to_sympy(const, sym_map) >= 0)
-        return rlx
+        return cls(optim_prob, name=name)
 
     def SetNumCores(self, num):
         r"""
@@ -720,23 +778,146 @@ class SDPRelaxations(base):
         elapsed = (time() - start)
         self.InitTime = elapsed
 
+    # ------------------------------------------------------------------ #
+    #  Adaptive parallelism controller (Improvement A)                     #
+    # ------------------------------------------------------------------ #
+
+    def _adaptive_decision(self):
+        r"""
+        Heuristic: decide whether parallel execution is beneficial.
+
+        Returns ``True`` (parallel) or ``False`` (serial) based on:
+          - Number of generators (high gens → Groebner bottleneck → serial)
+          - Reduced monomial basis size (large basis → parallel helps)
+          - Maximum constraint half-degree (high degree → parallel helps)
+          - Whether relations exist (relations → Groebner cost → serial bias)
+
+        The decision is cached in ``self._AdaptiveConfig`` as a dict with
+        keys ``'use_parallel'``, ``'score'``, and problem metadata.
+        """
+        ngens = self.NumGenerators
+        has_rels = bool(self.FreeRelations)
+        max_half_deg = max(self.CnsHalfDegs) if self.CnsHalfDegs else self.ObjHalfDeg
+        # Estimate basis size without full computation
+        est_basis = len(self.ReducedMonomialBase(min(self.MmntOrd, 2)))
+
+        # Scoring: positive → parallel, negative → serial
+        # Tuned so basis size bonus outweighs generator penalty for
+        # C_alpha-dominant problems (the ones that actually benefit from parallel).
+        score = 0.0
+        # Generators: high count penalises parallel (Groebner overhead per worker)
+        if ngens >= 7:
+            score -= 2.0
+        elif ngens >= 5:
+            score -= 1.0
+        else:
+            score += 0.5
+        # Relations: Groebner reduction adds overhead per worker
+        if has_rels:
+            score -= 1.0
+        # Large basis: parallel pays off (C_alpha dominates)
+        if est_basis >= 25:
+            score += 2.5
+        elif est_basis >= 15:
+            score += 1.5
+        # High degree constraints: parallel helps
+        if max_half_deg >= 3:
+            score += 1.5
+
+        use_parallel = score >= 0.0
+        self._AdaptiveConfig = {
+            "use_parallel": use_parallel,
+            "score": round(score, 2),
+            "num_generators": ngens,
+            "has_relations": has_rels,
+            "max_half_degree": max_half_deg,
+            "est_basis_size": est_basis,
+        }
+        return use_parallel
+
+    def _log_adaptive_result(self, init_time, mode, status):
+        r"""
+        Append a JSON record to the adaptive results database file.
+
+        Args:
+            init_time: SDP initialization time in seconds
+            mode: 'parallel' or 'serial'
+            status: solver status string
+        """
+        if not self.AdaptiveLogPath:
+            return
+        import json, os
+        record = {
+            "name": self.Name,
+            "mode": mode,
+            "init_time": round(init_time, 4),
+            "status": status,
+            "config": self._AdaptiveConfig or {},
+            "mat_size": self.MatSize,
+        }
+        try:
+            data = []
+            if os.path.exists(self.AdaptiveLogPath):
+                with open(self.AdaptiveLogPath, "r") as f:
+                    data = json.load(f)
+            data.append(record)
+            with open(self.AdaptiveLogPath, "w") as f:
+                json.dump(data, f, indent=2, default=str)
+        except Exception:
+            pass  # Non-critical telemetry
+
     def InitSDP(self):
         r"""
-        Initializes the SDP based on the value of ``self.Parallel``.
-        If it is ``True``, it runs in parallel mode, otherwise
-        in serial.
+        Initializes the SDP. Dispatch logic:
+
+        1. If ``AdaptiveParallel`` is ``True``, run the heuristic and
+           choose parallel/serial dynamically (with timeout fallback).
+        2. Otherwise, honour ``self.Parallel`` as before.
         """
-        if self.Parallel:
-            try:
-                self.pInitSDP()
-            except KeyboardInterrupt:
-                with open(self.Name + '.rlx', 'wb') as obj_file:
-                    dump(self, obj_file)
-                print("\n...::: The program is saved in '" +
-                      self.Name + ".rlx' :::...")
-                raise KeyboardInterrupt
+        if self.AdaptiveParallel:
+            use_parallel = self._adaptive_decision()
+            if use_parallel:
+                try:
+                    import signal
+                    class _TimeoutException(Exception):
+                        pass
+                    def _timeout_handler(signum, frame):
+                        raise _TimeoutException("Parallel init exceeded AdaptiveTimeout")
+                    old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
+                    signal.alarm(self.AdaptiveTimeout)
+                    try:
+                        self.pInitSDP()
+                        signal.alarm(0)
+                        signal.signal(signal.SIGALRM, old_handler)
+                        self._log_adaptive_result(self.InitTime, "parallel", "completed")
+                        return
+                    except _TimeoutException:
+                        signal.alarm(0)
+                        signal.signal(signal.SIGALRM, old_handler)
+                        print(f"\n[Adaptive] Parallel init timed out "
+                              f"({self.AdaptiveTimeout}s) — falling back to serial.")
+                except (ImportError, OSError):
+                    pass  # signal not available on this platform
+                # Fallback to serial
+                self._AdaptiveConfig["fallback"] = True
+                self.sInitSDP()
+                self._log_adaptive_result(self.InitTime, "serial_fallback", "completed")
+            else:
+                self.sInitSDP()
+                self._log_adaptive_result(self.InitTime, "serial", "completed")
         else:
-            self.sInitSDP()
+            # Original dispatch behaviour
+            if self.Parallel:
+                try:
+                    self.pInitSDP()
+                except KeyboardInterrupt:
+                    with open(self.Name + '.rlx', 'wb') as obj_file:
+                        dump(self, obj_file)
+                    print("\n...::: The program is saved in '" +
+                          self.Name + ".rlx' :::...")
+                    raise KeyboardInterrupt
+            else:
+                self.sInitSDP()
 
     def Minimize(self):
         r"""

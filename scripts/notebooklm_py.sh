@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CLI="$ROOT_DIR/.venv/bin/notebooklm"
+# Use globally available python (Hermes venv) — avoids Irene's sys.path conflicts
+CLI="notebooklm"
 
-if [[ ! -x "$CLI" ]]; then
-  echo "Error: notebooklm CLI not found at $CLI"
-  echo "Install first: $ROOT_DIR/.venv/bin/python -m pip install \"notebooklm-py[browser]\""
+if ! command -v "$CLI" &>/dev/null; then
+  echo "Error: notebooklm CLI not found in PATH"
+  echo "Install first: pip install \"notebooklm-py[browser]\""
   exit 1
 fi
 
