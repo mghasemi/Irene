@@ -5,7 +5,9 @@ Semidefinite Programming Relaxations
 The SDP module implements Lasserre's hierarchy of semidefinite programming
 relaxations for polynomial optimization problems. Given a problem
 
-$$\min \{f(x) : g_1(x) \geq 0, \dots, g_m(x) \geq 0, x \in K\},$$
+.. math::
+
+   \min \{f(x) : g_1(x) \geq 0, \dots, g_m(x) \geq 0, x \in K\},
 
 the hierarchy constructs a sequence of SDPs whose optimal values converge
 monotonically to the true optimum under mild topological conditions.

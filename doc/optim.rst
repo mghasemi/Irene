@@ -75,7 +75,7 @@ above theorem,  turns :eq:`infsdp` into a semidefinite program. Note that this d
 SDP is equal to :math:`\rho` since
 
 	+ :math:`Q_{\bf g}\cap B
-eq Psd_{B}(K)` and,
+\neq Psd_{B}(K)` and,
 	+ there may not exist a decomposition of :math:`f-\rho` as in :eq:`sosdecomp` inside :math:`B` (i.e., the summands may not belong to :math:`B`).
 
 Thus, the optimum value gives only a lower bound for :math:`\rho`. However,
