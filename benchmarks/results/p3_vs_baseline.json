@@ -1,0 +1,179 @@
+{
+  "Motzkin": {
+    "name": "Motzkin",
+    "orders": [
+      {
+        "order": 1,
+        "baseline": {
+          "value": -526.08114071,
+          "status": "optimal",
+          "runtime_s": 0.1667,
+          "init_time_s": 0.1169,
+          "matrix_dim": null
+        },
+        "p3_optimized": {
+          "value": -Infinity,
+          "status": "error",
+          "runtime_s": 0.0182,
+          "init_time_s": 0.0121,
+          "matrix_dim": null
+        },
+        "speedup": 9.16
+      },
+      {
+        "order": 2,
+        "baseline": {
+          "value": -526.08114071,
+          "status": "optimal",
+          "runtime_s": 0.1182,
+          "init_time_s": 0.0743,
+          "matrix_dim": null
+        },
+        "p3_optimized": {
+          "value": -Infinity,
+          "status": "error",
+          "runtime_s": 0.0557,
+          "init_time_s": 0.0144,
+          "matrix_dim": null
+        },
+        "speedup": 2.12
+      },
+      {
+        "order": 3,
+        "baseline": {
+          "value": -526.08114071,
+          "status": "optimal",
+          "runtime_s": 0.1189,
+          "init_time_s": 0.0739,
+          "matrix_dim": null
+        },
+        "p3_optimized": {
+          "value": -Infinity,
+          "status": "error",
+          "runtime_s": 0.0202,
+          "init_time_s": 0.0135,
+          "matrix_dim": null
+        },
+        "speedup": 5.88
+      }
+    ]
+  },
+  "Choi-Lam": {
+    "name": "Choi-Lam",
+    "orders": [
+      {
+        "order": 1,
+        "baseline": {
+          "value": -10.44082434,
+          "status": "optimal",
+          "runtime_s": 0.1499,
+          "init_time_s": 0.106,
+          "matrix_dim": null
+        },
+        "p3_optimized": {
+          "value": -Infinity,
+          "status": "error",
+          "runtime_s": 0.0194,
+          "init_time_s": 0.0136,
+          "matrix_dim": null
+        },
+        "speedup": 7.74
+      },
+      {
+        "order": 2,
+        "baseline": {
+          "value": -10.44082434,
+          "status": "optimal",
+          "runtime_s": 0.1525,
+          "init_time_s": 0.1106,
+          "matrix_dim": null
+        },
+        "p3_optimized": {
+          "value": -Infinity,
+          "status": "error",
+          "runtime_s": 0.0182,
+          "init_time_s": 0.0122,
+          "matrix_dim": null
+        },
+        "speedup": 8.39
+      },
+      {
+        "order": 3,
+        "baseline": {
+          "value": -10.44082434,
+          "status": "optimal",
+          "runtime_s": 0.1211,
+          "init_time_s": 0.0792,
+          "matrix_dim": null
+        },
+        "p3_optimized": {
+          "value": -Infinity,
+          "status": "error",
+          "runtime_s": 0.0191,
+          "init_time_s": 0.0131,
+          "matrix_dim": null
+        },
+        "speedup": 6.33
+      }
+    ]
+  },
+  "Robinson": {
+    "name": "Robinson",
+    "orders": [
+      {
+        "order": 1,
+        "baseline": {
+          "value": -0.37037037,
+          "status": "optimal",
+          "runtime_s": 0.1521,
+          "init_time_s": 0.1152,
+          "matrix_dim": null
+        },
+        "p3_optimized": {
+          "value": -Infinity,
+          "status": "error",
+          "runtime_s": 0.0329,
+          "init_time_s": 0.0247,
+          "matrix_dim": null
+        },
+        "speedup": 4.62
+      },
+      {
+        "order": 2,
+        "baseline": {
+          "value": -0.37037037,
+          "status": "optimal",
+          "runtime_s": 0.1455,
+          "init_time_s": 0.1053,
+          "matrix_dim": null
+        },
+        "p3_optimized": {
+          "value": -Infinity,
+          "status": "error",
+          "runtime_s": 0.0341,
+          "init_time_s": 0.0258,
+          "matrix_dim": null
+        },
+        "speedup": 4.27
+      },
+      {
+        "order": 3,
+        "baseline": {
+          "value": -0.37037037,
+          "status": "optimal",
+          "runtime_s": 0.1192,
+          "init_time_s": 0.0805,
+          "matrix_dim": null
+        },
+        "p3_optimized": {
+          "value": -Infinity,
+          "status": "error",
+          "runtime_s": 0.0374,
+          "init_time_s": 0.0284,
+          "matrix_dim": null
+        },
+        "speedup": 3.19
+      }
+    ]
+  }
+}

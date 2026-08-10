@@ -1,0 +1,847 @@
+{
+  "sparsity": [
+    {
+      "id": "quad_1d",
+      "name": "1D Quadratic",
+      "num_vars": 1,
+      "degree": 2,
+      "sparsity": {
+        "is_sparse": false,
+        "num_components": 1,
+        "component_sizes": [
+          1
+        ],
+        "component_vars": []
+      },
+      "reduction_factor_d1": 1.0,
+      "partition_blocks_d1": 2,
+      "reduction_factor_d2": 1.0,
+      "partition_blocks_d2": 2,
+      "reduction_factor_d3": 1.0,
+      "partition_blocks_d3": 2,
+      "reduction_factor_d4": 1.0,
+      "partition_blocks_d4": 2
+    },
+    {
+      "id": "quartic_1d",
+      "name": "1D Quartic (x^4 - x^2)",
+      "num_vars": 1,
+      "degree": 4,
+      "sparsity": {
+        "is_sparse": false,
+        "num_components": 1,
+        "component_sizes": [
+          1
+        ],
+        "component_vars": []
+      },
+      "reduction_factor_d1": 1.0,
+      "partition_blocks_d1": 2,
+      "reduction_factor_d2": 1.0,
+      "partition_blocks_d2": 2,
+      "reduction_factor_d3": 1.0,
+      "partition_blocks_d3": 2,
+      "reduction_factor_d4": 1.0,
+      "partition_blocks_d4": 2,
+      "reduction_factor_d5": 1.0,
+      "partition_blocks_d5": 2
+    },
+    {
+      "id": "motzkin",
+      "name": "Motzkin Polynomial",
+      "num_vars": 2,
+      "degree": 6,
+      "sparsity": {
+        "is_sparse": false,
+        "num_components": 1,
+        "component_sizes": [
+          2
+        ],
+        "component_vars": []
+      },
+      "reduction_factor_d1": 1.0,
+      "partition_blocks_d1": 2,
+      "reduction_factor_d2": 1.0,
+      "partition_blocks_d2": 2,
+      "reduction_factor_d3": 1.0,
+      "partition_blocks_d3": 2,
+      "reduction_factor_d4": 1.0,
+      "partition_blocks_d4": 2,
+      "reduction_factor_d5": 1.0,
+      "partition_blocks_d5": 2
+    },
+    {
+      "id": "choi_lam",
+      "name": "Choi-Lam Polynomial",
+      "num_vars": 2,
+      "degree": 6,
+      "sparsity": {
+        "is_sparse": false,
+        "num_components": 1,
+        "component_sizes": [
+          2
+        ],
+        "component_vars": []
+      },
+      "reduction_factor_d1": 1.0,
+      "partition_blocks_d1": 2,
+      "reduction_factor_d2": 1.0,
+      "partition_blocks_d2": 2,
+      "reduction_factor_d3": 1.0,
+      "partition_blocks_d3": 2,
+      "reduction_factor_d4": 1.0,
+      "partition_blocks_d4": 2,
+      "reduction_factor_d5": 1.0,
+      "partition_blocks_d5": 2
+    },
+    {
+      "id": "robinson",
+      "name": "Robinson Polynomial",
+      "num_vars": 2,
+      "degree": 6,
+      "sparsity": {
+        "is_sparse": false,
+        "num_components": 1,
+        "component_sizes": [
+          2
+        ],
+        "component_vars": []
+      },
+      "reduction_factor_d1": 1.0,
+      "partition_blocks_d1": 2,
+      "reduction_factor_d2": 1.0,
+      "partition_blocks_d2": 2,
+      "reduction_factor_d3": 1.0,
+      "partition_blocks_d3": 2,
+      "reduction_factor_d4": 1.0,
+      "partition_blocks_d4": 2,
+      "reduction_factor_d5": 1.0,
+      "partition_blocks_d5": 2
+    },
+    {
+      "id": "schick_separating",
+      "name": "Schick Separating SOS+SONC",
+      "num_vars": 2,
+      "degree": 6,
+      "sparsity": {
+        "is_sparse": false,
+        "num_components": 1,
+        "component_sizes": [
+          2
+        ],
+        "component_vars": []
+      },
+      "reduction_factor_d1": 1.0,
+      "partition_blocks_d1": 2,
+      "reduction_factor_d2": 1.0,
+      "partition_blocks_d2": 2,
+      "reduction_factor_d3": 1.0,
+      "partition_blocks_d3": 2,
+      "reduction_factor_d4": 1.0,
+      "partition_blocks_d4": 2,
+      "reduction_factor_d5": 1.0,
+      "partition_blocks_d5": 2
+    },
+    {
+      "id": "constrained_1d",
+      "name": "Constrained 1D (x^2 + y^2 on unit circle)",
+      "num_vars": 2,
+      "degree": 2,
+      "sparsity": {
+        "is_sparse": true,
+        "num_components": 2,
+        "component_sizes": [
+          1,
+          1
+        ],
+        "component_vars": []
+      },
+      "reduction_factor_d1": 0.3333,
+      "partition_blocks_d1": 3,
+      "reduction_factor_d2": 0.3333,
+      "partition_blocks_d2": 3,
+      "reduction_factor_d3": 0.2857,
+      "partition_blocks_d3": 3,
+      "reduction_factor_d4": 0.2444,
+      "partition_blocks_d4": 3
+    },
+    {
+      "id": "motzkin_constrained",
+      "name": "Motzkin on Box",
+      "num_vars": 2,
+      "degree": 6,
+      "sparsity": {
+        "is_sparse": false,
+        "num_components": 1,
+        "component_sizes": [
+          2
+        ],
+        "component_vars": []
+      },
+      "reduction_factor_d1": 1.0,
+      "partition_blocks_d1": 2,
+      "reduction_factor_d2": 1.0,
+      "partition_blocks_d2": 2,
+      "reduction_factor_d3": 1.0,
+      "partition_blocks_d3": 2,
+      "reduction_factor_d4": 1.0,
+      "partition_blocks_d4": 2,
+      "reduction_factor_d5": 1.0,
+      "partition_blocks_d5": 2
+    },
+    {
+      "id": "polynomial_on_sphere",
+      "name": "x^4 + y^4 on Unit Sphere",
+      "num_vars": 2,
+      "degree": 4,
+      "sparsity": {
+        "is_sparse": true,
+        "num_components": 2,
+        "component_sizes": [
+          1,
+          1
+        ],
+        "component_vars": []
+      },
+      "reduction_factor_d1": 0.3333,
+      "partition_blocks_d1": 3,
+      "reduction_factor_d2": 0.3333,
+      "partition_blocks_d2": 3,
+      "reduction_factor_d3": 0.2857,
+      "partition_blocks_d3": 3,
+      "reduction_factor_d4": 0.2444,
+      "partition_blocks_d4": 3,
+      "reduction_factor_d5": 0.2273,
+      "partition_blocks_d5": 3
+    },
+    {
+      "id": "mean_poly_sweep_motzkin",
+      "name": "Mean Poly Sweep \u2014 Motzkin",
+      "num_vars": 2,
+      "degree": 6,
+      "sparsity": {
+        "is_sparse": false,
+        "num_components": 1,
+        "component_sizes": [
+          2
+        ],
+        "component_vars": []
+      },
+      "reduction_factor_d1": 1.0,
+      "partition_blocks_d1": 2,
+      "reduction_factor_d2": 1.0,
+      "partition_blocks_d2": 2,
+      "reduction_factor_d3": 1.0,
+      "partition_blocks_d3": 2,
+      "reduction_factor_d4": 1.0,
+      "partition_blocks_d4": 2,
+      "reduction_factor_d5": 1.0,
+      "partition_blocks_d5": 2
+    },
+    {
+      "id": "dense_bivariate_deg8",
+      "name": "Dense Bivariate Degree-8",
+      "num_vars": 2,
+      "degree": 8,
+      "sparsity": {
+        "is_sparse": false,
+        "num_components": 1,
+        "component_sizes": [
+          2
+        ],
+        "component_vars": []
+      },
+      "reduction_factor_d1": 1.0,
+      "partition_blocks_d1": 2,
+      "reduction_factor_d2": 1.0,
+      "partition_blocks_d2": 2,
+      "reduction_factor_d3": 1.0,
+      "partition_blocks_d3": 2,
+      "reduction_factor_d4": 1.0,
+      "partition_blocks_d4": 2,
+      "reduction_factor_d5": 1.0,
+      "partition_blocks_d5": 2
+    },
+    {
+      "id": "sparse_trinomial",
+      "name": "Sparse Trinomial Benchmark",
+      "num_vars": 2,
+      "degree": 6,
+      "sparsity": {
+        "is_sparse": false,
+        "num_components": 1,
+        "component_sizes": [
+          2
+        ],
+        "component_vars": []
+      },
+      "reduction_factor_d1": 1.0,
+      "partition_blocks_d1": 2,
+      "reduction_factor_d2": 1.0,
+      "partition_blocks_d2": 2,
+      "reduction_factor_d3": 1.0,
+      "partition_blocks_d3": 2,
+      "reduction_factor_d4": 1.0,
+      "partition_blocks_d4": 2,
+      "reduction_factor_d5": 1.0,
+      "partition_blocks_d5": 2
+    }
+  ],
+  "newton_pruning": [
+    {
+      "id": "quad_1d",
+      "name": "1D Quadratic",
+      "num_vars": 1,
+      "degree": 2,
+      "order_1": {
+        "full_basis": 3,
+        "pruned_basis": 3,
+        "full_mm_entries": 6,
+        "pruned_mm_entries": 6,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      }
+    },
+    {
+      "id": "quartic_1d",
+      "name": "1D Quartic (x^4 - x^2)",
+      "num_vars": 1,
+      "degree": 4,
+      "order_1": {
+        "full_basis": 3,
+        "pruned_basis": 3,
+        "full_mm_entries": 6,
+        "pruned_mm_entries": 6,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      },
+      "order_2": {
+        "full_basis": 5,
+        "pruned_basis": 5,
+        "full_mm_entries": 15,
+        "pruned_mm_entries": 15,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      }
+    },
+    {
+      "id": "motzkin",
+      "name": "Motzkin Polynomial",
+      "num_vars": 2,
+      "degree": 6,
+      "order_1": {
+        "full_basis": 6,
+        "pruned_basis": 2,
+        "full_mm_entries": 21,
+        "pruned_mm_entries": 3,
+        "reduction_ratio": 0.3333,
+        "entries_saved": 32
+      },
+      "order_2": {
+        "full_basis": 15,
+        "pruned_basis": 5,
+        "full_mm_entries": 120,
+        "pruned_mm_entries": 15,
+        "reduction_ratio": 0.3333,
+        "entries_saved": 200
+      },
+      "order_3": {
+        "full_basis": 28,
+        "pruned_basis": 10,
+        "full_mm_entries": 406,
+        "pruned_mm_entries": 55,
+        "reduction_ratio": 0.3571,
+        "entries_saved": 684
+      }
+    },
+    {
+      "id": "choi_lam",
+      "name": "Choi-Lam Polynomial",
+      "num_vars": 2,
+      "degree": 6,
+      "order_1": {
+        "full_basis": 6,
+        "pruned_basis": 2,
+        "full_mm_entries": 21,
+        "pruned_mm_entries": 3,
+        "reduction_ratio": 0.3333,
+        "entries_saved": 32
+      },
+      "order_2": {
+        "full_basis": 15,
+        "pruned_basis": 5,
+        "full_mm_entries": 120,
+        "pruned_mm_entries": 15,
+        "reduction_ratio": 0.3333,
+        "entries_saved": 200
+      },
+      "order_3": {
+        "full_basis": 28,
+        "pruned_basis": 10,
+        "full_mm_entries": 406,
+        "pruned_mm_entries": 55,
+        "reduction_ratio": 0.3571,
+        "entries_saved": 684
+      }
+    },
+    {
+      "id": "robinson",
+      "name": "Robinson Polynomial",
+      "num_vars": 2,
+      "degree": 6,
+      "order_1": {
+        "full_basis": 6,
+        "pruned_basis": 6,
+        "full_mm_entries": 21,
+        "pruned_mm_entries": 21,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      },
+      "order_2": {
+        "full_basis": 15,
+        "pruned_basis": 15,
+        "full_mm_entries": 120,
+        "pruned_mm_entries": 120,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      },
+      "order_3": {
+        "full_basis": 28,
+        "pruned_basis": 28,
+        "full_mm_entries": 406,
+        "pruned_mm_entries": 406,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      }
+    },
+    {
+      "id": "schick_separating",
+      "name": "Schick Separating SOS+SONC",
+      "num_vars": 2,
+      "degree": 6,
+      "order_1": {
+        "full_basis": 6,
+        "pruned_basis": 2,
+        "full_mm_entries": 21,
+        "pruned_mm_entries": 3,
+        "reduction_ratio": 0.3333,
+        "entries_saved": 32
+      },
+      "order_2": {
+        "full_basis": 15,
+        "pruned_basis": 5,
+        "full_mm_entries": 120,
+        "pruned_mm_entries": 15,
+        "reduction_ratio": 0.3333,
+        "entries_saved": 200
+      },
+      "order_3": {
+        "full_basis": 28,
+        "pruned_basis": 10,
+        "full_mm_entries": 406,
+        "pruned_mm_entries": 55,
+        "reduction_ratio": 0.3571,
+        "entries_saved": 684
+      }
+    },
+    {
+      "id": "constrained_1d",
+      "name": "Constrained 1D (x^2 + y^2 on unit circle)",
+      "num_vars": 2,
+      "degree": 2,
+      "order_1": {
+        "full_basis": 6,
+        "pruned_basis": 6,
+        "full_mm_entries": 21,
+        "pruned_mm_entries": 21,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      }
+    },
+    {
+      "id": "motzkin_constrained",
+      "name": "Motzkin on Box",
+      "num_vars": 2,
+      "degree": 6,
+      "order_1": {
+        "full_basis": 6,
+        "pruned_basis": 2,
+        "full_mm_entries": 21,
+        "pruned_mm_entries": 3,
+        "reduction_ratio": 0.3333,
+        "entries_saved": 32
+      },
+      "order_2": {
+        "full_basis": 15,
+        "pruned_basis": 5,
+        "full_mm_entries": 120,
+        "pruned_mm_entries": 15,
+        "reduction_ratio": 0.3333,
+        "entries_saved": 200
+      },
+      "order_3": {
+        "full_basis": 28,
+        "pruned_basis": 10,
+        "full_mm_entries": 406,
+        "pruned_mm_entries": 55,
+        "reduction_ratio": 0.3571,
+        "entries_saved": 684
+      }
+    },
+    {
+      "id": "polynomial_on_sphere",
+      "name": "x^4 + y^4 on Unit Sphere",
+      "num_vars": 2,
+      "degree": 4,
+      "order_1": {
+        "full_basis": 6,
+        "pruned_basis": 6,
+        "full_mm_entries": 21,
+        "pruned_mm_entries": 21,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      },
+      "order_2": {
+        "full_basis": 15,
+        "pruned_basis": 15,
+        "full_mm_entries": 120,
+        "pruned_mm_entries": 120,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      }
+    },
+    {
+      "id": "mean_poly_sweep_motzkin",
+      "name": "Mean Poly Sweep \u2014 Motzkin",
+      "num_vars": 2,
+      "degree": 6,
+      "order_1": {
+        "full_basis": 6,
+        "pruned_basis": 2,
+        "full_mm_entries": 21,
+        "pruned_mm_entries": 3,
+        "reduction_ratio": 0.3333,
+        "entries_saved": 32
+      },
+      "order_2": {
+        "full_basis": 15,
+        "pruned_basis": 5,
+        "full_mm_entries": 120,
+        "pruned_mm_entries": 15,
+        "reduction_ratio": 0.3333,
+        "entries_saved": 200
+      },
+      "order_3": {
+        "full_basis": 28,
+        "pruned_basis": 10,
+        "full_mm_entries": 406,
+        "pruned_mm_entries": 55,
+        "reduction_ratio": 0.3571,
+        "entries_saved": 684
+      }
+    },
+    {
+      "id": "dense_bivariate_deg8",
+      "name": "Dense Bivariate Degree-8",
+      "num_vars": 2,
+      "degree": 8,
+      "order_1": {
+        "full_basis": 6,
+        "pruned_basis": 6,
+        "full_mm_entries": 21,
+        "pruned_mm_entries": 21,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      },
+      "order_2": {
+        "full_basis": 15,
+        "pruned_basis": 15,
+        "full_mm_entries": 120,
+        "pruned_mm_entries": 120,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      },
+      "order_3": {
+        "full_basis": 28,
+        "pruned_basis": 28,
+        "full_mm_entries": 406,
+        "pruned_mm_entries": 406,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      },
+      "order_4": {
+        "full_basis": 45,
+        "pruned_basis": 45,
+        "full_mm_entries": 1035,
+        "pruned_mm_entries": 1035,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      }
+    },
+    {
+      "id": "sparse_trinomial",
+      "name": "Sparse Trinomial Benchmark",
+      "num_vars": 2,
+      "degree": 6,
+      "order_1": {
+        "full_basis": 6,
+        "pruned_basis": 6,
+        "full_mm_entries": 21,
+        "pruned_mm_entries": 21,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      },
+      "order_2": {
+        "full_basis": 15,
+        "pruned_basis": 15,
+        "full_mm_entries": 120,
+        "pruned_mm_entries": 120,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      },
+      "order_3": {
+        "full_basis": 28,
+        "pruned_basis": 28,
+        "full_mm_entries": 406,
+        "pruned_mm_entries": 406,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      }
+    }
+  ],
+  "border_basis": [
+    {
+      "id": "ideal_x2_y2",
+      "name": "<x^2, y^2>",
+      "degrees": {
+        "d2": {
+          "border_basis_size": 4,
+          "groebner_basis_size": 4,
+          "border_size": 4,
+          "num_mult_tables": 4,
+          "border_basis_condition": "inf",
+          "groebner_condition": 1.0,
+          "condition_ratio": "inf",
+          "border_time_ms": 0.68,
+          "groebner_time_ms": 0.47,
+          "groebner_num_gens": 2
+        },
+        "d3": {
+          "border_basis_size": 4,
+          "groebner_basis_size": 4,
+          "border_size": 4,
+          "num_mult_tables": 4,
+          "border_basis_condition": "inf",
+          "groebner_condition": 1.0,
+          "condition_ratio": "inf",
+          "border_time_ms": 0.81,
+          "groebner_time_ms": 0.17,
+          "groebner_num_gens": 2
+        }
+      }
+    },
+    {
+      "id": "ideal_x3_y3",
+      "name": "<x^3, y^3>",
+      "degrees": {
+        "d2": {
+          "border_basis_size": 6,
+          "groebner_basis_size": 6,
+          "border_size": 4,
+          "num_mult_tables": 4,
+          "border_basis_condition": "inf",
+          "groebner_condition": 1.0,
+          "condition_ratio": "inf",
+          "border_time_ms": 0.2,
+          "groebner_time_ms": 0.13,
+          "groebner_num_gens": 2
+        },
+        "d3": {
+          "border_basis_size": 8,
+          "groebner_basis_size": 8,
+          "border_size": 5,
+          "num_mult_tables": 5,
+          "border_basis_condition": "inf",
+          "groebner_condition": 1.0,
+          "condition_ratio": "inf",
+          "border_time_ms": 0.38,
+          "groebner_time_ms": 0.13,
+          "groebner_num_gens": 2
+        }
+      }
+    },
+    {
+      "id": "circle",
+      "name": "<x^2+y^2-1>",
+      "degrees": {
+        "d2": {
+          "border_basis_size": 5,
+          "groebner_basis_size": 5,
+          "border_size": 4,
+          "num_mult_tables": 4,
+          "border_basis_condition": 1.0,
+          "groebner_condition": 1.0,
+          "condition_ratio": 1.0,
+          "border_time_ms": 0.43,
+          "groebner_time_ms": 0.11,
+          "groebner_num_gens": 1
+        },
+        "d3": {
+          "border_basis_size": 7,
+          "groebner_basis_size": 7,
+          "border_size": 5,
+          "num_mult_tables": 5,
+          "border_basis_condition": 1.0,
+          "groebner_condition": 1.0,
+          "condition_ratio": 1.0,
+          "border_time_ms": 0.94,
+          "groebner_time_ms": 0.12,
+          "groebner_num_gens": 1
+        }
+      }
+    },
+    {
+      "id": "hyperbola",
+      "name": "<xy-1>",
+      "degrees": {
+        "d2": {
+          "border_basis_size": 5,
+          "groebner_basis_size": 5,
+          "border_size": 5,
+          "num_mult_tables": 5,
+          "border_basis_condition": 1.0,
+          "groebner_condition": 1.0,
+          "condition_ratio": 1.0,
+          "border_time_ms": 0.41,
+          "groebner_time_ms": 0.1,
+          "groebner_num_gens": 1
+        },
+        "d3": {
+          "border_basis_size": 7,
+          "groebner_basis_size": 7,
+          "border_size": 7,
+          "num_mult_tables": 7,
+          "border_basis_condition": 1.0,
+          "groebner_condition": 1.0,
+          "condition_ratio": 1.0,
+          "border_time_ms": 0.79,
+          "groebner_time_ms": 0.1,
+          "groebner_num_gens": 1
+        }
+      }
+    },
+    {
+      "id": "motzkin_grad",
+      "name": "Motzkin Grad Ideal",
+      "degrees": {
+        "d2": {
+          "border_basis_size": 6,
+          "groebner_basis_size": 6,
+          "border_size": 4,
+          "num_mult_tables": 4,
+          "border_basis_condition": "inf",
+          "groebner_condition": 1.0,
+          "condition_ratio": "inf",
+          "border_time_ms": 0.57,
+          "groebner_time_ms": 0.39,
+          "groebner_num_gens": 4
+        }
+      }
+    }
+  ],
+  "scaling": [
+    {
+      "id": "fully_sparse",
+      "name": "Fully Sparse (6 indep)",
+      "num_vars": 6,
+      "sparsity": {
+        "is_sparse": true,
+        "num_components": 6,
+        "component_sizes": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "reduction_factor_d2": 0.0952,
+        "reduction_factor_d3": 0.0552
+      },
+      "newton": {
+        "full_basis": 210,
+        "pruned_basis": 210,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      }
+    },
+    {
+      "id": "chain",
+      "name": "Chain coupling",
+      "num_vars": 6,
+      "sparsity": {
+        "is_sparse": true,
+        "num_components": 5,
+        "component_sizes": [
+          2,
+          1,
+          1,
+          1,
+          1
+        ],
+        "reduction_factor_d2": 0.0952,
+        "reduction_factor_d3": 0.0563
+      },
+      "newton": {
+        "full_basis": 210,
+        "pruned_basis": 210,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      }
+    },
+    {
+      "id": "star",
+      "name": "Star (x0 hub)",
+      "num_vars": 6,
+      "sparsity": {
+        "is_sparse": true,
+        "num_components": 5,
+        "component_sizes": [
+          2,
+          1,
+          1,
+          1,
+          1
+        ],
+        "reduction_factor_d2": 0.0952,
+        "reduction_factor_d3": 0.0563
+      },
+      "newton": {
+        "full_basis": 210,
+        "pruned_basis": 210,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      }
+    },
+    {
+      "id": "fully_dense",
+      "name": "Fully Dense",
+      "num_vars": 6,
+      "sparsity": {
+        "is_sparse": false,
+        "num_components": 1,
+        "component_sizes": [
+          6
+        ],
+        "reduction_factor_d2": 1.0,
+        "reduction_factor_d3": 1.0
+      },
+      "newton": {
+        "full_basis": 210,
+        "pruned_basis": 210,
+        "reduction_ratio": 1.0,
+        "entries_saved": 0
+      }
+    }
+  ]
+}

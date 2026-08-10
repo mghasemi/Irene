@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, rewrite]
+  pull_request:
+    branches: [main, master, rewrite]
+
+env:
+  PYTHONUTF8: "1"
+
+jobs:
+  # ------------------------------------------------------------------
+  # Test matrix: 3 Python versions × 2 solvers = 6 jobs
+  # ------------------------------------------------------------------
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+        solver: [CLARABEL, SCS]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install system dependencies (CVXOPT)
+        run: |
+          sudo apt-get update && sudo apt-get install -y \
+            libopenblas-dev liblapack-dev libglpk-dev libgmp-dev
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+          pip install clarabel scs pytest pytest-timeout pytest-cov pyyaml
+          pip install -e .
+
+      - name: Verify solver availability
+        run: |
+          python -c "
+          import cvxpy as cp
+          available = cp.installed_solvers()
+          solver = '${{ matrix.solver }}'
+          assert solver in available, f'{solver} not installed. Available: {available}'
+          print(f'{solver} ✓ — installed solvers: {[s for s in [\"CLARABEL\",\"SCS\",\"CVXOPT\"] if s in available]}')
+          "
+
+      - name: Run pytest with coverage (solver=${{ matrix.solver }})
+        env:
+          IRENE_CI_SOLVER: ${{ matrix.solver }}
+          CI_PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          python -m pytest \
+            Irene/tests/ tests/ \
+            --cov=Irene --cov-report=xml \
+            --timeout=120 \
+            --tb=short -q
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage.xml
+          flags: python-${{ matrix.python-version }},${{ matrix.solver }}
+          name: coverage-py${{ matrix.python-version }}-${{ matrix.solver }}
+
+      - name: Run separating examples regression (solver=${{ matrix.solver }})
+        env:
+          IRENE_CI_SOLVER: ${{ matrix.solver }}
+        run: |
+          python -m pytest tests/test_separating_examples.py -v --tb=short
+
+  # ------------------------------------------------------------------
+  # Benchmark gallery — runs once on primary Python version
+  # ------------------------------------------------------------------
+  benchmark:
+    runs-on: ubuntu-latest
+    needs: test
+    if: always() && contains(needs.test.result, 'success')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install system dependencies (CVXOPT)
+        run: |
+          sudo apt-get update && sudo apt-get install -y \
+            libopenblas-dev liblapack-dev libglpk-dev libgmp-dev
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+          pip install clarabel scs pytest pyyaml
+          pip install -e .
+
+      - name: Run benchmark gallery (quick mode)
+        run: |
+          cd benchmarks
+          python run_gallery.py \
+            --solver clarabel \
+            --quick \
+            --timeout 120 \
+            --output-dir ./results/
+
+      - name: Upload benchmark results artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-py311-clarabel
+          path: benchmarks/results/
+          retention-days: 30

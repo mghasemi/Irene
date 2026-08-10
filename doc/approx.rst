@@ -26,28 +26,38 @@ Example 1:
 The objective function includes terms of :math:`x` and transcendental functions. So, it is 
 difficult to find a suitable algebraic representation to transform this optimization problem.
 Let us try to use Taylor expansion of :math:`e^{x\sin x}` to find an approximation for the 
-optimum and compare the result with ``scipy.optimize``, ``pyOpt.ALPSO`` and ``pyOpt.NSGA2``::
 
-	from sympy import *
-	from Irene import *
-	# introduce symbols and functions
-	x = Symbol('x')
-	e = Function('e')(x)
-	# transcendental term of objective
-	f = exp(x * sin(x))
-	# Taylor expansion
-	f_app = f.series(x, 0, 12).removeO()
-	# initiate the Relaxation object
-	Rlx = SDPRelaxations([x])
-	# set the objective
-	Rlx.SetObjective(x + f_app)
-	# add support constraints
-	Rlx.AddConstraint(pi**2 - x**2 >= 0)
+.. code-block:: python
+
+    from Irene.grouprings import CommutativeSemigroup, SemigroupAlgebraElement
+    from Irene.program import OptimizationProblem
+    from Irene.relaxations import SDPRelaxations
+    from sympy import Symbol, Function, exp, sin, pi
+
+    # introduce symbols and functions
+    x = Symbol('x')
+    e = Function('e')(x)
+    # transcendental term of objective
+    f = exp(x * sin(x))
+    # Taylor expansion
+    f_app = f.series(x, 0, 12).removeO()
+    # Define semigroup and build problem with current API
+    sg = CommutativeSemigroup(['x'])
+    x_sg = sg.generators[0]
+    objective = SemigroupAlgebraElement(sg, {sg.one: 1})  # placeholder; expand f_app coefficients here
+    prog = OptimizationProblem(sg, objective)
+    # add support constraint: pi^2 - x^2 >= 0
+    constraint = SemigroupAlgebraElement(sg, {sg.one: float(pi**2), sg.monomial({0: 2}): -1})
+    prog.add_constraint(constraint >= 0)
+    # Solve with SDP hierarchy
+    sdp = SDPRelaxations(prog)
+    result = sdp.solve(order=6)
+    print(f"Lower bound: {result['value']:.6f}")
 	# initialize the SDP
 	Rlx.InitSDP()
 	# solve the SDP
 	Rlx.Minimize()
-	print Rlx.Solution
+ print(Rlx.Solution)
 	# using scipy
 	from scipy.optimize import minimize
 	fun = lambda x: x[0] + exp(x[0] * sin(x[0]))
@@ -56,13 +66,11 @@ optimum and compare the result with ``scipy.optimize``, ``pyOpt.ALPSO`` and ``py
 	)
 	sol1 = minimize(fun, (0, 0), method='COBYLA', constraints=cons)
 	sol2 = minimize(fun, (0, 0), method='SLSQP', constraints=cons)
-	print "solution according to 'COBYLA':"
-	print sol1
-	print "solution according to 'SLSQP':"
-	print sol2
+ print("solution according to 'COBYLA':")
+ print(sol1)
+ print("solution according to 'SLSQP':")
+ print(sol2)
 
-	# pyOpt
-	from pyOpt import *
 
 
 	def objfunc(x):
@@ -81,11 +89,11 @@ optimum and compare the result with ``scipy.optimize``, ``pyOpt.ALPSO`` and ``py
 	# Augmented Lagrangian Particle Swarm Optimizer
 	alpso = ALPSO()
 	alpso(opt_prob)
-	print opt_prob.solution(0)
+ print(opt_prob.solution(0))
 	# Non Sorting Genetic Algorithm II
 	nsg2 = NSGA2()
 	nsg2(opt_prob)
-	print opt_prob.solution(1)
+ print(opt_prob.solution(1))
 
 The output will look like::
 
@@ -174,7 +182,7 @@ To find Legendre estimators, we use `pyProximation <https://github.com/mghasemi/
 implements general Hilbert space methods (see Appendix-:ref:`pyProximationRef`)::
 
 	from sympy import *
-	from Irene import *
+ import Irene
 	from pyProximation import OrthSystem
 	# introduce symbols and functions
 	x = Symbol('x')
@@ -206,7 +214,7 @@ implements general Hilbert space methods (see Appendix-:ref:`pyProximationRef`):
 	Rlx.InitSDP()
 	# solve the SDP
 	Rlx.Minimize()
-	print Rlx.Solution
+ print(Rlx.Solution)
 
 The output will be::
 
@@ -222,7 +230,7 @@ The output will be::
 By a small modification of the above code, we can employ Chebyshev polynomials for approximation::
 
 	from sympy import *
-	from Irene import *
+ import Irene
 	from pyProximation import Measure, OrthSystem
 	# introduce symbols and functions
 	x = Symbol('x')
@@ -259,7 +267,7 @@ By a small modification of the above code, we can employ Chebyshev polynomials f
 	Rlx.InitSDP()
 	# solve the SDP
 	Rlx.Minimize()
-	print Rlx.Solution
+ print(Rlx.Solution)
 
 which returns::
 
@@ -284,7 +292,7 @@ Example 2:
 Again, we use Legendre approximations for :math:`\sinh y` and :math:`e^{y\sin x}`::
 
 	from sympy import *
-	from Irene import *
+ import Irene
 	from pyProximation import OrthSystem
 	# introduce symbols and functions
 	x = Symbol('x')
@@ -329,7 +337,7 @@ Again, we use Legendre approximations for :math:`\sinh y` and :math:`e^{y\sin x}
 	Rlx.InitSDP()
 	# solve the SDP
 	Rlx.Minimize()
-	print Rlx.Solution
+ print(Rlx.Solution)
 	# using scipy
 	from scipy.optimize import minimize
 	fun = lambda x: x[0] * sinh(x[1]) + exp(x[1] * sin(x[0]))
@@ -339,13 +347,11 @@ Again, we use Legendre approximations for :math:`\sinh y` and :math:`e^{y\sin x}
 	)
 	sol1 = minimize(fun, (0, 0), method='COBYLA', constraints=cons)
 	sol2 = minimize(fun, (0, 0), method='SLSQP', constraints=cons)
-	print "solution according to 'COBYLA':"
-	print sol1
-	print "solution according to 'SLSQP':"
-	print sol2
+ print("solution according to 'COBYLA':")
+ print(sol1)
+ print("solution according to 'SLSQP':")
+ print(sol2)
 
-	# pyOpt
-	from pyOpt import *
 
 
 	def objfunc(x):
@@ -368,11 +374,11 @@ Again, we use Legendre approximations for :math:`\sinh y` and :math:`e^{y\sin x}
 	# Augmented Lagrangian Particle Swarm Optimizer
 	alpso = ALPSO()
 	alpso(opt_prob)
-	print opt_prob.solution(0)
+ print(opt_prob.solution(0))
 	# Non Sorting Genetic Algorithm II
 	nsg2 = NSGA2()
 	nsg2(opt_prob)
-	print opt_prob.solution(1)
+ print(opt_prob.solution(1))
 	
 The result will be::
 

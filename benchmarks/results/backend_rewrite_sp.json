@@ -1,0 +1,258 @@
+{
+ "mode": "irene_rewrite_sympy",
+ "package_root": "/home/mehdi/Code/Python/IreneRewrite",
+ "backend": "sympy",
+ "timestamp": "2026-08-09T20:54:45Z",
+ "sections": {
+  "sos_sonc_sosonc": {
+   "quartic_1d": {
+    "true_min": -0.25,
+    "methods": {
+     "sos_r2": {
+      "value": -0.25,
+      "status": "optimal",
+      "elapsed_s": 0.0306
+     },
+     "sonc_r2": {
+      "value": -Infinity,
+      "status": "error",
+      "elapsed_s": 0.1273
+     },
+     "sosonc_r2": {
+      "value": -0.24999999,
+      "status": "optimal",
+      "elapsed_s": 0.0239
+     }
+    }
+   },
+   "motzkin": {
+    "true_min": 0.0,
+    "methods": {
+     "sos_r1": {
+      "value": -Infinity,
+      "status": "infeasible",
+      "elapsed_s": 0.1226
+     },
+     "sonc_r1": {
+      "value": 1e-07,
+      "status": "optimal",
+      "elapsed_s": 0.0073
+     },
+     "sosonc_r1": {
+      "value": 1e-07,
+      "status": "optimal",
+      "elapsed_s": 0.161
+     }
+    }
+   },
+   "sphere_4": {
+    "true_min": 0.5,
+    "methods": {
+     "sos_r2": {
+      "value": 0.49999993,
+      "status": "optimal",
+      "elapsed_s": 0.094
+     },
+     "sonc_r2": {
+      "value": -0.0,
+      "status": "optimal",
+      "elapsed_s": 0.0085
+     },
+     "sosonc_r2": {
+      "value": 0.5,
+      "status": "optimal",
+      "elapsed_s": 0.0941
+     }
+    }
+   },
+   "schick": {
+    "true_min": 0.0,
+    "methods": {
+     "sos_r1": {
+      "value": -Infinity,
+      "status": "infeasible",
+      "elapsed_s": 0.1547
+     },
+     "sonc_r1": {
+      "value": -2.98780235,
+      "status": "optimal",
+      "elapsed_s": 0.014
+     },
+     "sosonc_r1": {
+      "value": -2.98780235,
+      "status": "optimal",
+      "elapsed_s": 0.1246
+     }
+    }
+   },
+   "elapsed_s": 0.9982,
+   "status": "ok"
+  },
+  "gp": {
+   "objective": "-2.000 * x**2 + -1.000 * y",
+   "num_constraints": 2,
+   "solve_output": "-3.593124846191197",
+   "elapsed_s": 0.0902,
+   "status": "ok"
+  },
+  "dsdp_mean": {
+   "problem": "choi_lam_M10",
+   "lower_bound": 4.985148532398173e-09,
+   "elapsed_s": 1.2749,
+   "status": "ok"
+  },
+  "dsdp_kkt": {
+   "problem": "exp_decay_kkt",
+   "lower_bound": 7.937918858727794e-09,
+   "elapsed_s": 0.0801,
+   "status": "ok"
+  },
+  "ade_relations": {
+   "single_deriv_symbols": [
+    "d_x",
+    "d_u"
+   ],
+   "multi_deriv_symbols": [
+    "dy_y",
+    "dy_L",
+    "dy_v"
+   ],
+   "relations": [
+    "d_x - 1",
+    "d_u - u**2 - 1"
+   ],
+   "gens": [
+    "d_x",
+    "d_u",
+    "x",
+    "u"
+   ],
+   "build_ms": 0.12,
+   "elapsed_s": 0.0009,
+   "status": "ok"
+  },
+  "border_basis": {
+   "circle_xy": {
+    "api": "rewrite(BorderBasis.variables/generators/degree)",
+    "reduced_xy": "1.0",
+    "conditioning": {
+     "condition_number": Infinity,
+     "basis_conditioning": 7.406535029834831,
+     "is_well_conditioned": false
+    },
+    "elapsed_s": 0.0035
+   },
+   "monomial": {
+    "api": "rewrite(BorderBasis.variables/generators/degree)",
+    "reduced_xy": "1.0*x*y",
+    "conditioning": {
+     "condition_number": Infinity,
+     "basis_conditioning": 3.7608937020816846,
+     "is_well_conditioned": false
+    },
+    "elapsed_s": 0.0018
+   },
+   "elapsed_s": 0.0053,
+   "status": "ok"
+  },
+  "sparsity": {
+   "api": "rewrite(detect_sparsity_from_polys)",
+   "is_sparse": true,
+   "reduction_factor": 0.22857142857142856,
+   "summary": {
+    "num_vars": 3,
+    "num_components": 3,
+    "is_sparse": true,
+    "component_sizes": [
+     1,
+     1,
+     1
+    ],
+    "components": [
+     [
+      0
+     ],
+     [
+      1
+     ],
+     [
+      2
+     ]
+    ],
+    "edges": 0
+   },
+   "elapsed_s": 0.0002,
+   "status": "ok"
+  },
+  "newton_polytope": {
+   "api": "rewrite(prune_basis_from_polys)",
+   "reduction_info": {
+    "full_basis_size": 15,
+    "pruned_basis_size": 5,
+    "reduction_ratio": 0.3333,
+    "matrix_entry_reduction": 0.1111,
+    "entries_saved": 200
+   },
+   "elapsed_s": 0.001,
+   "status": "ok"
+  },
+  "symbolic_micro": {
+   "backend": "engine-sympy",
+   "ops": {
+    "expand_deg8": {
+     "elapsed_ms": 0.006
+    },
+    "poly_deg6": {
+     "elapsed_ms": 0.06
+    },
+    "groebner": {
+     "elapsed_ms": 0.216
+    },
+    "matrix_mul": {
+     "elapsed_ms": 0.061
+    },
+    "zeros_50": {
+     "elapsed_ms": 0.003
+    }
+   },
+   "elapsed_s": 0.0025,
+   "status": "ok"
+  },
+  "quotient_basis": {
+   "quartic_1d": {
+    "true_min": -0.25,
+    "note": "no relations -> border mode falls back to full monomial basis",
+    "modes": {
+     "groebner": {
+      "lower_bound": -0.25,
+      "basis_size": 5,
+      "elapsed_s": 0.0231
+     },
+     "border": {
+      "lower_bound": -0.25,
+      "basis_size": 5,
+      "elapsed_s": 0.0189
+     }
+    }
+   },
+   "circle_relations": {
+    "true_min": 1.0,
+    "note": "quotient by <x^2+y^2-1>; standard monomials {1,x,y,xy,y^2}",
+    "modes": {
+     "groebner": {
+      "lower_bound": 1.0,
+      "basis_size": 5,
+      "elapsed_s": 0.029
+     },
+     "border": {
+      "lower_bound": 1.0,
+      "basis_size": 5,
+      "elapsed_s": 0.0247
+     }
+    }
+   },
+   "elapsed_s": 0.0958,
+   "status": "ok"
+  }
+ }
+}

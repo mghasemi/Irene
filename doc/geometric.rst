@@ -82,6 +82,32 @@ Practical Notes
 
 1. The method returns a lower bound as a floating-point value.
 2. Solver availability and numerical conditioning can affect runtime behavior.
-3. ``examples/GPExample.py`` provides a complete end-to-end usage pattern.
-4. If automatic transformation is unstable for a given instance, a custom
-   matrix can be supplied by setting ``gp.H`` before calling ``solve``.
+3. If automatic transformation is unstable for a given instance, a custom
+   matrix can be supplied by passing the ``H`` keyword argument or setting
+   ``gp.H`` before calling ``solve``.
+
+Runable Example
+=================================
+
+The following example minimizes :math:`-y - 2x^2` over a basic semialgebraic set
+using GP relaxations::
+
+    from Irene.grouprings import CommutativeSemigroup, SemigroupAlgebra
+    from Irene.program import OptimizationProblem
+    from Irene.geometric import GPRelaxations
+
+    sg = CommutativeSemigroup(['x', 'y'])
+    sga = SemigroupAlgebra(sg)
+    x, y = sga['x'], sga['y']
+
+    prog = OptimizationProblem(sga)
+    prog.set_objective(-y - 2 * x**2)
+    prog.add_constraints([1.0 - x**4 - y**4])
+
+    gp = GPRelaxations(prog, verbosity=0)
+    lower_bound = gp.solve()
+    print(f"GP lower bound: {lower_bound:.6f}")
+
+The ``verbosity`` keyword controls solver output (``0`` for silent). The returned
+value is a certified lower bound on the global minimum of the objective over the
+feasible set defined by the constraints.

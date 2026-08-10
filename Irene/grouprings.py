@@ -24,6 +24,7 @@ This module also provides the following functions:
 from itertools import combinations_with_replacement
 from typing import Any, Iterator
 
+# Structural SymPy imports -- combinatorics layer (free groups) is the algebraic backbone
 from sympy import Expr
 from sympy.combinatorics.fp_groups import FpGroup
 from sympy.combinatorics.free_groups import free_group, FreeGroupElement

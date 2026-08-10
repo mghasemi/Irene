@@ -1,0 +1,198 @@
+========================================
+Border Basis Theory and Implementation
+========================================
+
+The ``border_basis.py`` module provides tools for computing border bases of
+quotient algebras :math:`\mathbb{R}[x_1, \dots, x_n] / I` at a fixed degree.
+Border bases offer numerical advantages over Gröbner bases for polynomial
+optimization, particularly for moment matrix constructions in SDP hierarchies.
+
+.. contents::
+   :local:
+   :depth: 2
+
+Theory
+======
+
+Border Bases vs Gröbner Bases
+-----------------------------
+
+A **Gröbner basis** of an ideal :math:`I` depends on a monomial ordering and
+produces a unique standard monomial set (the normal form basis). However, the
+choice of ordering can severely affect numerical conditioning: lexicographic
+orderings tend to produce large coefficients, while graded reverse lexicographic
+orderings may include high-degree monomials that inflate matrix dimensions.
+
+A **border basis** at degree :math:`d` works with the vector space
+:math:`V_d = \text{span}\{x^\alpha : |\alpha| \leq d\}` and computes a basis
+for the quotient :math:`V_d / (I \cap V_d)` without fixing a monomial ordering.
+The key insight is that multiplication by variables maps :math:`V_d` into a larger
+space, and the **border** :math:`\partial V_d = \{x_i x^\alpha : |\alpha| = d\}`
+encodes how the quotient algebra extends to degree :math:`d+1`.
+
+Admissible Term Orders and QR Pivot Selection
+----------------------------------------------
+
+The numerical QR column-pivoting scheme in ``BorderBasis._compute_basis`` selects
+a monomial basis for the quotient ring :math:`\mathbb{R}[x_1,\dots,x_n]/I` by
+eliminating monomials whose coefficient columns are linearly dependent on the
+ideal generators.  To guarantee that this numerical selection recovers the
+standard monomial basis of the quotient, the column norm selection rule is
+perturbed by a graded term-order weight.
+
+Let :math:`\prec` be an admissible term order on the exponent vectors
+:math:`\alpha \in \mathbb{N}^n` (e.g., degree-lexicographic
+:math:`\prec_{\text{deglex}}` or degree-reverse-lexicographic
+:math:`\prec_{\text{degrevlex}}`).  Let :math:`\operatorname{rank}_\prec(\alpha)`
+be the position of :math:`\alpha` in the ascending enumeration of exponent
+vectors under :math:`\prec` (smaller monomials have lower rank).
+
+Each column in the relation matrix :math:`R` is scaled by the weight
+
+.. math::
+
+   w_\alpha = 10^{2 \cdot \|\alpha\|_1} \cdot \big(1 + \varepsilon \cdot \operatorname{rank}_\prec(\alpha)\big),
+
+where :math:`\varepsilon \ll 1` (e.g., :math:`10^{-12}`) and
+:math:`\|\alpha\|_1 = \sum_i \alpha_i` is the total degree.  The primary factor
+:math:`10^{2\|\alpha\|_1}` ensures that **higher-degree monomials pivot first**
+(respecting the graded structure required by border basis theory).  The secondary
+perturbation :math:`1 + \varepsilon \cdot \operatorname{rank}_\prec(\alpha)` breaks
+ties among monomials of the same total degree: the lex-larger monomial (higher
+:math:`\operatorname{rank}_\prec`) receives a slightly larger weight and is
+selected as a pivot column, eliminating it from the quotient basis.  This
+guarantees that the QR pivoting uniquely recovers the standard monomial basis
+of :math:`\mathbb{R}[x_1,\dots,x_n]/I`.
+
+Conditioning Benefits
+---------------------
+
+Border bases are known to be better conditioned than Gröbner bases for degrees
+:math:`d \\geq 6` in multivariate settings. This is because:
+
+1. **No monomial ordering bias in the basis itself**: The basis adapts to the
+   numerical structure of the generators; the ordering only affects pivot
+   tie-breaking.
+2. **Compact representation**: Only monomials up to degree :math:`d` are considered,
+   avoiding the high-degree terms that Gröbner bases may introduce.
+3. **Orthogonalization-friendly**: The border basis algorithm uses QR factorization,
+   which preserves numerical stability under perturbation.
+
+For SDP hierarchies in polynomial optimization, this translates to better-conditioned
+moment matrices and more reliable semidefinite programming solves at higher orders.
+
+Multiplication Tables
+---------------------
+
+The border basis representation includes **multiplication tables** :math:`M_{x_i}`
+that describe how multiplication by each variable acts on the quotient algebra
+basis. These tables are symmetric when the ideal is zero-dimensional and the
+quotient admits an inner product structure (as in the moment problem setting).
+
+Specifically, if :math:`\{b_1, \dots, b_k\}` is a border basis of
+:math:`V_d / (I \cap V_d)`, then for each variable :math:`x_i`:
+
+.. math::
+
+   x_i \cdot b_j = \sum_{l=1}^k (M_{x_i})_{lj} b_l + \text{border terms}.
+
+The multiplication tables encode the algebra structure of the quotient and can be
+used to recover roots via joint eigenvalue methods when :math:`I` is zero-dimensional.
+
+API Reference
+=============
+
+BorderBasis Class
+-----------------
+
+.. code-block:: python
+
+   from Irene.border_basis import BorderBasis
+
+   # Construct border basis at degree d for ideal generated by polys g1, ..., gm
+   bb = BorderBasis(variables=['x', 'y'], generators=[g1, g2], degree=4)
+
+   # Access the computed basis
+   basis = bb.basis          # List of monomials in quotient
+   mult_tables = bb.tables   # Multiplication tables M_xi for each variable
+
+The constructor takes:
+
+- **variables** (list[str]): Variable names defining the polynomial ring
+- **generators** (list): Polynomial generators of the ideal :math:`I` (as SymPy/SymEngine expressions or semigroup algebra elements)
+- **degree** (int): The degree bound :math:`d` for the border basis computation
+
+The border basis is computed via QR factorization of the generator coefficient
+matrix restricted to monomials of degree up to :math:`d`. The resulting basis
+spans a complement of :math:`I \cap V_d` in :math:`V_d`.
+
+Integration with SDP Hierarchies
+================================
+
+In the IreneRewrite relaxation pipeline, border bases are used to replace the
+full monomial basis with a numerically stable quotient basis at each order. This
+reduces moment matrix dimension while preserving the algebraic structure needed
+for positive semidefinite constraints.
+
+The ``RelaxationEngine`` automatically uses border basis reduction when configured:
+
+.. code-block:: python
+
+   from Irene.relaxations import RelaxationConfig
+   from Irene.relaxation_api import RelaxationEngine
+
+   config = RelaxationConfig(
+       reduction_method="border_basis",
+       monomial_pruning=True,
+   )
+   engine = RelaxationEngine(prog, order=3, config=config)
+   result = engine.solve("sos")
+
+Selecting the Quotient-Basis Reduction Engine
+---------------------------------------------
+
+The **quotient-basis option** (added 2026-08-09) lets users choose which engine
+performs the quotient-ring reduction inside ``SDPRelaxations``:
+
+- ``quotient_basis="groebner"`` (default) — classical SymPy Groebner-basis
+  reduction via ``sp.reduced``, matching original Irene.
+- ``quotient_basis="border"`` — IreneRewrite's ``BorderBasis`` quotient-algebra
+  reduction via multiplication tables (``ReduceExp`` and ``ReducedMonomialBase``
+  both use it).
+
+.. code-block:: python
+
+   config = RelaxationConfig(quotient_basis="border")   # or "groebner"
+   rlx = SDPRelaxations([x, y], relations=[x**2 + y**2 - 1], config=config)
+
+The environment variable ``IRENE_QUOTIENT_BASIS=groebner|border`` sets the
+default when no config is passed (useful for benchmark matrices).
+
+**Numerical fix (2026-08-09):** the QR column-pivot selection used in
+``BorderBasis._compute_basis`` previously resolved same-degree ties by column
+order, which could keep the generator's own leading monomial in the basis
+(e.g. :math:`y^2` instead of :math:`x^2` for :math:`\\langle x^2+y^2-1\\rangle`,
+whose lex leading monomial is :math:`x^2`), producing a wrong quotient basis.
+Column weights now carry a tiny ascending-lex tie-break so the lex-larger
+monomial pivots first, consistent with the monomial order used during
+reduction. All test ideals verify against the theoretical standard monomials.
+
+Practical Notes
+===============
+
+1. Border bases are most beneficial for **multivariate problems at degree $\geqslant 6$**,
+   where Gröbner basis conditioning degrades significantly.
+2. The multiplication tables can be used to extract **moment vectors** from the
+   dual SDP solution via eigenvalue methods.
+3. For zero-dimensional ideals, the border basis size equals the number of complex
+   roots (counting multiplicity), providing a dimension check.
+4. The border basis is computed numerically (QR + floating-point reduction);
+   ``reduce()`` returns float coefficients. Use ``quotient_basis="groebner"``
+   when exact rational arithmetic is required.
+
+References
+==========
+
+- Möller, H. M. & Trager, B. M. (1987). "A new approach to polynomial system solution." *ISSAC '87*.
+- Galligo, A., Gibanel, A., & Mourrain, B. (2005). "Border bases and the numerical solution of polynomial systems." *Applied Numerical Mathematics*, 54(4), 413–436.
+- Beckermann, B. & Gastinel, L. (2017). "Multivariate polynomial GCDs using border basis techniques." *Journal of Symbolic Computation*, 80, 399–425.
