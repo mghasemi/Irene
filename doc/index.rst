@@ -18,6 +18,7 @@ Contents:
 
    introduction
    architecture
+   migration
 
 .. toctree::
    :maxdepth: 2
@@ -30,19 +31,29 @@ Contents:
    sonc
    sosonc
    optim
-   approx
 
 .. toctree::
    :maxdepth: 2
-   :caption: Phase 3 — Reductions and Extensions
+   :caption: Phase 3 — Algebraic Reductions
 
    border_basis
    sparsity
    newton_polytope
    relaxation_api
-   cvxpy_solver
-   dsdp_mean
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Transcendental & Differential Algebraic Optimization
+
+   approx
    nonpopsdp
+   dsdp_mean
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Solver Layer & Numerical Methods
+
+   cvxpy_solver
 
 .. toctree::
    :maxdepth: 2

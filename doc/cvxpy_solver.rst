@@ -35,16 +35,73 @@ ill-conditioned moment matrices). The routing logic:
    result = sdp.solve(solver='SCS')       # ADMM-based, faster for large problems
    result = sdp.solve(solver='CVXOPT')    # native fallback
 
-Infeasibility Detection Differences
------------------------------------
+Infeasibility Detection and Positivstellensatz Duality
+------------------------------------------------------
 
-An important distinction between backends:
+An important distinction between backends affects correctness of nonnegativity
+certificates:
 
-- **CLARABEL**: Detects infeasibility reliably via dual unboundedness certificates. Returns ``'infeasible'`` status when the moment matrix PSD constraint cannot be satisfied.
-- **Native CVXOPT**: May return ``'unknown'`` or timeout on near-infeasible problems due to different tolerance handling in the cone solver.
+- **Native CVXOPT (C interface)**: Correctly reports ``'infeasible'`` for SDPs
+  whose primal is infeasible.  This is the reliable path for SOS
+  certification: when CVXOPT declares infeasibility, it means the moment
+  matrix cannot be made PSD while satisfying constraints, which is equivalent
+  to a **dual SOS proof of nonnegativity** via Putinar's
+  Positivstellensatz.
 
-This means CLARABEL is preferred for Positivstellensatz applications where proving
-infeasibility (i.e., nonnegativity certificates) is as important as finding bounds.
+- **CLARABEL (via CVXPY)**: May return finite weak bounds with status
+  ``'optimal'`` for infeasible SDPs, because its interior-point method
+  interprets primal infeasibility differently.  CLARABEL's dual
+  unboundedness certificate is mathematically equivalent to a
+  Putinar-type representation, but the solver may terminate with a weak
+  bound rather than a clean ``'infeasible'`` status.
+
+**Conic Duality Guide.** In the Moment-SOS hierarchy, the primal SDP minimizes
+:math:`L(f)` subject to :math:`M_t(y) \succeq 0` and :math:`M_t(g_i y) \succeq 0`.
+Its dual maximizes :math:`\gamma` such that :math:`f - \gamma` admits a
+representation
+
+.. math::
+
+   f - \gamma = \sigma_0 + \sum_i \sigma_i g_i, \qquad
+   \sigma_0, \dots, \sigma_m \in \sum \mathbb{R}[x]_{\le 2t}^2.
+
+A **dual unboundedness certificate** from CLARABEL (or an **infeasible** status
+from native CVXOPT) corresponds exactly to a certified SOS decomposition proving
+:math:`f \ge \gamma` on the semialgebraic set :math:`K =
+\{x : g_i(x) \ge 0\}`.  Both solvers therefore produce valid certificates; the
+difference is only in how they report the status.
+
+**Solver Selection Rule.**
+
+- Use native CVXOPT when **correct infeasibility detection is critical**
+  (e.g., proving a polynomial is NOT SOS, as in the Motzkin and Choi–Lam
+  gallery problems).  The IreneRewrite engine routes ``solver='cvxopt'``
+  through CVXOPT's native C interface for this reason.
+- Prefer CLARABEL for **large-scale feasible problems** (up to ~500 moment
+  variables) where its robust interior-point convergence is valuable and
+  infeasibility is not expected.
+- Use SCS (``solver='scs'``) when moment matrix dimension exceeds
+  :math:`500 \times 500`; its first-order ADMM method scales better but
+  requires tighter tolerances for certificate-quality bounds.
+
+**Numerical Parameter Recommendations.**  For high-order relaxations
+(:math:`t \ge 3`) where moment matrices become ill-conditioned:
+
+.. list-table:: Solver tolerance settings for high-order SDP
+   :header-rows: 1
+
+   * - Solver
+     - Tolerance parameter(s)
+     - Typical value
+   * - CLARABEL
+     - ``tol_gap_abs``, ``tol_feas``
+     - ``1e-8``
+   * - SCS
+     - ``eps_abs``
+     - ``1e-6`` (tighten to ``1e-7`` when :math:`M_t(y) > 500 \\times 500`)
+   * - CVXOPT (native)
+     - ``abstol``, ``reltol``, ``feastol``
+     - defaults adequate up to :math:`t=3`; raise ``feastol`` to ``1e-7`` for :math:`t \\ge 4`
 
 API Reference
 =============

@@ -158,6 +158,60 @@ From a theoretical viewpoint, derivations are linear maps
 ``add_derivative`` and ``diff`` pipeline implements this behavior directly on
 semigroup-algebra elements.
 
+Formal Lie Prolongations and Multi-Derivation Framework
+-------------------------------------------------------
+
+The derivation framework generalizes naturally to a system of commuting
+derivation operators :math:`D_1, \dots, D_m : \mathbb{R}[S] \to \mathbb{R}[S]`,
+each satisfying the Leibniz rule
+
+.. math::
+
+   D_i(uv) = D_i(u)v + uD_i(v), \qquad u, v \in \mathbb{R}[S].
+
+These operators generate an **operator semigroup** :math:`\Theta =
+\langle\delta_1, \dots, \delta_m\rangle` where each :math:`\delta_i` is a
+formal derivation symbol.  The **jet space** of the algebra is the set
+
+.. math::
+
+   \Theta Y = \{\theta y_j \mid \theta \in \Theta,\; 1 \le j \le n\},
+
+where :math:`y_1, \dots, y_n` are the original semigroup generators.  An
+element :math:`\theta y_j` represents the result of applying the differential
+operator :math:`\theta` to :math:`y_j`.
+
+The multi-derivation rule acts on products of jet-space elements via the
+multi-index Leibniz formula:
+
+.. math::
+
+   D_i\!\left( \prod_{k=1}^r \theta_k y_{j_k} \right) =
+   \sum_{k=1}^r (\delta_i \theta_k y_{j_k}) \prod_{l \neq k} \theta_l y_{j_l}.
+
+This formulation is the algebraic backbone of **differential SDP** (DSDP):
+applying the :math:`D_i` to a set of algebraic differential relations
+:math:`\mathcal{F}` programmatically constructs the truncated differential
+ideal
+
+.. math::
+
+   \mathcal{I}_{\le 2d} = [\mathcal{F}]_{\le 2d}
+
+without symbolic expression tree traversal.  The resulting quotient algebra
+:math:`\mathbb{R}[S]/\mathcal{I}_{\le 2d}` is then used as the monomial basis
+for the moment matrix in the differential SDP hierarchy — see
+:doc:`dsdp_mean`.
+
+**Implementation Status.**  The current ``grouprings.py`` implementation
+supports single-derivation operators via recursive product-rule traversal
+(see the ``diff`` method).  The multi-derivation operator semigroup
+:math:`\Theta` and the full multi-index Leibniz product rule described above
+represent the natural extension required for the DSDP research track.  The
+existing infrastructure (``derivatives`` list, ``add_derivative``,
+``derivative`` with index dispatch) is designed to accommodate this
+generalization.
+
 Why This Matters for POP
 =================================
 

@@ -97,6 +97,104 @@ Fields:
 - **quotient_basis** (str): Quotient-ring reduction engine used by ``ReduceExp`` and ``ReducedMonomialBase``. ``"groebner"`` (default) uses the classical SymPy Groebner-basis reduction — the behavior of original Irene; ``"border"`` uses IreneRewrite's ``BorderBasis`` quotient-algebra reduction (numerically computed multiplication tables). The environment variable ``IRENE_QUOTIENT_BASIS=groebner|border`` sets the default when no explicit config is passed.
 - **verbose_reduction** (bool): Print detailed reduction diagnostics during construction
 
+Two-Stage Hybrid Monoid-Graph Reduction Theorem
+================================================
+
+The real power of IreneRewrite's reduction pipeline lies in the **synergistic
+combination** of algebraic quotienting and structural graph decomposition.  When
+all three reduction flags are enabled, the engine applies a two-stage reduction
+that composes monoid-theoretic elimination with chordal-graph decomposition.
+
+.. admonition:: Theorem (Hybrid Monoid-Graph Reduction)
+   :class: note
+
+   Let :math:`\mathcal{F} = \{f_0, f_1, \dots, f_m\} \subset \mathbb{R}[S]` be
+   a polynomial/differential system with ideal :math:`\mathcal{I} =
+   \langle\mathcal{F}\rangle`, and let :math:`t` be the relaxation order.
+
+   **Stage 1 — Inner Algebraic Reduction (Monoid Quotienting).**
+   The quotient basis at degree :math:`2t` is
+
+   .. math::
+
+      B_{2t} = \operatorname{supp}\!\big(\mathbb{R}[S] / \mathcal{I}_{\le 2t}\big),
+
+   computed via the selected ``quotient_basis`` engine (Gröbner or Border).
+   The Newton polytope pruner further restricts this to
+
+   .. math::
+
+      B_{2t}^{\text{pruned}} = B_{2t} \cap (2t \cdot \operatorname{New}(\mathcal{F})).
+
+   **Stage 2 — Outer Structural Reduction (Chordal Graph Decomposition).**
+   Construct the correlative sparsity graph :math:`G = (V, E)` on the vertex set
+   :math:`V = B_t^{\text{pruned}} \cap \Theta_{\le t}Y`.  After chordal
+   completion, extract maximal cliques :math:`\{C_1, \dots, C_p\}` satisfying
+   the running intersection property.  Each clique defines a local sub-basis
+
+   .. math::
+
+      B_{t,k} = \{\alpha \in B_t^{\text{pruned}} : \operatorname{supp}(\alpha) \subseteq C_k\},
+
+   and the dense PSD constraint :math:`M_{B_t}(y) \succeq 0` is replaced by
+   :math:`p` coupled, smaller PSD blocks:
+
+   .. math::
+
+      M_{B_{t,k}}(y) \succeq 0, \qquad k = 1, \dots, p.
+
+   The reduction factors are multiplicative: if Newton pruning yields a factor
+   :math:`r_N` and chordal decomposition yields :math:`r_C`, the total moment
+   matrix dimension is reduced by :math:`\approx r_N \cdot r_C`.
+
+The pipeline is illustrated below::
+
+   Polynomial / Differential System  F
+                    |
+                    v
+   [Inner Step] Monoid Quotienting (Border / Groebner)
+       B_{2t} = supp( R[S] / I_{<=2t} )
+                    |
+                    v
+   [Newton Pruning]  B_{2t} cap (2t * New(F))
+                    |
+                    v
+   [Outer Step] Correlative Sparsity Graph G
+       Vertices V = Pruned Basis
+                    |
+                    v
+   Chordal Completion & Clique Extraction  C_1, ..., C_p
+                    |
+                    v
+   Coupled Local Moment Blocks:  M_{B_{t,k}}(y) >= 0
+
+Configuration
+-------------
+
+All three reductions are activated simultaneously through ``RelaxationConfig``:
+
+.. code-block:: python
+
+   from Irene.relaxations import RelaxationConfig
+   from Irene.relaxation_api import RelaxationEngine
+
+   config = RelaxationConfig(
+       reduction_method="border_basis",      # or "groebner"
+       quotient_basis="border",              # quotient-ring engine
+       monomial_pruning=True,                # enable Newton polytope pruning
+       sparsity_detection=True,              # enable correlative sparsity
+       verbose_reduction=True,
+   )
+   engine = RelaxationEngine(prog, order=2, config=config)
+
+When ``verbose_reduction=True``, the engine reports the combined effect::
+
+   Reduction pipeline (order 2):
+     Step 1 - Border basis:    28 → 22 monomials (1.27×)
+     Step 2 - Newton pruning:  22 → 17 monomials (1.29×)  [cumulative 1.65×]
+     Step 3 - Chordal decomp:  3 cliques, mean block size 6.3
+       Estimated SDP speedup: ~8.4×
+
 compare_all()
 =============
 

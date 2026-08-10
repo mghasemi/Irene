@@ -30,14 +30,49 @@ The key insight is that multiplication by variables maps :math:`V_d` into a larg
 space, and the **border** :math:`\partial V_d = \{x_i x^\alpha : |\alpha| = d\}`
 encodes how the quotient algebra extends to degree :math:`d+1`.
 
+Admissible Term Orders and QR Pivot Selection
+----------------------------------------------
+
+The numerical QR column-pivoting scheme in ``BorderBasis._compute_basis`` selects
+a monomial basis for the quotient ring :math:`\mathbb{R}[x_1,\dots,x_n]/I` by
+eliminating monomials whose coefficient columns are linearly dependent on the
+ideal generators.  To guarantee that this numerical selection recovers the
+standard monomial basis of the quotient, the column norm selection rule is
+perturbed by a graded term-order weight.
+
+Let :math:`\prec` be an admissible term order on the exponent vectors
+:math:`\alpha \in \mathbb{N}^n` (e.g., degree-lexicographic
+:math:`\prec_{\text{deglex}}` or degree-reverse-lexicographic
+:math:`\prec_{\text{degrevlex}}`).  Let :math:`\operatorname{rank}_\prec(\alpha)`
+be the position of :math:`\alpha` in the ascending enumeration of exponent
+vectors under :math:`\prec` (smaller monomials have lower rank).
+
+Each column in the relation matrix :math:`R` is scaled by the weight
+
+.. math::
+
+   w_\alpha = 10^{2 \cdot \|\alpha\|_1} \cdot \big(1 + \varepsilon \cdot \operatorname{rank}_\prec(\alpha)\big),
+
+where :math:`\varepsilon \ll 1` (e.g., :math:`10^{-12}`) and
+:math:`\|\alpha\|_1 = \sum_i \alpha_i` is the total degree.  The primary factor
+:math:`10^{2\|\alpha\|_1}` ensures that **higher-degree monomials pivot first**
+(respecting the graded structure required by border basis theory).  The secondary
+perturbation :math:`1 + \varepsilon \cdot \operatorname{rank}_\prec(\alpha)` breaks
+ties among monomials of the same total degree: the lex-larger monomial (higher
+:math:`\operatorname{rank}_\prec`) receives a slightly larger weight and is
+selected as a pivot column, eliminating it from the quotient basis.  This
+guarantees that the QR pivoting uniquely recovers the standard monomial basis
+of :math:`\mathbb{R}[x_1,\dots,x_n]/I`.
+
 Conditioning Benefits
 ---------------------
 
 Border bases are known to be better conditioned than Gröbner bases for degrees
-:math:`d \geq 6` in multivariate settings. This is because:
+:math:`d \\geq 6` in multivariate settings. This is because:
 
-1. **No monomial ordering bias**: The basis adapts to the numerical structure of
-   the generators rather than a fixed term order.
+1. **No monomial ordering bias in the basis itself**: The basis adapts to the
+   numerical structure of the generators; the ordering only affects pivot
+   tie-breaking.
 2. **Compact representation**: Only monomials up to degree :math:`d` are considered,
    avoiding the high-degree terms that Gröbner bases may introduce.
 3. **Orthogonalization-friendly**: The border basis algorithm uses QR factorization,
