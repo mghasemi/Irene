@@ -284,7 +284,7 @@ the coefficients :math:`\alpha_i, \beta_j` such that :math:`\|r\|_2` be minimum.
 Let :math:`L(\alpha, \beta)=r(x)\cdot r(x)`. Then the solution satisfies the following equations:
 
 .. math::
-	\frac{\partial}{\partial \alpha_i}L = 0,\\
+	\frac{\partial}{\partial \alpha_i}L = 0,\
 	\frac{\partial}{\partial \beta_i}L = 0,
 
 which is a system of linear equations.

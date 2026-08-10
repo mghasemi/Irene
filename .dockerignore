@@ -1,0 +1,37 @@
+# Virtual environments
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Git
+.git/
+.gitignore
+
+# IDE / editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Documentation (not needed in test image)
+reports/
+plan_master.md
+execution_log.md
+README.rst
+create_tasks.py
+siyuan_push.py
+
+# Coverage output (mounted as volume anyway)
+coverage-results/
+htmlcov/
+.coverage
+coverage.xml
+
+# Benchmark results (bind-mounted from host)
+benchmarks/results/*.json
+benchmarks/results/*.csv
+
+# Examples and auxiliary
+examples/
+pyProximation/

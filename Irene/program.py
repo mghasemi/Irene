@@ -5,7 +5,18 @@ from typing import Any, Optional, Sequence
 import numpy as np
 from scipy import optimize
 from scipy.spatial import ConvexHull, Delaunay, QhullError
-from sympy import sympify, Symbol
+from .symbolic_engine import engine
+# Runtime reference for SymPy Symbol (used in type hints) + direct sympify access
+try:
+    import sympy as _sp
+    from sympy import Symbol as _SymbolType
+except ImportError:
+    _sp = None
+    _SymbolType = None
+
+# Alias for type hint compatibility; use Any to avoid LSP issues with possibly-unbound vars
+from typing import Any
+Symbol = _SymbolType  # type: ignore[possibly-undefined]
  
 from .grouprings import _degree, SemigroupAlgebraElement, SemigroupAlgebra, CommutativeSemigroup, AtomicSGElement
 
@@ -645,15 +656,15 @@ class OptimizationProblem(object):
         Args:
             expr (SemigroupAlgebraElement): The polynomial expression to convert.
             sym_map (dict): Dictionary mapping generator name strings to SymPy Symbol objects,
-                e.g., {'x': Symbol('x'), 'y': Symbol('y')}.
+                e.g., {'x': engine.Symbol('x'), 'y': engine.Symbol('y')}.
 
         Returns:
             sympy.Expr: A SymPy expression algebraically equivalent to the input, using the
                 symbols provided in sym_map.
         """
-        sympy_expr = sympify(0)
+        sympy_expr = _sp.sympify(0)
         for coeff, mono in expr.content:
-            term = sympify(coeff)
+            term = _sp.sympify(coeff)
             if not mono.array_form:  # constant term
                 sympy_expr += term
                 continue

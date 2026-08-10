@@ -6,6 +6,7 @@ from gpkit import VectorVariable, Variable, Model, SignomialsEnabled
 from gpkit.constraints.bounded import Bounded, ConstraintSet
 
 from .program import OptimizationProblem
+from .telemetry import timed, TelemetryContext
 
 
 class SONCRelaxations(object):
@@ -286,15 +287,24 @@ class SONCRelaxations(object):
         if self.solution is None:
             raise RuntimeError("SONC GP solver returned no solution")
 
+    @timed("sonc_solve")
     def solve(self, verbosity: int | None = None) -> float:
         """Build and solve the constrained SONC geometric program."""
         if verbosity is None:
             verbosity = self.verbosity
+        ctx = TelemetryContext(
+            "sonc_gp",
+            program_size=self.program_size,
+            order=self.Ord,
+        )
+        ctx.__enter__()
         try:
             delta = self._build_delta_sets()
             beta_terms = sorted(delta['=d'].union(delta['<d']), key=str)
+            ctx.set("beta_term_count", len(beta_terms))
 
             supports, alpha, origin_idx, hull_computed = self._build_support_points()
+            ctx.set("support_point_count", len(supports))
             # Filter beta_terms to exclude Newton polytope vertices (support exponents).
             # Only do this when the convex hull was successfully computed; in the
             # fallback case all exponents act as supports and filtering would wrongly
@@ -320,9 +330,12 @@ class SONCRelaxations(object):
 
             self._solve_model(obj, constraints, verbosity)
             self.f_sonc_g = self.prog.objective.constant() - self.solution['cost']
+            ctx.set("lower_bound", float(self.f_sonc_g))
             return float(self.f_sonc_g)
         except RuntimeError:
             raise
         except Exception as exc:
             raise RuntimeError(f"SONC GP solve failed: {exc}") from exc
+        finally:
+            ctx.__exit__(None, None, None)
 

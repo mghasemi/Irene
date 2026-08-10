@@ -10,6 +10,7 @@ from gpkit.constraints.bounded import Bounded, ConstraintSet
 
 from .grouprings import _degree
 from .program import OptimizationProblem
+from .telemetry import timed, TelemetryContext
 
 
 class GPRelaxations(object):
@@ -166,6 +167,7 @@ class GPRelaxations(object):
                      sorted_diag[j][i] for i in range(n)] + [0.])
         return a
 
+    @timed("gp_solve")
     def solve(self) -> float:
         """
         Form the geometric program relaxation.
@@ -173,11 +175,21 @@ class GPRelaxations(object):
         Returns:
             The optimal value of the relaxation.
         """
+        ctx = TelemetryContext(
+            "gp_relaxation",
+            program_size=self.program_size,
+            order=self.Ord,
+        )
+        ctx.__enter__()
+
         if self.auto_transform:
             self.H = self.auto_transform_matrix()
         self.transform_program()
 
         delta = self._build_delta_sets()
+        all_delta_count = len(delta['=d'].union(delta['<d']))
+        ctx.set("delta_size", all_delta_count)
+
         mu, w, z, all_delta = self._initialize_variables(delta)
         constraints = list()
         self._add_variable_bounds(constraints, mu, z, all_delta)
@@ -275,4 +287,6 @@ class GPRelaxations(object):
 
         self._solve_model(obj, constraints)
         self.f_gp_g = -self.h[0].constant() - self.solution['cost']
+        ctx.set("lower_bound", float(self.f_gp_g))
+        ctx.__exit__(None, None, None)
         return self.f_gp_g

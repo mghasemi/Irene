@@ -25,10 +25,21 @@ exponent tuples, convex combinations) used directly in GP and SONC routines.
 Module Layers
 =================================
 
-1. Algebra layer: ``grouprings.py``.
-2. Problem layer: ``program.py``.
-3. Relaxation layer: ``relaxations.py``, ``geometric.py``, ``sonc.py``.
-4. Solver layer: ``sdp.py`` and external solver backends.
+The codebase is organized into six abstraction layers, each with clear boundaries:
+
+1. **Symbolic Engine**: ``symbolic_engine.py`` — SymEngine primary / SymPy fallback router for all polynomial operations (expand, Gröbner basis, Poly API, matrix construction).
+
+2. **Algebra layer**: ``grouprings.py`` — commutative semigroups, semigroup algebras, and derivation operators.
+
+3. **Problem layer**: ``program.py`` — optimization problem definition with objective and constraint management.
+
+4. **Relaxation layer**: ``relaxations.py`` (SDP hierarchy), ``geometric.py`` (GP relaxations), ``sonc.py`` (SONC circuit polynomials), ``sosonc.py`` (SOS+SONC combined bounds). Unified access via ``relaxation_api.py`` (``RelaxationEngine`` + ``compare_all()``).
+
+5. **Structural optimization**: ``border_basis.py`` (border basis for quotient algebras), ``sparsity.py`` (correlative sparsity detection), ``newton_polytope.py`` (Newton polytope pruning of monomial bases).
+
+6. **Solver layer**: ``sdp.py`` (native SDP solver interface), ``cvxpy_solver.py`` (CVXPY DCP layer bridging to CLARABEL/SCS/CVXOPT backends), ``dsdp.py`` (DSDP mean relaxation with SymEngine bridge).
+
+7. **Tooling**: ``telemetry.py`` (timing/decoration utilities), ``matrices.py`` (moment/localizing matrix construction), ``invariant.py`` (group-invariant polynomial optimization).
 
 Choosing a Relaxation Family
 =================================

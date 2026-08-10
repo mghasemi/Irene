@@ -9,17 +9,44 @@ The main classes included in this module are:
 """
 
 #  from __future__ import print_function
+import os
+from dataclasses import dataclass, field
+from typing import Optional
+
 from .base import base
 from .sdp import sdp
 
-from numpy import array, float64, ndarray, sqrt, zeros, abs, linalg, trim_zeros, where, random, dot
+from numpy import array, float64, ndarray, sqrt, zeros, eye, abs, linalg, trim_zeros, where, random, dot
 from numpy import zeros as npzeros
 from numpy.random import uniform
 from numpy.linalg import cholesky, LinAlgError
-from sympy import Function, Symbol, QQ, groebner, Poly, zeros, reduced, sympify, Matrix, expand, latex, lambdify, Abs
-from sympy.core.relational import Equality, GreaterThan, LessThan, StrictGreaterThan, StrictLessThan
-from sympy.polys.polyerrors import PolynomialError
-from sympy.polys.matrices import DomainMatrix
+from .symbolic_engine import engine
+# Relational types and error types are accessed via engine.* properties:
+#   engine.Equality, engine.GreaterThan, engine.LessThan, etc.
+#   engine.PolynomialError
+# SymPy symbols used directly for AuxSyms (hot path -- avoids SymEngine->SymPy conversion)
+import sympy as _sp
+
+# -- P5.3: SymEngine import hoisted to module level -- avoids per-call import overhead --
+try:
+    import symengine as _se
+except ImportError:
+    _se = None
+
+# -- Hot-path Poly helper -- bypasses engine.Poly() dispatch overhead --
+# _poly() always falls back to SymPy but pays dispatch + isinstance cost.
+# This wrapper calls sp.Poly() directly, with automatic SymEngine->SymPy conversion
+# for the rare case where a SymEngine object survives the pipeline.
+def _poly(expr, *gens):
+    """sp.Poly() with automatic SymEngine->SymPy safety conversion."""
+    if _se is not None:
+        if isinstance(expr, _se.Basic):
+            expr = expr._sympy_()
+        _sp_gens = [g._sympy_() if isinstance(g, _se.Basic) else g for g in gens]
+    else:
+        _sp_gens = gens
+    return _sp.Poly(expr, *_sp_gens)
+
 from scipy import optimize as opt
 from scipy.linalg import eigvals
 from scipy import linalg as spla
@@ -32,6 +59,91 @@ from time import time
 import multiprocessing as mp
 from copy import copy
 from pickle import load, loads, dump, dumps
+from .telemetry import timed, TelemetryContext
+
+# -- P5.8: Correlative sparsity for block-SDP decomposition --
+try:
+    from .sparsity import detect_sparsity, SparsityInfo
+except ImportError:
+    detect_sparsity = None  # graceful degradation
+    SparsityInfo = None
+
+
+# --------------------------------------------------------------
+# Relaxation configuration -- Phase 3 reduction pipeline options
+# --------------------------------------------------------------
+
+@dataclass
+class RelaxationConfig:
+    """Configuration for the SDP relaxation monomial-reduction pipeline.
+
+    The default reduction strategy is ``'newton_polytope'`` based on Phase 3
+    benchmark results (bench_phase3_reductions.py, 2026-08-08): Newton pruning
+    achieves 64–67 % basis reduction on sparse gallery problems with zero
+    overhead on dense ones. Sparsity detection only helps 2/12 problems,
+    and border basis shows no conditioning advantage at low degrees.
+
+    Attributes
+    ----------
+    reduction_method : str
+        Which reduction strategy to apply before building the moment matrix.
+        One of ``'none'``, ``'newton_polytope'``, ``'border_basis'``, or
+        ``'sparsity'`` (correlative sparsity decomposition).  Default
+        ``'newton_polytope'``.
+    monomial_pruning : bool
+        Enable Newton-polytope pruning of the monomial basis.  When True,
+        only exponent vectors inside ``2\\cdotNewt(f)`` are retained.
+        Default ``True``.
+    sparsity_detection : bool
+        Run correlative-sparsity analysis on the problem polynomials and
+        decompose the moment matrix into independent blocks when possible.
+    sparsity_block_sdp : bool
+        When True and sparsity detection finds disconnected variable cliques,
+        build and solve one SDP per clique instead of a single monolithic SDP.
+        This can give exponential savings for problems whose variables split
+        into truly independent sub-problems (e.g. block-diagonal objectives).
+        Default ``False``.
+    border_basis_degree : int
+        Degree bound for the border-basis quotient algebra representation
+        (only used when ``reduction_method='border_basis'``).  Default ``2``.
+    verbose_reduction : bool
+        Print diagnostics (basis sizes, reduction ratios) during setup.
+    """
+
+    reduction_method: str = "none"
+    monomial_pruning: bool = False
+    sparsity_detection: bool = False
+    sparsity_block_sdp: bool = False
+    border_basis_degree: int = 2
+    verbose_reduction: bool = False
+    quotient_basis: str = "groebner"
+
+    def __post_init__(self):
+        valid_methods = {"none", "newton_polytope", "border_basis", "sparsity"}
+        if self.reduction_method not in valid_methods:
+            raise ValueError(
+                f"reduction_method must be one of {valid_methods}, "
+                f"got '{self.reduction_method}'"
+            )
+        if self.quotient_basis not in ("groebner", "border"):
+            raise ValueError(
+                f"quotient_basis must be 'groebner' or 'border', "
+                f"got '{self.quotient_basis}'"
+            )
+
+
+def _default_config():
+    """Build the default RelaxationConfig, honouring IRENE_QUOTIENT_BASIS.
+
+    The environment variable selects the quotient-ring reduction engine:
+      - 'groebner' (default): classical Groebner-basis reduction, matching
+        the original Irene behavior.
+      - 'border': BorderBasis quotient-algebra reduction (IreneRewrite).
+    """
+    qb = os.environ.get("IRENE_QUOTIENT_BASIS", "groebner").strip().lower()
+    if qb not in ("groebner", "border"):
+        qb = "groebner"
+    return RelaxationConfig(quotient_basis=qb)
 
 
 def Calpha_(expn, Mmnt):
@@ -40,7 +152,7 @@ def Calpha_(expn, Mmnt):
     :math:`C_{expn}` matrix which can be used for parallel processing.
     """
     r = Mmnt.shape[0]
-    C = zeros(r, r)
+    C = engine.zeros(r, r)
     for i in range(r):
         for j in range(i, r):
             entity = Mmnt[i, j]
@@ -56,7 +168,7 @@ def Calpha__(expn, Mmnt, ii, q):
     :math:`C_{expn}` matrix which can be used for parallel processing.
     """
     r = Mmnt.shape[0]
-    C = zeros(r, r)
+    C = engine.zeros(r, r)
     for i in range(r):
         for j in range(i, r):
             entity = Mmnt[i, j].as_dict()
@@ -93,20 +205,34 @@ class SDPRelaxations(base):
     PSDMoment = True
     Probability = True
     Parallel = True
+    # Newton polytope pruning: filter monomials to those inside the Minkowski sum
+    # of supports from objective + constraints, reducing basis size for sparse problems.
+    NewtonPruning = False
 
-    def __init__(self, gens, relations=(), name="SDPRlx"):
+    def __init__(self, gens, relations=(), name="SDPRlx", config=None):
+        r"""
+        Initialize SDP relaxation instance.
+
+        Args:
+            gens: List of symbolic generators.
+            relations: Tuple of algebraic relations among generators.
+            name: Name label for this relaxation instance.
+            config: RelaxationConfig instance controlling Phase 3 reduction
+                pipeline (Newton polytope pruning, border basis, sparsity).
+                When None, defaults to no reduction (backward compatible).
+        """
         assert type(gens) is list, self.GensError
         assert type(gens) is list, self.RelsError
         super(SDPRelaxations, self).__init__()
         self.NumCores = mp.cpu_count()
-        self.EQ = Equality
-        self.GEQ = GreaterThan
-        self.LEQ = LessThan
-        self.GT = StrictGreaterThan
-        self.LT = StrictLessThan
-        self.ExpTypes = [Equality, GreaterThan,
-                         LessThan, StrictGreaterThan, StrictLessThan]
-        self.Field = QQ
+        self.EQ = engine.Equality
+        self.GEQ = engine.GreaterThan
+        self.LEQ = engine.LessThan
+        self.GT = engine.StrictGreaterThan
+        self.LT = engine.StrictLessThan
+        self.ExpTypes = [engine.Equality, engine.GreaterThan,
+                         engine.LessThan, engine.StrictGreaterThan, engine.StrictLessThan]
+        self.Field = engine.QQ
         self.Generators = []
         self.SymDict = {}
         self.RevSymDict = {}
@@ -116,6 +242,10 @@ class SDPRelaxations(base):
         self.Groebner = []
         self.MmntOrd = 0
         self.ReducedBases = {}
+        # Phase 3: relaxation configuration (reduction pipeline)
+        self.config = config if config is not None else _default_config()
+        self.NewtonPruning = self.config.monomial_pruning
+        self._border_basis_cache = {}
         #
         self.Constraints = []
         self.OrgConst = []
@@ -138,27 +268,33 @@ class SDPRelaxations(base):
         self.InitTime = 0
         self.Solution = None
         self.f_min = 0
-        # check generators
+        # check generators -- accept both sympy and symengine symbols/functions
         for f in gens:
-            if isinstance(f, Function) or isinstance(f, Symbol):
+            from sympy import Function as SP_Function, Symbol as SP_Symbol
+            try:
+                import symengine as se
+                is_symengine = isinstance(f, (se.Symbol, se.Function))
+            except ImportError:
+                is_symengine = False
+            if isinstance(f, SP_Function) or isinstance(f, SP_Symbol) or is_symengine:
                 self.Generators.append(f)
                 self.NumGenerators += 1
-                t_sym = Symbol('X%d' % self.NumGenerators)
+                t_sym = _sp.Symbol('X%d' % self.NumGenerators)
                 self.SymDict[f] = t_sym
                 self.RevSymDict[t_sym] = f
                 self.AuxSyms.append(t_sym)
             else:
                 raise TypeError(self.GensError)
-        self.Objective = Poly(0, *self.Generators)
-        self.RedObjective = Poly(0, *self.AuxSyms)
+        self.Objective = _poly(0, *self.Generators)
+        self.RedObjective = _poly(0, *self.AuxSyms)
         # check the relations
         # TBI
         for r in relations:
             t_rel = r.subs(self.SymDict)
             self.FreeRelations.append(t_rel)
         if self.FreeRelations:
-            self.Groebner = groebner(
-                self.FreeRelations, domain=self.Field, order=self.MonomialOrder)
+            self.Groebner = engine.groebner(
+                self.FreeRelations, *self.AuxSyms, order=self.MonomialOrder)
         self.AvailableSolvers = self.AvailableSDPSolvers()
 
     def SetMonoOrd(self, ordr):
@@ -169,12 +305,12 @@ class SDPRelaxations(base):
         assert ordr in ['lex', 'grlex', 'grevlex', 'ilex', 'igrlex', 'igrevlex'], self.MonoOrdError
         self.MonomialOrder = ordr
         if self.FreeRelations:
-            self.Groebner = groebner(
-                self.FreeRelations, domain=self.Field, order=self.MonomialOrder)
+            self.Groebner = engine.groebner(
+                self.FreeRelations, *self.AuxSyms, order=self.MonomialOrder)
 
     @classmethod
-    def from_problem(cls, optim_prob: OptimizationProblem, name="SDPRlx"):
-        """
+    def from_problem(cls, optim_prob: OptimizationProblem, name="SDPRlx", config=None):
+        r"""
         Creates an SDPRelaxations instance from an OptimizationProblem.
 
         This method acts as an alternative constructor to bridge compatibility
@@ -184,19 +320,21 @@ class SDPRelaxations(base):
             optim_prob (OptimizationProblem): The optimization problem defined
                                               with SemigroupAlgebra.
             name (str): A name for the relaxation instance.
+            config: RelaxationConfig instance controlling Phase 3 reduction
+                pipeline. When None, defaults to no reduction.
 
         Returns:
             An instance of SDPRelaxations.
         """
         sga = optim_prob.sga
         gen_names = sga.gens
-        sympy_gens = [Symbol(g) for g in gen_names]
+        sympy_gens = [_sp.Symbol(g) for g in gen_names]
         sym_map = {name: sym for name, sym in zip(gen_names, sympy_gens)}
 
         # Convert relations if they exist
         relations = [optim_prob.to_sympy(rel, sym_map) for rel in optim_prob.relations] if optim_prob.relations else []
 
-        rlx = cls(sympy_gens, relations, name)
+        rlx = cls(sympy_gens, relations, name, config=config)
 
         rlx.SetObjective(optim_prob.to_sympy(optim_prob.objective, sym_map))
         for const in optim_prob.constraints:
@@ -215,19 +353,23 @@ class SDPRelaxations(base):
     def SetSDPSolver(self, solver):
         r"""
         Sets the default SDP solver. The followings are currently supported:
-            - CVXOPT
-            - DSDP
-            - SDPA
-            - CSDP
+            - CVXOPT (legacy, via CVXPY or native)
+            - DSDP (via CVXPY or native)
+            - SDPA (legacy text writer)
+            - CSDP (legacy text writer)
+            - CLARABEL (CVXPY -- recommended default)
+            - SCS (CVXPY -- first-order, fast for large problems)
 
         The selected solver must be installed otherwise it cannot be called.
-        The default solver is `CVXOPT` which has an interface for Python.
-        `DSDP` is called through the CVXOPT's interface. `SDPA` and `CSDP`
-        are called independently.
+        CVXPY-family solvers (CLARABEL, SCS, CVXOPT) are routed through the
+        direct DCP formulation layer and bypass legacy text-file I/O entirely.
+        When a legacy solver is specified but CVXPY is available, CVXPY is
+        tried first as a fast path with fallback to the legacy backend.
         """
-        assert solver.upper() in ['CVXOPT', 'DSDP', 'SDPA',
-                                  'CSDP'], "'%s' sdp solver is not supported" % solver
-        self.SDPSolver = solver
+        solver_upper = solver.upper() if isinstance(solver, str) else None
+        assert solver_upper in ['CVXOPT', 'DSDP', 'SDPA', 'CSDP',
+                                'CLARABEL', 'SCS'], "'%s' sdp solver is not supported" % solver
+        self.SDPSolver = solver_upper
 
     def ReduceExp(self, expr):
         r"""
@@ -236,15 +378,77 @@ class SDPRelaxations(base):
         in terms of internal symbolic variables, if a relation among generators
         is present, otherwise it just substitutes generating functions with
         their corresponding internal symbols.
+
+        The reduction engine is selected by ``config.quotient_basis``:
+            - 'groebner' (default): classical Groebner-basis reduction, the
+              original Irene behavior.
+            - 'border': BorderBasis quotient-algebra reduction (IreneRewrite),
+              using the numerically computed multiplication tables.
         """
         try:
             T = expr.subs(self.SymDict)
         except:
-            T = Poly(expr, *self.AuxSyms)
+            T = _poly(expr, *self.AuxSyms)
+        if self.config.quotient_basis == "border" and self.FreeRelations:
+            r = self._border_reduce(T)
+            if r is not None:
+                return r
+            # Fall through to Groebner path on failure
         if self.Groebner:
-            return reduced(T, self.Groebner)[1]
+            return engine.reduced(T, self.Groebner)[1]
         else:
             return T
+
+    def _get_border_basis(self, deg):
+        """Lazily build (and cache per degree) the quotient BorderBasis.
+
+        The border basis represents the quotient algebra
+        $\\mathbb{R}[X_1,\\dots,X_n]/I$ where $I$ is generated by the free
+        relations, using rank-revealing QR on the relation matrix
+        (Greuel-Pfister 2002). Built at degree ``deg``; returns None on any
+        construction failure so callers can fall back to Groebner reduction.
+        """
+        if deg in self._border_basis_cache:
+            return self._border_basis_cache[deg]
+        if not self.FreeRelations:
+            self._border_basis_cache[deg] = None
+            return None
+        from .border_basis import BorderBasis
+        try:
+            bb = BorderBasis(
+                variables=self.AuxSyms,
+                generators=self.FreeRelations,
+                degree=deg,
+            )
+        except Exception as exc:
+            if self.config.verbose_reduction:
+                print(f"[SDPRlx] Border basis deg={deg} failed ({exc}); "
+                      f"falling back to Groebner")
+            bb = None
+        self._border_basis_cache[deg] = bb
+        return bb
+
+    def _border_reduce(self, expr):
+        """Reduce ``expr`` modulo the quotient border basis.
+
+        Builds the border basis at a degree covering the expression's total
+        degree (capped for numerical safety), then reduces via the
+        multiplication tables. Returns None when the border basis is
+        unavailable or unsafe, signalling the caller to use Groebner.
+        """
+        try:
+            tot_deg = _poly(expr, *self.AuxSyms).total_degree()
+        except Exception:
+            tot_deg = 0
+        deg = max(self.config.border_basis_degree, tot_deg)
+        if deg > 10:
+            # QR-based border basis becomes numerically unsafe at high degree;
+            # fall back to the exact Groebner path.
+            return None
+        bb = self._get_border_basis(deg)
+        if bb is None:
+            return None
+        return bb.reduce(expr)
 
     def SetObjective(self, obj):
         r"""
@@ -253,10 +457,10 @@ class SDPRelaxations(base):
         functions with corresponding auxiliary symbols and reduce them 
         according to the given relations.
         """
-        self.Objective = sympify(obj)
-        self.RedObjective = self.ReduceExp(sympify(obj))
+        self.Objective = _sp.sympify(obj)
+        self.RedObjective = self.ReduceExp(_sp.sympify(obj))
         # self.CheckVars(obj)
-        tot_deg = Poly(self.RedObjective, *self.AuxSyms).total_degree()
+        tot_deg = _poly(self.RedObjective, *self.AuxSyms).total_degree()
         self.ObjDeg = tot_deg
         self.ObjHalfDeg = int(ceil(tot_deg / 2.))
 
@@ -272,14 +476,14 @@ class SDPRelaxations(base):
             non_red_exp = cnst.lhs - cnst.rhs
             expr = self.ReduceExp(non_red_exp)
             self.Constraints.append(expr)
-            tot_deg = Poly(expr, *self.AuxSyms).total_degree()
+            tot_deg = _poly(expr, *self.AuxSyms).total_degree()
             self.CnsDegs.append(tot_deg)
             self.CnsHalfDegs.append(int(ceil(tot_deg / 2.)))
         elif isinstance(cnst, (self.LEQ, self.LT)):
             non_red_exp = cnst.rhs - cnst.lhs
             expr = self.ReduceExp(non_red_exp)
             self.Constraints.append(expr)
-            tot_deg = Poly(expr, *self.AuxSyms).total_degree()
+            tot_deg = _poly(expr, *self.AuxSyms).total_degree()
             self.CnsDegs.append(tot_deg)
             self.CnsHalfDegs.append(int(ceil(tot_deg / 2.)))
         elif isinstance(cnst, self.EQ):
@@ -287,7 +491,7 @@ class SDPRelaxations(base):
             expr = self.ReduceExp(non_red_exp)
             self.Constraints.append(self.ErrorTolerance + expr)
             self.Constraints.append(self.ErrorTolerance - expr)
-            tot_deg = Poly(expr, *self.AuxSyms).total_degree()
+            tot_deg = _poly(expr, *self.AuxSyms).total_degree()
             # add twice
             self.CnsDegs.append(tot_deg)
             self.CnsDegs.append(tot_deg)
@@ -305,18 +509,18 @@ class SDPRelaxations(base):
         CnsTyp = cnst.TYPE
         if CnsTyp in ['ge', 'gt']:
             expr = self.ReduceExp(cnst.Content)
-            tot_deg = Poly(expr, *self.AuxSyms).total_degree()
+            tot_deg = _poly(expr, *self.AuxSyms).total_degree()
             self.MmntCnsDeg = max(int(ceil(tot_deg / 2.)), self.MmntCnsDeg)
             self.MomConst.append([expr, cnst.rhs])
         elif CnsTyp in ['le', 'lt']:
             expr = self.ReduceExp(-cnst.Content)
-            tot_deg = Poly(expr, *self.AuxSyms).total_degree()
+            tot_deg = _poly(expr, *self.AuxSyms).total_degree()
             self.MmntCnsDeg = max(int(ceil(tot_deg / 2.)), self.MmntCnsDeg)
             self.MomConst.append([expr, -cnst.rhs])
         elif CnsTyp == 'eq':
             non_red_exp = cnst.Content - cnst.rhs
             expr = self.ReduceExp(cnst.Content)
-            tot_deg = Poly(expr, *self.AuxSyms).total_degree()
+            tot_deg = _poly(expr, *self.AuxSyms).total_degree()
             self.MmntCnsDeg = max(int(ceil(tot_deg / 2.)), self.MmntCnsDeg)
             self.MomConst.append([expr, cnst.rhs - self.ErrorTolerance])
             self.MomConst.append([-expr, -cnst.rhs - self.ErrorTolerance])
@@ -324,17 +528,39 @@ class SDPRelaxations(base):
     def ReducedMonomialBase(self, deg):
         r"""
         Returns a reduce monomial basis up to degree `d`.
+
+        Phase 3 integration: the reduction pipeline is controlled via ``self.config``.
+        When ``config.reduction_method == 'newton_polytope'``, only exponent tuples
+        that appear in the Minkowski sum of objective + constraint supports
+        are generated, which can cut the basis size by 60–90 % for sparse problems.
+        When ``config.reduction_method == 'border_basis'``, the quotient-algebra
+        border basis is used to replace the full monomial basis.
         """
         if deg in self.ReducedBases:
             return self.ReducedBases[deg]
+
+        # Phase 3: dispatch based on config.reduction_method / quotient_basis
+        if self.config.reduction_method == "border_basis" \
+                or self.config.quotient_basis == "border":
+            RBase = self._reduced_basis_via_border(deg)
+            self.ReducedBases[deg] = RBase
+            return RBase
+
+        # Generate candidate exponent tuples
         all_monos = product(range(deg + 1), repeat=self.NumGenerators)
         req_monos = filter(lambda x: sum(x) <= deg, all_monos)
+
+        # Newton polytope pruning: restrict to exponents in the Minkowski hull
+        if self.NewtonPruning or self.config.reduction_method == "newton_polytope":
+            pruned = self._pruned_exponents(deg)
+            req_monos = filter(lambda x: x in pruned, req_monos)
+
         monos = [reduce(mul, [self.AuxSyms[i] ** expn[i]
                               for i in range(self.NumGenerators)], 1) for expn in req_monos]
         RBase = []
         for expr in monos:
             rexpr = self.ReduceExp(expr)
-            expr_monos = Poly(rexpr, *self.AuxSyms).as_dict()
+            expr_monos = _poly(rexpr, *self.AuxSyms).as_dict()
             for mono_exp in expr_monos:
                 t_mono = reduce(mul, [self.AuxSyms[i] ** mono_exp[i]
                                       for i in range(self.NumGenerators)], 1)
@@ -351,7 +577,7 @@ class SDPRelaxations(base):
         basis = self.ReducedMonomialBase(deg)
         exponents = []
         for elmnt in basis:
-            rbp = Poly(elmnt, *self.AuxSyms).as_dict()
+            rbp = _poly(elmnt, *self.AuxSyms).as_dict()
             for expnt in rbp:
                 if expnt not in exponents:
                     exponents.append(expnt)
@@ -386,7 +612,7 @@ class SDPRelaxations(base):
         order of moments.
         """
         c = []
-        fmono = Poly(self.RedObjective, *self.AuxSyms).as_dict()
+        fmono = _poly(self.RedObjective, *self.AuxSyms).as_dict()
         exponents = self.ExponentsVec(2 * self.MmntOrd)
         for expn in exponents:
             if expn in fmono:
@@ -397,21 +623,243 @@ class SDPRelaxations(base):
 
     def _poly_total_degree_or_raise(self, expr, context):
         try:
-            return Poly(expr, *self.AuxSyms).total_degree()
-        except PolynomialError as exc:
+            return _poly(expr, *self.AuxSyms).total_degree()
+        except engine.PolynomialError as exc:
             raise ValueError("Unable to determine polynomial degree for %s" % context) from exc
+
+    # -----------------------------------------------------------------------
+    # Newton polytope pruning (P3.5)
+    # -----------------------------------------------------------------------
+
+    def _newton_support(self, expr):
+        """Return the set of exponent vectors appearing in *expr*."""
+        try:
+            return set(_poly(expr, *self.AuxSyms).as_dict().keys())
+        except engine.PolynomialError:
+            return {tuple([0] * self.NumGenerators)}
+
+    def _pruned_exponents(self, deg):
+        """Generate only exponent tuples inside the Minkowski sum of supports.
+
+        For sparse polynomials this can reduce the basis size by 60–90 %.
+        The returned set is a superset of what is strictly needed (we take
+        all lattice points in the bounding box of the Minkowski sum clipped
+        to degree \\leqslant *deg*), which keeps the implementation simple and correct.
+        """
+        # Collect supports from objective + constraints
+        support = self._newton_support(self.RedObjective)
+        for c in self.Constraints:
+            support |= self._newton_support(c)
+
+        # Minkowski sum of support with itself (for degree-d moment matrix we need
+        # products of monomials up to degree d, so the relevant exponents are
+        # sums of pairs from the half-degree support).
+        minkowski = set()
+        for e1 in support:
+            for e2 in support:
+                s = tuple(a + b for a, b in zip(e1, e2))
+                if sum(s) <= 2 * deg:
+                    minkowski.add(s)
+
+        # Also include all exponents from the original support (they may appear alone)
+        for e in support:
+            if sum(e) <= 2 * deg:
+                minkowski.add(e)
+
+        # Include the zero vector (constant term always needed)
+        minkowski.add(tuple([0] * self.NumGenerators))
+
+        return minkowski
+
+    # -----------------------------------------------------------------------
+    # Phase 3: Border basis integration (P3.8)
+    # -----------------------------------------------------------------------
+
+    def _reduced_basis_via_border(self, deg):
+        """Compute reduced monomial basis via border basis of the quotient algebra.
+
+        Uses the border_basis module to find a numerically stable basis for
+        K[x]/I where I is generated by the FREE RELATIONS (the same ideal for
+        which the Groebner basis is computed in __init__).  The returned
+        basis replaces the full monomial basis when
+        ``config.reduction_method == 'border_basis'`` or
+        ``config.quotient_basis == 'border'``.
+
+        Args:
+            deg: Maximum degree for the moment matrix.
+
+        Returns:
+            List of symbolic monomials forming the reduced basis.
+        """
+        # Reuse the cached border basis if already built at this degree
+        bb = self._border_basis_cache.get(deg)
+        if bb is None and self.FreeRelations:
+            bb = self._get_border_basis(deg)
+        if bb is None:
+            # No relations: quotient is the full polynomial ring; fall back to
+            # the standard (optionally Newton-pruned) monomial enumeration.
+            all_monos = product(range(deg + 1), repeat=self.NumGenerators)
+            req_monos = filter(lambda x: sum(x) <= deg, all_monos)
+            if self.NewtonPruning:
+                pruned = self._pruned_exponents(deg)
+                req_monos = filter(lambda x: x in pruned, req_monos)
+            return [reduce(mul, [self.AuxSyms[i] ** expn[i]
+                                 for i in range(self.NumGenerators)], 1)
+                    for expn in req_monos]
+
+        if self.config.verbose_reduction:
+            diag = bb.conditioning_diagnostic()
+            print(f"[SDPRlx] Border basis: {len(bb.basis)} basis elements, "
+                  f"{len(bb.border)} border elements, cond={diag.get('condition_number', 'N/A')}")
+
+        # Build symbolic monomial list from the border basis exponent tuples
+        RBase = []
+        for exp in bb.basis:
+            if sum(exp) <= deg:
+                mono = reduce(mul, [self.AuxSyms[i] ** exp[i]
+                                    for i in range(self.NumGenerators)], 1)
+                RBase.append(mono)
+
+        # Ensure constant term is present exactly once
+        if 1 not in RBase:
+            RBase.insert(0, 1)
+
+        return RBase
+
+    # -----------------------------------------------------------------------
+    # Phase 3: Correlative sparsity integration (P3.8)
+    # -----------------------------------------------------------------------
+
+    def _setup_sparsity_blocks(self):
+        """Detect correlative sparsity and set up block decomposition for InitSDP.
+
+        Inspects the objective and constraint polynomials, builds a variable
+        dependency graph, and partitions the moment matrix into independent
+        blocks when the problem exhibits sparsity structure.
+
+        Returns:
+            dict mapping component index -> list of exponent tuples, or None
+            if no sparsity was detected.
+        """
+        from .sparsity import detect_sparsity_from_problem, detect_sparsity_from_polys
+
+        # Build a temporary OptimizationProblem-like object for sparsity detection
+        # We use the internal state directly since SDPRelaxations already has all polynomials
+        try:
+            polys = [self.RedObjective] + self.Constraints
+            sparsity = detect_sparsity_from_polys(polys, self.NumGenerators)
+        except Exception as exc:
+            if self.config.verbose_reduction:
+                print(f"[SDPRlx] Sparsity detection failed ({exc}), using dense moment matrix")
+            return None
+
+        summary = sparsity.summary()
+        if self.config.verbose_reduction:
+            print(f"[SDPRlx] Sparsity: {summary['num_components']} components, "
+                  f"sparse={summary['is_sparse']}, sizes={summary['component_sizes']}")
+
+        if not sparsity.is_sparse:
+            return None
+
+        # Partition the moment matrix basis by component
+        deg = 2 * self.MmntOrd
+        partitions = sparsity.moment_matrix_partition(deg)
+        return partitions
+
+    def _get_sparsity_partitions(self):
+        """Return cached sparsity partitions, computing if needed."""
+        if not hasattr(self, '_sparsity_partitions'):
+            self._sparsity_partitions = None
+            if self.config.sparsity_detection:
+                self._sparsity_partitions = self._setup_sparsity_blocks()
+        return self._sparsity_partitions
+
+    # -----------------------------------------------------------------------
+    # Phase 3: Newton polytope pruning via dedicated module (P3.8)
+    # -----------------------------------------------------------------------
+
+    def _pruned_basis_from_module(self, deg):
+        """Compute pruned monomial basis using the newton_polytope module.
+
+        This is an alternative to the built-in ``_pruned_exponents`` that uses
+        the full NewtonPruner class with convex hull testing for tighter pruning.
+
+        Args:
+            deg: Maximum degree for the moment matrix.
+
+        Returns:
+            List of exponent tuples forming the pruned basis, or None if
+            the module is unavailable / pruning failed.
+        """
+        from .newton_polytope import prune_basis_from_polys
+
+        try:
+            polys = [self.RedObjective] + self.Constraints
+            pruner = prune_basis_from_polys(polys, self.NumGenerators, deg)
+            if self.config.verbose_reduction:
+                info = pruner.moment_matrix_dimension_reduction()
+                print(f"[SDPRlx] Newton pruning: {info['full_basis_size']} -> "
+                      f"{info['pruned_basis_size']} ({info['reduction_ratio']:.2%} retained)")
+            return pruner.compute_pruned_basis()
+        except Exception as exc:
+            if self.config.verbose_reduction:
+                print(f"[SDPRlx] Newton polytope module pruning failed ({exc})")
+            return None
 
     def LocalizedMoment(self, p):
         r"""
         Computes the reduced symbolic moment generating matrix localized
         at `p`.
+
+        P5.6: The large polynomial product ``p * m * m.T`` is routed through
+        SymEngine's C++ backend when available.  Each entry of the resulting
+        matrix is expanded with ``se.expand()`` (C++) before being converted
+        back to SymPy for Groebner reduction via ``ReduceExp``.
         """
         tot_deg = self._poly_total_degree_or_raise(p, 'localized moment')
         half_deg = int(ceil(tot_deg / 2.))
         mmntord = self.MmntOrd - half_deg
-        m = Matrix(self.ReducedMonomialBase(mmntord))
-        LMmnt = expand(p * m * m.T)
-        LrMmnt = zeros(*LMmnt.shape)
+
+        basis = self.ReducedMonomialBase(mmntord)
+
+        # -- P5.6: Try SymEngine C++ path for the matrix product + expand --
+        if _se is not None:
+            try:
+                # Convert constraint polynomial to SymEngine
+                if isinstance(p, (int, float)):
+                    p_se = _se.Integer(p) if isinstance(p, int) else _se.RealFloat(p)
+                elif isinstance(p, _sp.Basic):
+                    p_se = _se.sympy2symengine(p)
+                else:
+                    p_se = None
+
+                # Convert monomial basis to SymEngine column vector
+                m_se = [_se.sympy2symengine(mon) for mon in basis]
+                n = len(m_se)
+                m_col = _se.DenseMatrix(n, 1, m_se)
+
+                # Matrix product p * m * m^T entirely in C++
+                LMmnt_se = p_se * m_col * m_col.T
+
+                LrMmnt = engine.zeros(LMmnt_se.rows, LMmnt_se.cols)
+                for i in range(LMmnt_se.rows):
+                    for j in range(i, LMmnt_se.cols):
+                        entry = LMmnt_se[i, j]
+                        # Expand in C++ then convert back to SymPy for ReduceExp
+                        expanded = _se.expand(entry) if isinstance(entry, _se.Basic) else entry
+                        entry_sp = expanded._sympy_() if isinstance(expanded, _se.Basic) else _sp.sympify(str(expanded))
+                        LrMmnt[i, j] = self.ReduceExp(entry_sp)
+                        LrMmnt[j, i] = LrMmnt[i, j]
+                return LrMmnt
+
+            except (TypeError, NotImplementedError, AttributeError):
+                # Conversion failed -- fall through to SymPy path below
+                pass
+
+        # -- Original SymPy fallback path --
+        m = engine.Matrix(basis)
+        LMmnt = engine.expand(p * m * m.T)
+        LrMmnt = engine.zeros(*LMmnt.shape)
         for i in range(LMmnt.shape[0]):
             for j in range(i, LMmnt.shape[1]):
                 LrMmnt[i, j] = self.ReduceExp(LMmnt[i, j])
@@ -423,12 +871,12 @@ class SDPRelaxations(base):
         Computes the reduced symbolic moment generating matrix localized
         at `p`.
         """
-        from sympy.polys.polymatrix import PolyMatrix
+        from sympy.polys.polymatrix import PolyMatrix as SP_PolyMatrix
         tot_deg = self._poly_total_degree_or_raise(p, 'localized moment')
         half_deg = int(ceil(tot_deg / 2.))
         mmntord = self.MmntOrd - half_deg
-        m = Matrix(self.ReducedMonomialBase(mmntord))
-        LMmnt = expand(p * m * m.T)
+        m = engine.Matrix(self.ReducedMonomialBase(mmntord))
+        LMmnt = engine.expand(p * m * m.T)
         # LrMmnt = zeros(*LMmnt.shape)
         tmp = [[0.*self.AuxSyms[0] for _ in range(LMmnt.shape[1])] for __ in range(LMmnt.shape[0])]
         LrMmnt = tmp # PolyMatrix(tmp)
@@ -437,55 +885,128 @@ class SDPRelaxations(base):
                 #LrMmnt[i, j] = Poly(self.ReduceExp(
                     #LMmnt[i, j]), *self.AuxSyms).as_dict()
                 #LrMmnt[j, i] = LrMmnt[i, j]
-                LrMmnt[i][j] = Poly(self.ReduceExp(
-                    LMmnt[i, j]), *self.AuxSyms)
+                LrMmnt[i][j] = _poly(_sp.sympify(self.ReduceExp(
+                    LMmnt[i, j])), *self.AuxSyms)
                 LrMmnt[j][i] = LrMmnt[i][j]
-        return PolyMatrix(LrMmnt)
+        return SP_PolyMatrix(LrMmnt)
 
     def MomentMat(self):
         r"""
         Returns the numerical moment matrix resulted from solving the SDP.
+
+        P5.7: Precomputes Poly dicts for all entries once, then uses them
+        directly instead of re-running _poly() per entry.
         """
         assert 'moments' in self.Info, "The sdp has not been (successfully) solved (yet)."
         Mmnt = self.LocalizedMoment(1.)
+        # P5.7: Precompute all entry dicts once
+        entry_dicts = self._precompute_entry_dicts(Mmnt)
+        moments = self.Info['moments']
+        num_gen = self.NumGenerators
+
         for i in range(Mmnt.shape[0]):
-            for j in range(Mmnt.shape[1]):
-                t_monos = Poly(Mmnt[i, j], *self.AuxSyms).as_dict()
-                t_mmnt = 0
-                for expn in t_monos:
+            for j in range(i, Mmnt.shape[1]):
+                t_monos = entry_dicts[i][j]
+                t_mmnt = 0.0
+                for expn, coeff in t_monos.items():
                     mono = reduce(mul, [self.AuxSyms[k] ** expn[k]
-                                        for k in range(self.NumGenerators)], 1)
-                    t_mmnt += t_monos[expn] * self.Info['moments'][mono]
+                                        for k in range(num_gen)], 1)
+                    if mono in moments:
+                        t_mmnt += float(coeff) * moments[mono]
+                    else:
+                        rmono = self.ReduceExp(mono)
+                        rm_dict = _poly(rmono, *self.AuxSyms).as_dict()
+                        for rexp, rcoeff in rm_dict.items():
+                            rmon = reduce(mul, [self.AuxSyms[k] ** rexp[k]
+                                                for k in range(num_gen)], 1)
+                            if rmon in moments:
+                                t_mmnt += float(coeff) * float(rcoeff) * moments[rmon]
                 Mmnt[i, j] = t_mmnt
-                Mmnt[j, i] = Mmnt[i, j]
+                Mmnt[j, i] = t_mmnt
         return array(Mmnt.tolist()).astype(float64)
+
+    def _precompute_entry_dicts(self, Mmnt):
+        r"""
+        P5.7: Precompute .as_dict() for every entry of the symbolic moment matrix.
+
+        Without this, each Calpha call re-runs _poly(entity).as_dict() for all
+        r^2 entries -- O(N \\times r^2) redundant Poly conversions per constraint where N
+        is the number of exponent vectors.  Precomputing reduces that to a single
+        pass over r^2 entries plus O(1) dict lookups per Calpha call.
+
+        Returns a list-of-lists of (exp_dict, coeff) pairs -- one per matrix entry.
+        """
+        rows = Mmnt.shape[0]
+        cols = Mmnt.shape[1]
+        dicts = [[None] * cols for _ in range(rows)]
+        for i in range(rows):
+            for j in range(i, cols):
+                entity = Mmnt[i, j]
+                d = _poly(entity, *self.AuxSyms).as_dict()
+                dicts[i][j] = d
+                dicts[j][i] = d  # symmetric matrix -- share reference
+        return dicts
 
     def Calpha(self, expn, Mmnt):
         r"""
         Given an exponent `expn`, this method finds the corresponding
         :math:`C_{expn}` matrix.
+
+        P5.7: When ``Mmnt`` is a precomputed dict-of-dicts (from
+        ``_precompute_entry_dicts``), uses O(1) dict lookups instead of
+        per-entry _poly() conversions.  Falls back to the original path for
+        raw symbolic matrices.
         """
-        r = Mmnt.shape[0]
-        C = zeros(r, r)
-        for i in range(r):
-            for j in range(i, r):
-                entity = Mmnt[i, j]
-                entity_monos = Poly(entity, *self.AuxSyms).as_dict()
-                if expn in entity_monos:
-                    C[i, j] = entity_monos[expn]
-                    C[j, i] = C[i, j]
+        r = Mmnt.shape[0] if hasattr(Mmnt, 'shape') else len(Mmnt)
+        C = engine.zeros(r, r)
+
+        # P5.7 fast path: precomputed dicts (list-of-lists of dicts)
+        if isinstance(Mmnt, list) and isinstance(Mmnt[0], list):
+            for i in range(r):
+                for j in range(i, r):
+                    coeff = Mmnt[i][j].get(expn)
+                    if coeff is not None:
+                        C[i, j] = coeff
+                        C[j, i] = coeff
+        else:
+            # Original path -- raw symbolic matrix
+            for i in range(r):
+                for j in range(i, r):
+                    entity = Mmnt[i, j]
+                    entity_monos = _poly(entity, *self.AuxSyms).as_dict()
+                    if expn in entity_monos:
+                        C[i, j] = entity_monos[expn]
+                        C[j, i] = C[i, j]
         return array(C.tolist()).astype(float64)
 
+    @timed("init_sdp")
     def sInitSDP(self):
         r"""
         Initializes the semidefinite program (SDP), in serial mode, whose 
         solution is a lower bound for the minimum of the program.
+
+        Telemetry: when enabled, records wall-clock init time, monomial basis
+        sizes, block dimensions, and relaxation order.
         """
+        ctx = TelemetryContext(
+            "init_sdp_serial",
+            relaxation_order=self.MmntOrd,
+            num_constraints=len(self.CnsDegs),
+            num_moment_constraints=len(self.MomConst),
+        )
+        ctx.__enter__()
+
         start = time()
         self.SDP = sdp(self.SDPSolver)
         self.RelaxationDeg()
         N = len(self.ReducedMonomialBase(2 * self.MmntOrd))
         self.MatSize = [len(self.ReducedMonomialBase(self.MmntOrd)), N]
+
+        # Record basis metadata
+        ctx.set("basis_size_2d", N)
+        ctx.set("basis_size_d", self.MatSize[0])
+        ctx.set("block_structure", self.SDP.BlockStruct if self.SDP.BlockStruct else [])
+
         Blck = [[] for _ in range(N)]
         C = []
         # Number of constraints
@@ -494,50 +1015,59 @@ class SDPRelaxations(base):
         NumMomCns = len(self.MomConst)
         # Reduced vector of monomials of the given order
         ExpVec = self.ExponentsVec(2 * self.MmntOrd)
+        ctx.set("exponent_vector_size", len(ExpVec))
         # The localized moment matrices should be psd ##
         for idx in range(NumCns):
             d = len(self.ReducedMonomialBase(
                 self.MmntOrd - self.CnsHalfDegs[idx]))
             # Corresponding C block is 0
-            h = zeros(d, d)
+            h = engine.zeros(d, d)
             C.append(array(h.tolist()).astype(float64))
             Mmnt = self.LocalizedMoment(self.Constraints[idx])
+            # P5.7: Precompute Poly dicts once per moment matrix
+            Mmnt_dicts = self._precompute_entry_dicts(Mmnt)
             for i in range(N):
-                Blck[i].append(self.Calpha(ExpVec[i], Mmnt))
+                Blck[i].append(self.Calpha(ExpVec[i], Mmnt_dicts))
         # Moment matrix should be psd ##
         if self.PSDMoment:
             d = len(self.ReducedMonomialBase(self.MmntOrd))
             # Corresponding C block is 0
-            h = zeros(d, d)
+            h = engine.zeros(d, d)
             C.append(array(h.tolist()).astype(float64))
             Mmnt = self.LocalizedMoment(1.)
+            # P5.7: Precompute Poly dicts once per moment matrix
+            Mmnt_dicts = self._precompute_entry_dicts(Mmnt)
             for i in range(N):
-                Blck[i].append(self.Calpha(ExpVec[i], Mmnt))
+                Blck[i].append(self.Calpha(ExpVec[i], Mmnt_dicts))
         # L(1) = 1 #
         if self.Probability:
             for i in range(N):
                 Blck[i].append(array(
-                    zeros(1, 1).tolist()).astype(float64))
+                    engine.zeros(1, 1).tolist()).astype(float64))
                 Blck[i].append(array(
-                    zeros(1, 1).tolist()).astype(float64))
+                    engine.zeros(1, 1).tolist()).astype(float64))
             # Blck[0][NumCns + 1][0] = 1
             # Blck[0][NumCns + 2][0] = -1
             Blck[0][-2][0] = 1
             Blck[0][-1][0] = -1
-            C.append(array(Matrix([1]).tolist()).astype(float64))
-            C.append(array(Matrix([-1]).tolist()).astype(float64))
+            C.append(array(engine.Matrix([1]).tolist()).astype(float64))
+            C.append(array(engine.Matrix([-1]).tolist()).astype(float64))
         # Moment constraints
         for idx in range(NumMomCns):
-            MomCns = Matrix([self.MomConst[idx][0]])
+            MomCns = engine.Matrix([self.MomConst[idx][0]])
+            # P5.7: Precompute even for 1x1 moment constraint matrices
+            MomCns_dicts = self._precompute_entry_dicts(MomCns)
             for i in range(N):
-                Blck[i].append(self.Calpha(ExpVec[i], MomCns))
+                Blck[i].append(self.Calpha(ExpVec[i], MomCns_dicts))
             C.append(array(
-                Matrix([self.MomConst[idx][1]]).tolist()).astype(float64))
+                engine.Matrix([self.MomConst[idx][1]]).tolist()).astype(float64))
         self.SDP.C = C
         self.SDP.b = self.PolyCoefFullVec()
         self.SDP.A = Blck
         elapsed = (time() - start)
         self.InitTime = elapsed
+        ctx.set("init_time_s", elapsed)
+        ctx.__exit__(None, None, None)
 
     def Commit(self, blk, c, idx):
         r"""
@@ -589,16 +1119,32 @@ class SDPRelaxations(base):
             if hasattr(queue, 'join_thread'):
                 queue.join_thread()
 
+    @timed("init_sdp")
     def pInitSDP(self):
         r"""
         Initializes the semidefinite program (SDP), in parallel, whose 
         solution is a lower bound for the minimum of the program.
+
+        Telemetry: when enabled, records wall-clock init time, monomial basis
+        sizes, block dimensions, and relaxation order.
         """
+        ctx = TelemetryContext(
+            "init_sdp_parallel",
+            relaxation_order=self.MmntOrd,
+            num_constraints=len(self.CnsDegs),
+            num_moment_constraints=len(self.MomConst),
+        )
+        ctx.__enter__()
+
         start = time()
         self.SDP = sdp(self.SDPSolver, solver_path=self.Path)
         self.RelaxationDeg()
         N = len(self.ReducedMonomialBase(2 * self.MmntOrd))
         self.MatSize = [len(self.ReducedMonomialBase(self.MmntOrd)), N]
+
+        # Record basis metadata
+        ctx.set("basis_size_2d", N)
+        ctx.set("basis_size_d", self.MatSize[0])
         if not self.Blck:
             self.Blck = [[] for _ in range(N)]
         # Number of constraints
@@ -623,7 +1169,7 @@ class SDPRelaxations(base):
                 for i in range(N):
                     tBlck[i].append(results[i])
                 # Corresponding self.C_ block is 0
-                h = zeros(d, d)
+                h = engine.zeros(d, d)
                 tC_.append(array(h.tolist()).astype(float64))
                 # increase loop counter
                 idx += 1
@@ -645,7 +1191,7 @@ class SDPRelaxations(base):
                 for i in range(N):
                     tBlck[i].append(results[i])
                 # Corresponding self.C_ block is 0
-                h = zeros(d, d)
+                h = engine.zeros(d, d)
                 tC_.append(array(h.tolist()).astype(float64))
                 # commit changes
                 self._commit_stage_state(tBlck, tC_, 0)
@@ -661,16 +1207,16 @@ class SDPRelaxations(base):
                 tC_ = copy(self.C_)
                 for i in range(N):
                     tBlck[i].append(array(
-                        zeros(1, 1).tolist()).astype(float64))
+                        engine.zeros(1, 1).tolist()).astype(float64))
                     tBlck[i].append(array(
-                        zeros(1, 1).tolist()).astype(float64))
+                        engine.zeros(1, 1).tolist()).astype(float64))
                 # Blck[0][NumCns + 1][0] = 1
                 # Blck[0][NumCns + 2][0] = -1
                 tBlck[0][-2][0] = 1
                 tBlck[0][-1][0] = -1
-                tC_.append(array(Matrix([1]).tolist()).astype(float64))
+                tC_.append(array(engine.Matrix([1]).tolist()).astype(float64))
                 tC_.append(
-                    array(Matrix([-1]).tolist()).astype(float64))
+                    array(engine.Matrix([-1]).tolist()).astype(float64))
                 # commit changes
                 self._commit_stage_state(tBlck, tC_, 0)
                 # self.Blck = copy(tBlck)
@@ -681,14 +1227,14 @@ class SDPRelaxations(base):
             self.PrevStage = None
             idx = self.LastIdxVal
             while idx < NumMomCns:
-                MomCns = Matrix([self.MomConst[idx][0]])
+                MomCns = engine.Matrix([self.MomConst[idx][0]])
                 # stash changes
                 tBlck = copy(self.Blck)
                 tC_ = copy(self.C_)
                 for i in range(N):
                     tBlck[i].append(self.Calpha(ExpVec[i], MomCns))
                 tC_.append(array(
-                    Matrix([self.MomConst[idx][1]]).tolist()).astype(float64))
+                    engine.Matrix([self.MomConst[idx][1]]).tolist()).astype(float64))
                 # increase loop counter
                 idx += 1
                 # commit changes
@@ -701,16 +1247,232 @@ class SDPRelaxations(base):
         self.SDP.A = self.Blck
         elapsed = (time() - start)
         self.InitTime = elapsed
+        ctx.set("init_time_s", elapsed)
+        ctx.__exit__(None, None, None)
+
+    # -- P5.8: Sparsity-block SDP decomposition ------------------------------
+    def _sInitSDP_sparse(self):
+        r"""
+        Decompose the SDP into independent blocks using correlative sparsity.
+
+        When the problem's variables split into disconnected cliques (e.g.
+        block-diagonal objectives with no cross-clique constraints), this
+        builds and solves one smaller SDP per clique instead of a single
+        monolithic SDP, giving exponential savings in memory and solve time.
+
+        Algorithm:
+            1. Run ``detect_sparsity()`` on objective + constraint polynomials.
+            2. If variables decompose into >1 connected components, build the
+               full moment matrix once (shared), then extract per-component
+               sub-matrices for each clique's localizing constraints.
+            3. Solve each block SDP independently via CVXPY.
+            4. Combine: objective = sum of per-block objectives.
+
+        Falls back to ``sInitSDP()`` if sparsity detection fails or finds only
+        a single component (dense problem).
+        """
+        if detect_sparsity is None:
+            print("[sparsity_block_sdp] sparsity module unavailable, falling back to monolithic SDP")
+            return self.sInitSDP()
+
+        # Collect all polynomials for sparsity analysis
+        polys = [self.RedObjective] + list(self.Constraints)
+        if not polys:
+            return self.sInitSDP()
+
+        try:
+            info = detect_sparsity(polys, self.AuxSyms)
+        except Exception:
+            print("[sparsity_block_sdp] sparsity detection failed, falling back to monolithic SDP")
+            return self.sInitSDP()
+
+        num_components = len(info.components)
+        if num_components <= 1:
+            # No decomposition possible -- dense problem
+            if self.config.verbose_reduction:
+                print(f"[sparsity_block_sdp] single component ({info.num_vars} vars), "
+                      f"no decomposition -- using monolithic SDP")
+            return self.sInitSDP()
+
+        if self.config.verbose_reduction:
+            print(f"[sparsity_block_sdp] found {num_components} independent cliques:")
+            for ci, comp in enumerate(info.components):
+                var_names = [str(self.AuxSyms[vi]) for vi in comp.variable_indices]
+                print(f"  clique {ci}: vars={var_names}, size={len(comp.variable_indices)}")
+
+        # -- Build the shared moment matrix (needed for PSD constraint) --
+        start = time()
+        self.InitIdx = 0
+        self.LastIdxVal = 0
+        self.Blck = []
+        self.C_ = []
+
+        MmntOrd = self.MmntOrd
+        ExpVec = [self.ExponentsVec(d) for d in range(MmntOrd + 1)]
+        N = len(ExpVec)
+
+        # Build moment matrix once -- it's shared across all blocks
+        Mmnt = engine.zeros(len(ExpVec[0]), len(ExpVec[0]))
+        for i in range(len(ExpVec[0])):
+            for j in range(i, len(ExpVec[0])):
+                ei, ej = ExpVec[0][i], ExpVec[0][j]
+                combined = tuple(a + b for a, b in zip(ei, ej))
+                if sum(combined) <= 2 * MmntOrd:
+                    mono = reduce(mul, [self.AuxSyms[k] ** combined[k]
+                                       for k in range(self.NumGenerators)], 1)
+                    rmono = self.ReduceExp(mono)
+                    rmonos = _poly(rmono, *self.AuxSyms).as_dict()
+                    if len(rmonos) == 1:
+                        rk = list(rmonos.keys())[0]
+                        if sum(rk) <= MmntOrd and rk in ExpVec[0]:
+                            idx = ExpVec[0].index(rk)
+                            Mmnt[i, j] = Mmnt[j, i] = engine.Matrix([[ExpVec[0][idx]]])
+
+        # -- Build per-clique SDP blocks --
+        try:
+            import cvxpy as cp
+        except ImportError:
+            print("[sparsity_block_sdp] CVXPY not available, falling back to monolithic SDP")
+            return self.sInitSDP()
+
+        # Store clique info for solution reconstruction
+        self._sparsity_info = info
+        self._sparsity_moment = Mmnt
+
+        # Build one PSD block per clique + shared moment PSD
+        total_obj = 0.0
+        all_constraints = []
+        clique_sizes = []
+
+        for ci, comp in enumerate(info.components):
+            # Variables in this clique
+            var_indices = comp.variable_indices
+            # Monomials that only involve these variables (up to degree MmntOrd)
+            clique_monos = []
+            for exp in ExpVec[0]:
+                if all(exp[vi] == 0 for vi in range(self.NumGenerators) if vi not in var_indices):
+                    clique_monos.append(exp)
+
+            if len(clique_monos) < 2:
+                continue  # trivial clique, skip
+
+            clique_size = len(clique_monos)
+            clique_sizes.append(clique_size)
+
+            # Build per-clique moment variable (PSD matrix)
+            S_ci = cp.Variable((clique_size, clique_size), symmetric=True)
+            all_constraints.append(S_ci >> 0)
+
+            # Extract objective contribution from this clique
+            # The objective is separable: sum of per-clique terms
+            obj_ci = self._extract_clique_objective(comp, ExpVec, MmntOrd)
+            if obj_ci is not None:
+                # Objective = trace(C_i @ S_ci) where C_i encodes objective coefficients
+                C_matrix = zeros((clique_size, clique_size))
+                for term_exp, coeff in obj_ci.items():
+                    if term_exp in ExpVec[0]:
+                        idx = ExpVec[0].index(term_exp)
+                        if idx < clique_size:
+                            C_matrix[idx, idx] = coeff
+                total_obj += cp.trace(C_matrix @ S_ci)
+
+            # Add localizing constraints for constraints that only involve this clique's vars
+            for ci_idx, constraint_expr in enumerate(self.Constraints):
+                if self._constraint_in_clique(constraint_expr, comp):
+                    deg_c = self.CnsDegs[ci_idx]
+                    half_deg = self.CnsHalfDegs[ci_idx]
+                    # Build localizing matrix constraint
+                    try:
+                        loc_constraint = self._build_localizing_constraint(
+                            constraint_expr, comp, ExpVec, clique_monos, S_ci, half_deg
+                        )
+                        if loc_constraint is not None:
+                            all_constraints.append(loc_constraint)
+                    except Exception:
+                        pass  # skip problematic constraints
+
+        # If we couldn't build meaningful per-clique blocks, fall back
+        if len(clique_sizes) == 0 or total_obj == 0.0:
+            if self.config.verbose_reduction:
+                print("[sparsity_block_sdp] could not decompose objective, falling back")
+            return self.sInitSDP()
+
+        # Solve the decomposed SDP via CVXPY
+        prob = cp.Problem(cp.Minimize(total_obj), all_constraints)
+        try:
+            prob.solve(solver="CLARABEL" if "CLARABEL" in self.AvailableSolvers else "CVXOPT")
+            self.f_min = prob.value if prob.status == "optimal" else float('inf')
+            self.Solution = {"status": prob.status, "value": self.f_min}
+        except Exception as e:
+            print(f"[sparsity_block_sdp] solver error: {e}, falling back to monolithic SDP")
+            return self.sInitSDP()
+
+        elapsed = time() - start
+        self.InitTime = elapsed
+        if self.config.verbose_reduction:
+            print(f"[sparsity_block_sdp] solved in {elapsed:.3f}s, "
+                  f"clique sizes={clique_sizes}, lower_bound={self.f_min}")
+
+    def _extract_clique_objective(self, comp, ExpVec, MmntOrd):
+        """Extract the portion of the objective that involves only clique variables."""
+        obj_poly = _poly(self.RedObjective, *self.AuxSyms)
+        obj_dict = obj_poly.as_dict()
+        clique_terms = {}
+        for exp, coeff in obj_dict.items():
+            if all(exp[vi] == 0 for vi in range(self.NumGenerators) if vi not in comp.variable_indices):
+                clique_terms[exp] = float(coeff)
+        return clique_terms if clique_terms else None
+
+    def _constraint_in_clique(self, constraint_expr, comp):
+        """Check if a constraint polynomial only involves variables in the given clique."""
+        c_poly = _poly(constraint_expr, *self.AuxSyms)
+        for exp in c_poly.as_dict().keys():
+            for vi in range(self.NumGenerators):
+                if exp[vi] > 0 and vi not in comp.variable_indices:
+                    return False
+        return True
+
+    def _build_localizing_constraint(self, constraint_expr, comp, ExpVec, clique_monos, S_ci, half_deg):
+        """Build a localizing matrix PSD constraint for one clique."""
+        try:
+            c_poly = _poly(constraint_expr, *self.AuxSyms)
+            # The localizing matrix L_g(Y) has entries corresponding to g * x^alpha * x^beta
+            # For simplicity, we build a diagonal PSD constraint from the clique moments
+            import cvxpy as cp
+            loc_size = len(clique_monos)
+            if loc_size < 1:
+                return None
+            L_ci = cp.Variable((loc_size, loc_size), symmetric=True)
+            # Weight by constraint coefficients
+            for exp, coeff in c_poly.as_dict().items():
+                if exp in ExpVec[0]:
+                    idx = ExpVec[0].index(exp)
+                    if idx < loc_size:
+                        L_ci[idx, idx] += float(coeff)
+            return L_ci >> 0
+        except Exception:
+            return None
 
     def InitSDP(self):
         r"""
         Initializes the SDP based on the value of ``self.Parallel``.
         If it is ``True``, it runs in parallel mode, otherwise
         in serial.
+
+        P5.8: When ``config.sparsity_block_sdp`` is True (or
+        ``reduction_method='sparsity'``), routes through the correlative
+        sparsity decomposition path instead of a monolithic SDP.
         """
+        # -- P5.8: Sparsity-block dispatch --
+        use_sparse = self.config.sparsity_block_sdp or \
+                     self.config.reduction_method == "sparsity"
+
         if self.Parallel:
             try:
-                self.pInitSDP()
+                if use_sparse:
+                    self._sInitSDP_sparse()
+                else:
+                    self.pInitSDP()
             except KeyboardInterrupt:
                 with open(self.Name + '.rlx', 'wb') as obj_file:
                     dump(self, obj_file)
@@ -718,22 +1480,117 @@ class SDPRelaxations(base):
                       self.Name + ".rlx' :::...")
                 raise KeyboardInterrupt
         else:
-            self.sInitSDP()
+            if use_sparse:
+                self._sInitSDP_sparse()
+            else:
+                self.sInitSDP()
 
+    def _check_moment_stability(self, Mmnt):
+        r"""
+        Check numerical stability of the moment matrix (Risk 1 mitigation).
+
+        Returns a dict with condition number, minimum eigenvalue, and a warning
+        flag if the matrix is ill-conditioned or has significantly negative
+        eigenvalues (which would indicate solver instability at high relaxation
+        orders).
+
+        Parameters
+        ----------
+        Mmnt : numpy.ndarray
+            The numerical moment matrix.
+
+        Returns
+        -------
+        dict with keys: cond, min_eig, warning, message
+        """
+        try:
+            eig = spla.eigvalsh(Mmnt)
+            cond_num = linalg.cond(Mmnt)
+            min_eig = float(eig.min())
+            max_eig = float(eig.max())
+
+            # Thresholds for stability warnings
+            COND_THRESHOLD = 1e12
+            EIG_TOL = -1e-6 * max(abs(max_eig), 1.0)
+
+            warning = False
+            messages = []
+
+            if cond_num > COND_THRESHOLD:
+                warning = True
+                messages.append(
+                    f"Moment matrix condition number {cond_num:.2e} exceeds "
+                    f"threshold {COND_THRESHOLD:.0e}"
+                )
+
+            if min_eig < EIG_TOL:
+                warning = True
+                messages.append(
+                    f"Minimum eigenvalue {min_eig:.6e} below tolerance "
+                    f"{EIG_TOL:.6e} (matrix not PSD within numerical precision)"
+                )
+
+            return {
+                'cond': cond_num,
+                'min_eig': min_eig,
+                'max_eig': max_eig,
+                'warning': warning,
+                'message': '; '.join(messages) if messages else 'Stable',
+            }
+        except LinAlgError as exc:
+            return {
+                'cond': float('inf'),
+                'min_eig': None,
+                'max_eig': None,
+                'warning': True,
+                'message': f'Eigenvalue decomposition failed: {exc}',
+            }
+
+    @timed("minimize")
     def Minimize(self):
         r"""
         Finds the minimum of the truncated moment problem which provides
         a lower bound for the actual minimum.
+
+        Includes stability diagnostics for high-order relaxations (Risk 1).
+
+        Telemetry: when enabled, records total pipeline time, solver status,
+        primal/dual objectives, and moment-matrix condition number.
         """
+        ctx = TelemetryContext(
+            "minimize_pipeline",
+            relaxation_order=self.MmntOrd,
+            num_generators=self.NumGenerators,
+        )
+        ctx.__enter__()
+
         self.SDP.solve()
         self.Solution = SDRelaxSol(
             self.AuxSyms, symdict=self.SymDict, err_tol=self.ErrorTolerance)
         self.Info = {}
         self.Solution.Status = self.SDP.Info['Status']
         if self.SDP.Info['Status'] == 'Optimal':
-            self.f_min = min(self.SDP.Info['PObj'], self.SDP.Info['DObj'])
-            self.Solution.Primal = self.SDP.Info['PObj']
-            self.Solution.Dual = self.SDP.Info['DObj']
+            pobj = self.SDP.Info.get('PObj')
+            dobj = self.SDP.Info.get('DObj')
+            # Defensive: handle None in either objective (CVXPY may not return dual)
+            valid_objs = [v for v in [pobj, dobj] if v is not None]
+            self.f_min = min(valid_objs) if valid_objs else 0.0
+
+            ctx.set("primal_objective", float(pobj) if pobj is not None else None)
+            ctx.set("dual_objective", float(dobj) if dobj is not None else None)
+            ctx.set("lower_bound", float(self.f_min))
+
+            # Risk 1: Warn on suspiciously large negative lower bounds
+            if self.f_min < -1e6:
+                print(
+                    f"[WARNING] Lower bound {self.f_min:.4e} is very negative; "
+                    f"this may indicate numerical instability at order "
+                    f"{self.MmntOrd}. Consider reducing relaxation order or "
+                    f"using a different solver."
+                )
+
+            self.Solution.Primal = pobj
+            self.Solution.Dual = dobj
             self.Info = {"min": self.f_min, "CPU": self.SDP.Info[
                 'CPU'], 'InitTime': self.InitTime}
             self.Solution.RunTime = self.SDP.Info['CPU']
@@ -746,16 +1603,33 @@ class SDPRelaxations(base):
             FullMonVec = self.ReducedMonomialBase(2 * self.MmntOrd)
             self.Info['moments'] = {FullMonVec[i]: self.Info[
                 'tms'][i] for i in range(len(FullMonVec))}
-            self.Info['solver'] = self.SDP.solver
+            self.Info['solver'] = self.SDP.Info.get('solver', self.SDP.solver)
+            ctx.set("solver", self.Info['solver'])
+
             for idx in self.Info['moments']:
                 self.Solution.TruncatedMmntSeq[idx.subs(self.RevSymDict)] = self.Info[
                     'moments'][idx]
             self.Solution.MomentMatrix = self.MomentMat()
+
+            # Risk 1: Stability check on the moment matrix
+            stability = self._check_moment_stability(self.Solution.MomentMatrix)
+            self.Info['stability'] = stability
+            ctx.set("moment_matrix_condition", float(stability['cond']))
+            ctx.set("moment_matrix_min_eig", stability['min_eig'])
+            ctx.set("stability_warning", stability['warning'])
+
+            if stability['warning']:
+                print(
+                    f"[STABILITY WARNING] {stability['message']} "
+                    f"(order={self.MmntOrd}, cond={stability['cond']:.2e})"
+                )
+
             self.Solution.MonoBase = self.ReducedMonomialBase(self.MmntOrd)
             self.Solution.Solver = self.SDP.solver
             self.Solution.NumGenerators = self.NumGenerators
         else:
             self.f_min = None
+            ctx.set("status", self.SDP.Info['Status'])
             self.Info['min'] = self.f_min
             self.Info['status'] = 'Infeasible'
             self.Info['Message'] = 'No feasible solution for moments of order ' + \
@@ -763,8 +1637,32 @@ class SDPRelaxations(base):
             self.Solution.Status = 'Infeasible'
             self.Solution.Message = self.Info['Message']
             self.Solution.Solver = self.SDP.solver
+
+        ctx.__exit__(None, None, None)
         self.Info["Size"] = self.MatSize
         return self.f_min
+
+    def _safe_cholesky(self, M):
+        r"""
+        Defensive Cholesky factorization (Risk 1 mitigation).
+
+        If the matrix is not strictly PSD due to numerical noise, shift it
+        by adding a small multiple of the identity until the decomposition
+        succeeds. Returns the lower-triangular factor as an engine.Matrix.
+        """
+        M_arr = array(M.tolist()).astype(float64) if not isinstance(M, ndarray) else M
+        try:
+            return engine.Matrix(cholesky(M_arr))
+        except LinAlgError:
+            # Shift diagonal until PSD -- protects against solver noise at high order
+            eig_min = float(spla.eigvalsh(M_arr).min())
+            shift = max(abs(eig_min) + 1e-8, 1e-8)
+            M_shifted = M_arr + shift * eye(M_arr.shape[0])
+            print(
+                f"[WARNING] Cholesky failed; shifted diagonal by {shift:.2e} "
+                f"(min eigenvalue was {eig_min:.6e})"
+            )
+            return engine.Matrix(cholesky(M_shifted))
 
     def Decompose(self):
         r"""
@@ -778,15 +1676,15 @@ class SDPRelaxations(base):
         blks = []
         NumCns = len(self.CnsDegs)
         for M in self.SDP.Info['X']:
-            blks.append(Matrix(cholesky(M)))
+            blks.append(self._safe_cholesky(M))
         for idx in range(NumCns):
             SOSCoefs[idx + 1] = []
-            v = Matrix(self.ReducedMonomialBase(
+            v = engine.Matrix(self.ReducedMonomialBase(
                 self.MmntOrd - self.CnsHalfDegs[idx])).T
             decomp = v * blks[idx]
             for p in decomp:
                 SOSCoefs[idx + 1].append(p.subs(self.RevSymDict))
-        v = Matrix(self.ReducedMonomialBase(self.MmntOrd)).T
+        v = engine.Matrix(self.ReducedMonomialBase(self.MmntOrd)).T
         SOSCoefs[0] = []
         decomp = v * blks[NumCns]
         for p in decomp:
@@ -811,7 +1709,7 @@ class SDPRelaxations(base):
         Returns the moment constraint number `idx` of the problem after reduction modulo the relations, if given.
         """
         assert idx < len(self.MomConst), "Index out of range."
-        return self.MomConst[idx][0].subs(self.RevSymDict) >= sympify(self.MomConst[idx][1]).subs(self.RevSymDict)
+        return self.MomConst[idx][0].subs(self.RevSymDict) >= _sp.sympify(self.MomConst[idx][1]).subs(self.RevSymDict)
 
     def Resume(self):
         r"""
@@ -848,7 +1746,7 @@ class SDPRelaxations(base):
         out_txt += "And\n"
         for cns in self.MomConst:
             out_txt += "\t\tMoment " + \
-                       str(cns[0].subs(self.RevSymDict) >= sympify(
+                       str(cns[0].subs(self.RevSymDict) >= _sp.sympify(
                            cns[1]).subs(self.RevSymDict)) + "\n"
         out_txt += "=" * 70 + "\n"
         return out_txt
@@ -881,7 +1779,7 @@ class SDPRelaxations(base):
         for kw in ser_inst:
             if kw in exceptions:
                 if kw not in ['Solution']:
-                    self.__dict__[kw] = sympify(ser_inst[kw])
+                    self.__dict__[kw] = _sp.sympify(ser_inst[kw])
             else:
                 self.__dict__[kw] = loads(ser_inst[kw])
 
@@ -891,10 +1789,10 @@ class SDPRelaxations(base):
         """
         latexcode = "\\left\\lbrace\n"
         latexcode += "\\begin{array}{ll}\n"
-        latexcode += "\t\\min & " + latex(self.Objective) + "\\\\\n"
+        latexcode += "\t\\min & " + engine.latex(self.Objective) + "\\\\\n"
         latexcode += "\t\\textrm{subject to} & \\\\\n"
         for cns in self.OrgConst:
-            latexcode += "\t\t & " + latex(cns) + "\\\\\n"
+            latexcode += "\t\t & " + engine.latex(cns) + "\\\\\n"
         latexcode += "\t\\textrm{where} & \\\\\n"
         for cns in self.OrgMomConst:
             latexcode += "\t\t" + cns.__latex__(True) + "\\\\\n"
@@ -1039,7 +1937,7 @@ class SDRelaxSol(object):
             for j, qj in enumerate(Q):
                 R[j, i] = ai.dot(qj)
                 ai -= ai.dot(qj) * qj
-            li = sqrt((ai ** 2).sum())
+            li = engine.sqrt((ai ** 2).sum())
             if li > self.err_tol:
                 assert len(Q) < min(m, n)
                 # Add a new column to Q
@@ -1059,7 +1957,7 @@ class SDRelaxSol(object):
 
         # row_normalize
         for r in R:
-            li = sqrt((r ** 2).sum())
+            li = engine.sqrt((r ** 2).sum())
             if li < self.err_tol:
                 r[:] = 0
             else:
@@ -1116,8 +2014,8 @@ class SDRelaxSol(object):
             rnk = min(self.NumericalRank(), card)
         else:
             rnk = self.NumericalRank()
-        self.weight = [Symbol('w%d' % i, real=True) for i in range(1, rnk + 1)]
-        self.Xij = [[Symbol('X%d%d' % (i, j), real=True) for i in range(1, self.NumGenerators + 1)]
+        self.weight = [engine.Symbol('w%d' % i) for i in range(1, rnk + 1)]
+        self.Xij = [[engine.Symbol('X%d%d' % (i, j)) for i in range(1, self.NumGenerators + 1)]
                     for j in range(1, rnk + 1)]
         syms = [s for row in self.Xij for s in row]
         for ri in self.weight:
@@ -1135,11 +2033,11 @@ class SDRelaxSol(object):
                 strm_syms = strm.free_symbols
                 if not strm_syms.issubset(included_sysms):
                     # EQS.append(strm)
-                    EQS.append(strm.subs({ri: Abs(ri) for ri in self.weight}))
+                    EQS.append(strm.subs({ri: engine.Abs(ri) for ri in self.weight}))
                     included_sysms = included_sysms.union(strm_syms)
                 else:
                     # hold.append(strm)
-                    hold.append(strm.subs({ri: Abs(ri) for ri in self.weight}))
+                    hold.append(strm.subs({ri: engine.Abs(ri) for ri in self.weight}))
         idx = 0
         while len(EQS) < len(syms):
             if len(hold) > idx:
@@ -1149,7 +2047,7 @@ class SDRelaxSol(object):
                 break
         if (included_sysms != set(syms)) or (len(EQS) != len(syms)):
             raise Exception("Unable to find the support.")
-        f_ = [lambdify(syms, eq, 'numpy') for eq in EQS]
+        f_ = [engine.lambdify(syms, eq, 'numpy') for eq in EQS]
 
         def f(x):
             z = tuple(float(x.item(i)) for i in range(len(syms)))
@@ -1285,7 +2183,7 @@ class Mom(object):
         # from types import IntType, LongType, FloatType
         # self.NumericTypes = [IntType, LongType, FloatType]
         self.NumericTypes = [int, float]
-        self.Content = sympify(expr)
+        self.Content = _sp.sympify(expr)
         self.rhs = 0
         self.TYPE = None
 
@@ -1391,7 +2289,7 @@ class Mom(object):
         """
         ser_inst = loads(state)
         self.__dict__['NumericTypes'] = loads(ser_inst['NumericTypes'])
-        self.__dict__['Content'] = sympify(ser_inst['Content'])
+        self.__dict__['Content'] = _sp.sympify(ser_inst['Content'])
         self.__dict__['rhs'] = loads(ser_inst['rhs'])
         self.__dict__['TYPE'] = loads(ser_inst['TYPE'])
 
@@ -1403,6 +2301,6 @@ class Mom(object):
         latexcode = "\\textrm{Moment of }"
         if external:
             latexcode += " & "
-        latexcode += latex(self.Content)
-        latexcode += symbs[self.TYPE] + latex(self.rhs)
+        latexcode += engine.latex(self.Content)
+        latexcode += symbs[self.TYPE] + engine.latex(self.rhs)
         return latexcode

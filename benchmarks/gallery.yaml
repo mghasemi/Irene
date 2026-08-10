@@ -1,0 +1,304 @@
+# ============================================================================
+# Irene Benchmark Problem Gallery
+# ============================================================================
+# Schema:
+#   id:           unique string identifier
+#   name:         human-readable name
+#   description:  short mathematical description
+#   variables:    list of variable names
+#   degree:       total degree of objective polynomial(s)
+#   category:     unconstrained | constrained | mean_poly | separating
+#   objective:    polynomial expression in SymPy-compatible syntax
+#   constraints:  list of constraint dicts (optional for unconstrained)
+#                 each: { expr: "...", type: "ineq" | "eq" }
+#   true_min:     known global minimum (float or null if unknown)
+#   min_at:       point(s) where minimum is attained (list of dicts, optional)
+#   relaxations:  expected relaxation results at various orders
+#                 sos_rN: SOS lower bound at order N
+#                 sonc_rN: SONC lower bound at order N
+#                 notes: free-text observations
+#   tags:         list of keywords for filtering
+# ============================================================================
+
+gallery:
+  # ------------------------------------------------------------------
+  # Unconstrained — trivial and warm-up problems
+  # ------------------------------------------------------------------
+  - id: quad_1d
+    name: "1D Quadratic"
+    description: "x^2, global minimum 0 at x=0. Trivial SOS certificate."
+    variables: [x]
+    degree: 2
+    category: unconstrained
+    objective: "x**2"
+    true_min: 0.0
+    min_at: [{x: 0}]
+    relaxations:
+      sos_r1: 0.0
+      notes: "Perfect at order 1; x^2 is trivially SOS."
+    tags: [trivial, warmup, sos]
+
+  - id: quartic_1d
+    name: "1D Quartic (x^4 - x^2)"
+    description: "Biquartic with global minimum -1/4 at x=±1/√2. Classic SOS test."
+    variables: [x]
+    degree: 4
+    category: unconstrained
+    objective: "x**4 - x**2"
+    true_min: -0.25
+    min_at: [{x: 0.7071}, {x: -0.7071}]
+    relaxations:
+      sos_r2: -0.25
+      notes: "Exact at order 2; Hilbert's theorem guarantees SOS for univariate."
+    tags: [classic, sos, hilbert]
+
+  # ------------------------------------------------------------------
+  # Separating examples — nonnegative but not SOS
+  # ------------------------------------------------------------------
+  - id: motzkin
+    name: "Motzkin Polynomial"
+    description: >
+      M(x,y) = x^4 y^2 + x^2 y^4 + 1 - 3 x^2 y^2.
+      Nonnegative (AM-GM), not SOS. SONC certificate exists at order 6.
+    variables: [x, y]
+    degree: 6
+    category: separating
+    objective: "x**4 * y**2 + x**2 * y**4 + 1 - 3 * x**2 * y**2"
+    true_min: 0.0
+    min_at: [{x: 0, y: 0}, {x: 1, y: 1}, {x: -1, y: 1}]
+    relaxations:
+      sos_r3: "infeasible_or_weak"  # SOS at order 3 cannot certify nonnegativity
+      sonc_r6: 0.0
+      notes: >
+        Motzkin is the canonical separating example.
+        SONC can certify nonnegativity via circuit polynomial decomposition.
+        Mean polynomial M_{q,p} with p|2d should also work.
+    tags: [separating, motzkin, sonc, mean_poly]
+
+  - id: choi_lam
+    name: "Choi-Lam Polynomial"
+    description: >
+      C(x,y) = x^4 y^2 + x^2 y^4 + x^2 y^2 (x^2 + y^2 - 1).
+      Nonnegative on R^2, not SOS. Zero at (0,0), (±1,0), (0,±1).
+    variables: [x, y]
+    degree: 6
+    category: separating
+    objective: "x**4 * y**2 + x**2 * y**4 + x**2 * y**2 * (x**2 + y**2 - 1)"
+    true_min: 0.0
+    min_at: [{x: 0, y: 0}, {x: 1, y: 0}, {x: -1, y: 0}, {x: 0, y: 1}, {x: 0, y: -1}]
+    relaxations:
+      sos_r3: "infeasible_or_weak"
+      sonc_r6: 0.0
+      notes: >
+        Choi-Lam polynomial. Used in Mean Polynomial paper as separating example.
+        M_{q,p} forms should certify nonnegativity for appropriate (q,p).
+    tags: [separating, choi-lam, sonc, mean_poly]
+
+  - id: robinson
+    name: "Robinson Polynomial"
+    description: >
+      R(x,y) = x^4 y^2 + x^2 y^4 + x^4 + y^4 - x^2 - y^2.
+      Nonnegative, not SOS. Global minimum 0 at (±1,0), (0,±1).
+    variables: [x, y]
+    degree: 6
+    category: separating
+    objective: "x**4 * y**2 + x**2 * y**4 + x**4 + y**4 - x**2 - y**2"
+    true_min: 0.0
+    min_at: [{x: 1, y: 0}, {x: -1, y: 0}, {x: 0, y: 1}, {x: 0, y: -1}]
+    relaxations:
+      sos_r3: "infeasible_or_weak"
+      sonc_r6: 0.0
+      notes: >
+        Robinson polynomial — another canonical separating example.
+        Circuit polynomial structure enables SONC certification.
+    tags: [separating, robinson, sonc]
+
+  - id: schick_separating
+    name: "Schick Separating SOS+SONC"
+    description: >
+      f = 1/2 * (1 + 2xy + x^2 y)^2 + Motzkin.
+      Nonnegative, not SOS, SONC bound ~-2.9878 at order 3.
+      Direct SOS+SONC cone program certifies nonnegativity.
+    variables: [x, y]
+    degree: 6
+    category: separating
+    objective: "0.5 * (1 + 2*x*y + x**2*y)**2 + x**4*y**2 + x**2*y**4 + 1 - 3*x**2*y**2"
+    true_min: 0.0
+    relaxations:
+      sos_r3: "infeasible"
+      sonc_r3: -2.9878
+      notes: >
+        Schick's example separating SOS+SONC from individual cones.
+        SOS alone fails, SONC gives weak bound (~-2.99),
+        but the joint SOS+SONC cone certifies nonnegativity.
+    tags: [separating, schick, sosonc]
+
+  # ------------------------------------------------------------------
+  # Constrained optimization problems
+  # ------------------------------------------------------------------
+  - id: constrained_1d
+    name: "Constrained 1D (x^2 + y^2 on unit circle)"
+    description: >
+      Minimize x^2 + y^2 subject to x^2 + y^2 = 1.
+      Trivial: minimum is 1, attained everywhere on the constraint.
+    variables: [x, y]
+    degree: 2
+    category: constrained
+    objective: "x**2 + y**2"
+    constraints:
+      - expr: "x**2 + y**2 - 1"
+        type: "eq"
+    true_min: 1.0
+    relaxations:
+      sos_r1: 1.0
+      notes: "Exact at order 1; constraint directly implies objective = 1."
+    tags: [constrained, trivial]
+
+  - id: motzkin_constrained
+    name: "Motzkin on Box"
+    description: >
+      Minimize Motzkin polynomial over [-2, 2]^2.
+      True minimum is still 0 (attained inside the box).
+      Tests localizing matrix construction with 4 inequality constraints.
+    variables: [x, y]
+    degree: 6
+    category: constrained
+    objective: "x**4 * y**2 + x**2 * y**4 + 1 - 3 * x**2 * y**2"
+    constraints:
+      - expr: "2 - x"
+        type: "ineq"
+      - expr: "2 + x"
+        type: "ineq"
+      - expr: "2 - y"
+        type: "ineq"
+      - expr: "2 + y"
+        type: "ineq"
+    true_min: 0.0
+    relaxations:
+      sos_r3: "~0.0"  # Should converge to 0 at sufficient order
+      notes: >
+        Box constraints exercise localizing matrix construction.
+        Minimum is interior, so relaxation should certify ~0.
+    tags: [constrained, motzkin, box]
+
+  - id: polynomial_on_sphere
+    name: "x^4 + y^4 on Unit Sphere"
+    description: >
+      Minimize x^4 + y^4 subject to x^2 + y^2 = 1.
+      True minimum is 1/2 at (±1/√2, ±1/√2).
+    variables: [x, y]
+    degree: 4
+    category: constrained
+    objective: "x**4 + y**4"
+    constraints:
+      - expr: "x**2 + y**2 - 1"
+        type: "eq"
+    true_min: 0.5
+    min_at: [{x: 0.7071, y: 0.7071}, {x: -0.7071, y: 0.7071}]
+    relaxations:
+      sos_r2: 0.5
+      notes: "Exact at order 2; symmetric structure aids convergence."
+    tags: [constrained, sphere, classic]
+
+  # ------------------------------------------------------------------
+  # Mean polynomial parameter sweep targets
+  # ------------------------------------------------------------------
+  - id: mean_poly_sweep_motzkin
+    name: "Mean Poly Sweep — Motzkin"
+    description: >
+      Test M_{q,p} certification of Motzkin for (q,p) = (1,0), (2,1), (4,2).
+      All should certify nonnegativity since p|2d=6 is not required but q|2d matters.
+    variables: [x, y]
+    degree: 6
+    category: mean_poly
+    objective: "x**4 * y**2 + x**2 * y**4 + 1 - 3 * x**2 * y**2"
+    true_min: 0.0
+    mean_params:
+      - q: 1
+        p: 0
+        expected: "~0.0"
+      - q: 2
+        p: 1
+        expected: "~0.0"
+      - q: 4
+        p: 2
+        expected: "~0.0"
+    notes: >
+      Mean polynomial hierarchy should certify Motzkin nonnegativity.
+      Compare convergence rates across (q,p) choices.
+    tags: [mean_poly, motzkin, parameter_sweep]
+
+  # ------------------------------------------------------------------
+  # Scaling / stress test problems
+  # ------------------------------------------------------------------
+  - id: dense_bivariate_deg8
+    name: "Dense Bivariate Degree-8"
+    description: >
+      (x + y)^8 expanded. Trivially nonnegative as even power of real polynomial.
+      Stress test for symbolic engine — 45 monomials after expansion.
+    variables: [x, y]
+    degree: 8
+    category: unconstrained
+    objective: "(x + y)**8"
+    true_min: 0.0
+    min_at: [{x: 0, y: 0}]
+    relaxations:
+      sos_r4: 0.0
+      notes: >
+        Stress test for matrix generation speed.
+        Moment matrix at order 4 has ~28 entries in bivariate case.
+        Primary benchmark for SymEngine acceleration (P1 success criterion).
+    tags: [stress, scaling, symengine]
+
+  - id: sparse_trinomial
+    name: "Sparse Trinomial Benchmark"
+    description: >
+      f = x^6 + y^6 + 1 - 3*x^2*y^2.
+      Similar structure to Motzkin but lower degree terms.
+      Tests Newton polytope pruning effectiveness.
+    variables: [x, y]
+    degree: 6
+    category: unconstrained
+    objective: "x**6 + y**6 + 1 - 3 * x**2 * y**2"
+    true_min: -0.5  # approximate; AM-GM gives lower bound
+    relaxations:
+      sos_r3: "~negative"
+      sonc_r6: "~0.0 or negative"
+      notes: >
+        Sparse structure (only 4 terms) should benefit from Newton polytope pruning.
+        Compare matrix dimension with and without pruning (P3 success criterion).
+    tags: [sparse, newton_polytope, pruning]
+
+# ============================================================================
+# Runner configuration
+# ============================================================================
+runner:
+  default_solver: "clarabel"
+  fallback_solvers: ["scs", "mosek"]
+  tolerance: 1e-4
+  timeout_per_problem: 300  # seconds
+  verbosity: 0
+  output_format: "json"    # json | csv | both
+  output_dir: "./benchmarks/results/"
+
+# ============================================================================
+# Validation criteria (from plan_master.md success criteria)
+# ============================================================================
+validation:
+  phase1:
+    description: "Matrix generation ≥3× faster on degree-6 bivariate"
+    benchmark_ids: [motzkin, choi_lam, dense_bivariate_deg8]
+    metric: matrix_gen_time_ratio
+    threshold: 3.0
+
+  phase2:
+    description: "CVXPY solves Motzkin/Choi-Lam within 1e-4 of known optima"
+    benchmark_ids: [motzkin, choi_lam]
+    metric: solution_accuracy
+    threshold: 1e-4
+
+  phase3:
+    description: "Newton pruning reduces matrix dimension by ≥20% on sparse problems"
+    benchmark_ids: [sparse_trinomial]
+    metric: dimension_reduction_ratio
+    threshold: 0.20
