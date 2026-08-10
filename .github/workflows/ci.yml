@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main, master, rewrite]
 
+permissions:
+  contents: read
+
 env:
   PYTHONUTF8: "1"
 
