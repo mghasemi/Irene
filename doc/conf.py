@@ -42,7 +42,7 @@ project = 'IreneRewrite'
 copyright = '2016-2026, Mehdi Ghasemi'
 author = 'Mehdi Ghasemi'
 version = '1.3'
-release = '1.3.0'
+release = '1.3.1'
 language = 'en'
 
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
@@ -66,6 +66,9 @@ latex_elements = {
 \usepackage{mathrsfs}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{textcomp}
+\usepackage{upquote}
 ''',
 }
 
