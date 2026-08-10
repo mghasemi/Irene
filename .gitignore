@@ -1,26 +1,74 @@
+# Packaging artifacts
+dist/
+build/
+*.egg
+*.egg-info/
+*.dist-info/
+
+# Generated egg files
 dist/Irene-1.2.3-py3.11.egg
+dist/Irene-1.2.3-py3.12.egg
 Irene.egg-info/dependency_links.txt
 Irene.egg-info/SOURCES.txt
-dist/Irene-1.2.3-py3.12.egg
 Irene.egg-info/PKG-INFO
 Irene.egg-info/top_level.txt
 Irene.egg-info/requires.txt
-/doc/_build/
-AN APPROACH TO CONSTRAINED POLYNOMIAL OPTIMIZATION.pdf
-Lower bounds for Polynomials on a basic semialgebraic set.pdf
-.vscode/*.*
+
+# Python cache and virtual environments
 .venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.tox/
+.nox/
+.ipynb_checkpoints/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.egg-info
-*.egg
-dist
-build
+.coverage
+.coverage.*
+htmlcov/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+.python-version
+
+# Editor files
+.vscode/
+.idea/
+
+# Docs/build outputs and local planning docs
+doc/_build/
+doc/_static/*
+!doc/_static/custom.css
+doc/release-notes-1.2.5.md
+doc/INTEGRATION_PLAN.md
+doc/documentation-update-plan.md
+
+# Local PDFs
+AN APPROACH TO CONSTRAINED POLYNOMIAL OPTIMIZATION.pdf
+Lower bounds for Polynomials on a basic semialgebraic set.pdf
+
+# Local reports and run outputs
+reports/
+plan_master.md
+execution_log.md
 *.log
 *.bak
 *.swp
-*.dist-info
 *.out
 *.aux
+*.res
+*.sdpa
+*.dat
+*.dat-s
+
+# Local helper scripts
+siyuan_push.py
+bench_p1_2.py
+create_tasks.py
+bench_phase3_reductions.py
