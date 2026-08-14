@@ -405,10 +405,6 @@ class BorderBasis:
         if exp in basis_set:
             return {exp: coeff}
 
-        if sum(exp) > self.degree + 2:
-            # Term is too high degree -- discard (beyond our representation)
-            return {}
-
         # Try to reduce using multiplication tables
         if exp in self.mult_tables:
             table_coeffs = self.mult_tables[exp]
@@ -419,38 +415,34 @@ class BorderBasis:
                     result[beta] = result.get(beta, 0.0) + coeff * c
             return result
 
-        # If not directly in table, try reducing one variable at a time
+        # Reduce a factor first, then apply the corresponding multiplication
+        # operator. This extends the finite border tables to arbitrary-degree
+        # monomials without silently dropping terms outside the border.
         for i in range(self.nvars):
             if exp[i] > 0:
                 lower_exp = list(exp)
                 lower_exp[i] -= 1
                 lower_tuple = tuple(lower_exp)
 
-                if lower_tuple in self.mult_tables:
-                    # x^exp = x_i \\cdot x^lower_exp, reduce x^lower_exp first
-                    intermediate = self._reduce_single_term(lower_tuple, coeff)
-                    final_result = {}
-                    for beta, c in intermediate.items():
-                        # Now multiply by x_i and reduce again if needed
-                        new_exp = list(beta)
-                        new_exp[i] += 1
-                        new_tuple = tuple(new_exp)
-                        if new_tuple in basis_set:
-                            final_result[new_tuple] = final_result.get(new_tuple, 0.0) + c
-                        elif new_tuple in self.mult_tables:
-                            sub_reduced = {}
-                            for j, cj in enumerate(self.mult_tables[new_tuple]):
-                                if abs(cj) > 1e-14 and j < len(self.basis):
-                                    sub_beta = self.basis[j]
-                                    sub_reduced[sub_beta] = (
-                                        sub_reduced.get(sub_beta, 0.0) + c * cj
-                                    )
-                            for beta2, c2 in sub_reduced.items():
-                                final_result[beta2] = (
-                                    final_result.get(beta2, 0.0) + c2
-                                )
-                        else:
-                            final_result[new_tuple] = final_result.get(new_tuple, 0.0) + c
+                # x^exp = x_i * x^lower_exp, reduce x^lower_exp first.
+                intermediate = self._reduce_single_term(lower_tuple, coeff)
+                if not intermediate:
+                    return {}
+
+                final_result = {}
+                for beta, c in intermediate.items():
+                    new_exp = list(beta)
+                    new_exp[i] += 1
+                    new_tuple = tuple(new_exp)
+                    if new_tuple in basis_set:
+                        final_result[new_tuple] = final_result.get(new_tuple, 0.0) + c
+                    else:
+                        sub_reduced = self._reduce_single_term(new_tuple, c)
+                        for beta2, c2 in sub_reduced.items():
+                            final_result[beta2] = (
+                                final_result.get(beta2, 0.0) + c2
+                            )
+                if final_result:
                     return final_result
 
         # Cannot reduce further -- keep as is

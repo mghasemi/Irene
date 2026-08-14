@@ -314,6 +314,32 @@ class TestSparsityBlockSDP:
         rlx.InitSDP()
         assert called[0], "reduction_method='sparsity' should dispatch to sparse path"
 
+    def test_sparsity_detection_does_not_change_sdp_dispatch(self):
+        """Detection alone must not switch to the experimental block SDP."""
+        from Irene.relaxations import SDPRelaxations, RelaxationConfig
+
+        x1, x2 = _sp.symbols('x1 x2')
+        config = RelaxationConfig(
+            reduction_method="none",
+            sparsity_detection=True,
+            verbose_reduction=False,
+        )
+        rlx = SDPRelaxations([x1, x2], config=config)
+        rlx.SetObjective(x1**2 + x2**2)
+        rlx.MmntOrd = 2
+        rlx.Parallel = False
+
+        original_sparse = rlx._sInitSDP_sparse
+        called = [False]
+
+        def spy_sparse():
+            called[0] = True
+            return original_sparse()
+
+        rlx._sInitSDP_sparse = spy_sparse
+        rlx.InitSDP()
+        assert not called[0], "detection alone must preserve monolithic SDP dispatch"
+
     def test_fallback_when_sparsity_module_unavailable(self):
         """Graceful degradation when detect_sparsity is None."""
         import Irene.relaxations as rlx_mod

@@ -63,10 +63,11 @@ from .telemetry import timed, TelemetryContext
 
 # -- P5.8: Correlative sparsity for block-SDP decomposition --
 try:
-    from .sparsity import detect_sparsity, SparsityInfo
+    from .sparsity import detect_sparsity_from_polys
+    detect_sparsity = detect_sparsity_from_polys
 except ImportError:
-    detect_sparsity = None  # graceful degradation
-    SparsityInfo = None
+    detect_sparsity_from_polys = None  # graceful degradation
+    detect_sparsity = None
 
 
 # --------------------------------------------------------------
@@ -420,6 +421,11 @@ class SDPRelaxations(base):
                 generators=self.FreeRelations,
                 degree=deg,
             )
+            for relation in self.FreeRelations:
+                reduced = bb.reduce(relation)
+                reduced_terms = _poly(reduced, *self.AuxSyms).as_dict()
+                if any(abs(float(coeff)) > 1e-8 for coeff in reduced_terms.values()):
+                    raise ValueError("border basis does not reduce all relations to zero")
         except Exception as exc:
             if self.config.verbose_reduction:
                 print(f"[SDPRlx] Border basis deg={deg} failed ({exc}); "
@@ -639,37 +645,17 @@ class SDPRelaxations(base):
             return {tuple([0] * self.NumGenerators)}
 
     def _pruned_exponents(self, deg):
-        """Generate only exponent tuples inside the Minkowski sum of supports.
+        """Return the certified degree-bounded monomial support.
 
-        For sparse polynomials this can reduce the basis size by 60–90 %.
-        The returned set is a superset of what is strictly needed (we take
-        all lattice points in the bounding box of the Minkowski sum clipped
-        to degree \\leqslant *deg*), which keeps the implementation simple and correct.
+        Newton-polytope support alone does not certify that a monomial is
+        unnecessary from an SOS Gram basis: a polynomial can need interior
+        Gram monomials that do not occur in its own support. Until a complete
+        SOS-support certificate is available, retain the full basis rather
+        than changing the relaxation when pruning is enabled.
         """
-        # Collect supports from objective + constraints
-        support = self._newton_support(self.RedObjective)
-        for c in self.Constraints:
-            support |= self._newton_support(c)
-
-        # Minkowski sum of support with itself (for degree-d moment matrix we need
-        # products of monomials up to degree d, so the relevant exponents are
-        # sums of pairs from the half-degree support).
-        minkowski = set()
-        for e1 in support:
-            for e2 in support:
-                s = tuple(a + b for a, b in zip(e1, e2))
-                if sum(s) <= 2 * deg:
-                    minkowski.add(s)
-
-        # Also include all exponents from the original support (they may appear alone)
-        for e in support:
-            if sum(e) <= 2 * deg:
-                minkowski.add(e)
-
-        # Include the zero vector (constant term always needed)
-        minkowski.add(tuple([0] * self.NumGenerators))
-
-        return minkowski
+        candidates = list(product(range(deg + 1), repeat=self.NumGenerators))
+        candidates = [e for e in candidates if sum(e) <= deg]
+        return set(candidates)
 
     # -----------------------------------------------------------------------
     # Phase 3: Border basis integration (P3.8)
@@ -696,6 +682,24 @@ class SDPRelaxations(base):
         if bb is None and self.FreeRelations:
             bb = self._get_border_basis(deg)
         if bb is None:
+            if self.FreeRelations:
+                # A border basis is only valid when it represents the full
+                # quotient ideal. Fall back to exact Groebner reduction when
+                # the numerical/truncated construction fails validation.
+                all_monos = product(range(deg + 1), repeat=self.NumGenerators)
+                req_monos = filter(lambda x: sum(x) <= deg, all_monos)
+                RBase = []
+                for expn in req_monos:
+                    mono = reduce(mul, [self.AuxSyms[i] ** expn[i]
+                                        for i in range(self.NumGenerators)], 1)
+                    reduced = self.ReduceExp(mono)
+                    for mono_exp in _poly(reduced, *self.AuxSyms).as_dict():
+                        t_mono = reduce(mul, [self.AuxSyms[i] ** mono_exp[i]
+                                              for i in range(self.NumGenerators)], 1)
+                        if t_mono not in RBase:
+                            RBase.append(t_mono)
+                return RBase
+
             # No relations: quotient is the full polynomial ring; fall back to
             # the standard (optionally Newton-pruned) monomial enumeration.
             all_monos = product(range(deg + 1), repeat=self.NumGenerators)
@@ -1281,7 +1285,7 @@ class SDPRelaxations(base):
             return self.sInitSDP()
 
         try:
-            info = detect_sparsity(polys, self.AuxSyms)
+            info = detect_sparsity(polys, len(self.AuxSyms))
         except Exception:
             print("[sparsity_block_sdp] sparsity detection failed, falling back to monolithic SDP")
             return self.sInitSDP()
@@ -1297,36 +1301,12 @@ class SDPRelaxations(base):
         if self.config.verbose_reduction:
             print(f"[sparsity_block_sdp] found {num_components} independent cliques:")
             for ci, comp in enumerate(info.components):
-                var_names = [str(self.AuxSyms[vi]) for vi in comp.variable_indices]
-                print(f"  clique {ci}: vars={var_names}, size={len(comp.variable_indices)}")
+                var_names = [str(self.AuxSyms[vi]) for vi in comp]
+                print(f"  clique {ci}: vars={var_names}, size={len(comp)}")
 
-        # -- Build the shared moment matrix (needed for PSD constraint) --
         start = time()
-        self.InitIdx = 0
-        self.LastIdxVal = 0
-        self.Blck = []
-        self.C_ = []
-
         MmntOrd = self.MmntOrd
         ExpVec = [self.ExponentsVec(d) for d in range(MmntOrd + 1)]
-        N = len(ExpVec)
-
-        # Build moment matrix once -- it's shared across all blocks
-        Mmnt = engine.zeros(len(ExpVec[0]), len(ExpVec[0]))
-        for i in range(len(ExpVec[0])):
-            for j in range(i, len(ExpVec[0])):
-                ei, ej = ExpVec[0][i], ExpVec[0][j]
-                combined = tuple(a + b for a, b in zip(ei, ej))
-                if sum(combined) <= 2 * MmntOrd:
-                    mono = reduce(mul, [self.AuxSyms[k] ** combined[k]
-                                       for k in range(self.NumGenerators)], 1)
-                    rmono = self.ReduceExp(mono)
-                    rmonos = _poly(rmono, *self.AuxSyms).as_dict()
-                    if len(rmonos) == 1:
-                        rk = list(rmonos.keys())[0]
-                        if sum(rk) <= MmntOrd and rk in ExpVec[0]:
-                            idx = ExpVec[0].index(rk)
-                            Mmnt[i, j] = Mmnt[j, i] = engine.Matrix([[ExpVec[0][idx]]])
 
         # -- Build per-clique SDP blocks --
         try:
@@ -1337,7 +1317,6 @@ class SDPRelaxations(base):
 
         # Store clique info for solution reconstruction
         self._sparsity_info = info
-        self._sparsity_moment = Mmnt
 
         # Build one PSD block per clique + shared moment PSD
         total_obj = 0.0
@@ -1346,7 +1325,7 @@ class SDPRelaxations(base):
 
         for ci, comp in enumerate(info.components):
             # Variables in this clique
-            var_indices = comp.variable_indices
+            var_indices = comp
             # Monomials that only involve these variables (up to degree MmntOrd)
             clique_monos = []
             for exp in ExpVec[0]:
@@ -1419,7 +1398,7 @@ class SDPRelaxations(base):
         obj_dict = obj_poly.as_dict()
         clique_terms = {}
         for exp, coeff in obj_dict.items():
-            if all(exp[vi] == 0 for vi in range(self.NumGenerators) if vi not in comp.variable_indices):
+            if all(exp[vi] == 0 for vi in range(self.NumGenerators) if vi not in comp):
                 clique_terms[exp] = float(coeff)
         return clique_terms if clique_terms else None
 
@@ -1428,7 +1407,7 @@ class SDPRelaxations(base):
         c_poly = _poly(constraint_expr, *self.AuxSyms)
         for exp in c_poly.as_dict().keys():
             for vi in range(self.NumGenerators):
-                if exp[vi] > 0 and vi not in comp.variable_indices:
+                if exp[vi] > 0 and vi not in comp:
                     return False
         return True
 

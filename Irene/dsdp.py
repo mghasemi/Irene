@@ -359,12 +359,22 @@ class DSDPRelaxations(SDPRelaxations):
         r"""
         Build the (Q, P) posynomial pair for a single mean form M_{q,p}.
 
-        Per Eq. (920) in the manuscript:
-            M_{q,p} = Q - P
-            Q = (sum w_i X_i^q)^{c/q}
-            P = (sum w_i X_i^p)^{c/p}   (or 1 when p=0)
+        For p > 0 (power-mean difference, normalized):
+            Let W = sum w_i, c = lcm(q, p).  Since q > p we have
+            c/q < c/p.  Multiply the power-mean inequality by W^{c/p}:
 
-        where c = lcm(q, p) clears fractional exponents.
+            Q = W^{c/p - c/q} · (sum w_i X_i^q)^{c/q}
+            P = (sum w_i X_i^p)^{c/p}
+            M_{q,p} = Q - P  ≥ 0   (power mean inequality)
+
+            This is the minimal integer-coefficient form; it corrects
+            the prior implementation which omitted normalization entirely
+            (producing potentially negative M) and the intermediate version
+            which over-scaled by W^c.
+
+        For p = 0 (arithmetic-mean certificate):
+            M_{q,0} = (sum w_i X_i^q)^{c/q} - 1
+            (valid as a local certificate under archimedean boxing)
 
         Args:
             q: Power mean parameter q (positive integer).
@@ -374,32 +384,40 @@ class DSDPRelaxations(SDPRelaxations):
             Tuple (Q, P) of expanded sympy expressions.
         """
         n = self.NumGenerators
+        W = int(sum(self.weights))  # total weight for normalization
 
         if p != 0:
             c = lcm(q, p)
             q_exp = c // q
             p_exp = c // p
-        else:
-            # p=0 (geometric mean case): c = q suffices, q_exp = 1
-            c = q
-            q_exp = 1
-            p_exp = 0
 
-        # Build (sum w_j X_j^q)^{c/q}
-        weighted_q_sum = sum(
-            self.weights[j] * self.AuxSyms[j] ** q
-            for j in range(n)
-        )
-        Q = expand(weighted_q_sum ** q_exp)
+            # Build (sum w_j X_j^q)^{c/q}
+            weighted_q_sum = sum(
+                self.weights[j] * self.AuxSyms[j] ** q
+                for j in range(n)
+            )
+            Q_raw = expand(weighted_q_sum ** q_exp)
 
-        # Build (sum w_j X_j^p)^{c/p} or 1 when p=0
-        if p != 0:
+            # Build (sum w_j X_j^p)^{c/p}
             weighted_p_sum = sum(
                 self.weights[j] * self.AuxSyms[j] ** p
                 for j in range(n)
             )
             P = expand(weighted_p_sum ** p_exp)
+
+            # Since q > p: c/q < c/p, multiply Q_raw by W^{c/p - c/q}
+            diff_exp = p_exp - q_exp  # = c/p - c/q
+            Q = (W ** diff_exp) * Q_raw
         else:
+            # p=0: arithmetic-mean certificate (unchanged)
+            c = q
+            q_exp = 1
+
+            weighted_q_sum = sum(
+                self.weights[j] * self.AuxSyms[j] ** q
+                for j in range(n)
+            )
+            Q = expand(weighted_q_sum ** q_exp)
             P = sympify(1)
 
         return Q, P

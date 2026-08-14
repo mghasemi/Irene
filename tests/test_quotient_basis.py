@@ -62,6 +62,21 @@ class TestReductionEquivalence:
                 # border basis returns float coefficients
                 assert abs(float(red) - 1.0) < 1e-8
 
+    def test_border_reduces_higher_degree_ideal_multiples(self):
+        """Border reduction preserves the ideal for terms above its border."""
+        x = symbols("x")
+        rlx = SDPRelaxations(
+            [x],
+            relations=[x**2 - 2],
+            config=RelaxationConfig(
+                quotient_basis="border",
+                border_basis_degree=2,
+            ),
+        )
+
+        assert rlx.ReduceExp(x**4 - 4) == 0
+        assert rlx.ReduceExp(x**5 - 4 * x) == 0
+
     def test_relation_free_problem_same_basis(self):
         """No relations: both modes give the full monomial basis."""
         x, y = symbols("x y")
@@ -86,6 +101,28 @@ class TestReductionEquivalence:
         # degree <= 2 are {1, x, y, xy, y^2} -- 5 elements
         assert len(basis) == 5
         assert basis.count(1) == 1  # constant term not duplicated
+
+    def test_border_falls_back_for_positive_dimensional_ideal(self):
+        """Invalid truncated border bases must fall back to Groebner reduction."""
+        x, y, u, v, dvx, dvy, dvu = symbols("x y u v dvx dvy dvu")
+        relations = [
+            u**2 - (x * y + 1),
+            v * y**2 * dvx - (y - x * y * v * dvy),
+            v * x**2 * dvy - (x - x * y * v * dvx),
+            2 * u * dvu - (y * dvx + x * dvy),
+        ]
+        rlx = SDPRelaxations(
+            [x, y, u, v, dvx, dvy, dvu],
+            relations=relations,
+            config=RelaxationConfig(
+                reduction_method="border_basis",
+                quotient_basis="border",
+                border_basis_degree=2,
+            ),
+        )
+
+        assert rlx._get_border_basis(2) is None
+        assert rlx.ReduceExp(relations[1]) == 0
 
 
 class TestEndToEnd:
