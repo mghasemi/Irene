@@ -69,6 +69,8 @@ execution_log.md
 
 # Local helper scripts
 siyuan_push.py
-bench_p1_2.py
 create_tasks.py
-bench_phase3_reductions.py
+bench_*.py
+benchmarks/
+dsdp_ade_demo*.py
+verify_*.py

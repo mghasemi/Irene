@@ -76,10 +76,55 @@ The above procedure is implemented in the ``Interpolation`` module. The followin
 	# print the result
 	print(p)
 
-:math:`L^2`-approximation with discrete measures
-==================================================
-Suppose that :math:`\mu=\sum_1^n\delta_{x_i}` is a measure with `n`-points in its support. Then the orthogonal system of polynomials consists of at most
-`n+1` polynomials. Approximation with these `n+1` polynomials is essentially same as interpolation::
+Lagrange interpolation as an :math:`L^2`-orthogonal projection
+==============================================================
+The ``Interpolation`` and ``OrthSystem`` modules are two views of the same
+operator. Let :math:`X=\{x_0,\dots,x_m\}` be :math:`m+1` distinct nodes and let
+
+.. math::
+	\mu = \sum_{k=0}^{m} w_k\,\delta_{x_k}, \qquad w_k > 0,
+
+be a discrete measure (the example below uses :math:`w_k=1`). On the polynomials,
+define the associated inner product
+
+.. math::
+	(f,g)_\mu = \int f\,g\,d\mu = \sum_{k=0}^{m} w_k\,f(x_k)\,g(x_k),
+
+and let :math:`V=\Pi_m` be the space of polynomials of degree at most :math:`m`,
+so that :math:`\dim V = m+1` equals the number of atoms of :math:`\mu`.
+
+Lagrange interpolation is the :math:`L^2(\mu)`-orthogonal projection
+--------------------------------------------------------------------
+The :math:`L^2(\mu)`-orthogonal projection :math:`P_V f` of :math:`f` onto
+:math:`V` is the unique :math:`p\in V` satisfying :math:`p(x_k)=f(x_k)` for
+:math:`k=0,\dots,m` --- that is, the Lagrange interpolant.
+
+*Proof sketch.* The form :math:`(\cdot,\cdot)_\mu` is a genuine inner product on
+:math:`V`: if :math:`v\in V` and :math:`(v,v)_\mu=0`, then :math:`v(x_k)=0` for
+every :math:`k`, so :math:`v` has :math:`m+1` roots and hence :math:`v=0`. Thus
+:math:`P_V` is well-defined. By the projection characterization,
+:math:`p=P_V f` iff :math:`(f-p,v)_\mu=0` for all :math:`v\in V`, i.e.
+
+.. math::
+	\sum_{k=0}^{m} w_k\big(f(x_k)-p(x_k)\big)\,v(x_k)=0 \qquad \forall\, v\in V.
+
+Because the evaluation functionals :math:`v\mapsto v(x_k)` span :math:`V^*`
+(the Lagrange basis :math:`\{\ell_k\}_{k=0}^m` is the dual basis to the point
+evaluations), this orthogonality is equivalent to
+:math:`f(x_k)-p(x_k)=0` for each :math:`k`, i.e. :math:`p(x_k)=f(x_k)`.
+Uniqueness follows from :math:`\dim V=m+1`.
+
+Equivalently, in the orthonormal basis :math:`\{u_0,\dots,u_m\}` obtained from
+:math:`\{1,x,\dots,x^m\}` by Gram--Schmidt with respect to
+:math:`(\cdot,\cdot)_\mu`, the interpolant is the truncated Hilbert series
+
+.. math::
+	p = \sum_{i=0}^{m}\langle f,u_i\rangle_\mu\,u_i
+	  = \sum_{i=0}^{m}\Big(\sum_{k=0}^{m} w_k\,f(x_k)\,u_i(x_k)\Big)\,u_i,
+
+which is exactly what ``OrthSystem.FormBasis`` / ``OrthSystem.Series`` compute.
+The following example builds the same interpolant two ways and shows they
+coincide::
 
 	# symbolic variable
 	x = Symbol('x')
@@ -115,3 +160,72 @@ Suppose that :math:`\mu=\sum_1^n\delta_{x_i}` is a measure with `n`-points in it
 	Intrp = Interpolation([x])
 	intr = Intrp.Interpolate(Xs, Ys)
 	print(intr)
+
+The two constructions agree to machine precision: the ``OrthSystem`` truncated
+series and the ``Interpolation`` Lagrange form both return the same degree-6
+polynomial passing through the seven nodes (verified: max node difference
+:math:`\le 10^{-15}`).
+
+Interpolation and least-squares are one projection in two regimes
+-----------------------------------------------------------------
+The same operator :math:`P_V f` changes character with the relation between
+:math:`\dim V` and the number :math:`m+1` of atoms of :math:`\mu`. The form
+:math:`(\cdot,\cdot)_\mu` is a genuine (non-degenerate) inner product on
+:math:`V=\Pi_n` exactly when :math:`n+1\le m+1`, i.e. :math:`\dim V\le` the
+number of atoms.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 25 45
+
+   * - :math:`\dim V` vs atoms
+     - What :math:`P_V f` is
+     - Characterizing property
+   * - :math:`\dim V < m+1` (underdetermined)
+     - weighted least-squares fit
+     - minimizes :math:`\sum w_k(f-p)^2`; normal equations; residual :math:`\neq 0`
+   * - :math:`\dim V = m+1` (exact fit)
+     - Lagrange interpolant
+     - interpolates exactly; residual :math:`= 0`
+   * - :math:`\dim V > m+1` (overdetermined)
+     - degenerate (no unique projection)
+     - :math:`m+1` interpolants; the minimum-norm (Moore--Penrose) interpolant is canonical
+
+
+In the underdetermined regime the projection is the weighted least-squares fit:
+it is the unique :math:`p\in V` minimizing :math:`\sum_k w_k\big(f(x_k)-p(x_k)\big)^2`,
+equivalently the solution of the normal equations
+:math:`(E^	op W E)\,c = E^	op W y` with :math:`E` the Vandermonde matrix.
+The transition is sharp: the monomial Gram matrix :math:`E^	op W E` is
+nonsingular for :math:`\dim V\le m+1` and singular for :math:`\dim V>m+1`.
+
+Taylor / Maclaurin series lie outside the ordinary :math:`L^2` framework
+------------------------------------------------------------------------
+Unlike interpolation and least-squares, the Taylor expansion is **not** an
+:math:`L^2(\mu)`-orthogonal projection for any ordinary positive measure
+:math:`\mu` on an interval. Its coefficient functionals are the point
+derivatives :math:`f\mapsto f^{(k)}(a)`, which are *unbounded* on
+:math:`L^2`: the sequence
+:math:`f_n(x)=n\,e^{-n^2(x-a)^2}(x-a)^2` satisfies
+:math:`\|f_n\|_{L^2}	o 0` while :math:`f_n''(a)	o\infty`, so no
+:math:`L^2`-inner product can represent them. Taylor series are recovered only
+after extending "measure" to *distributions*: with
+:math:`\langle f,\delta_a^{(k)}\rangle=(-1)^k f^{(k)}(a)`, the degree-`n`
+Taylor polynomial is the truncated expansion
+
+.. math::
+	T_n(f)(x) = \sum_{k=0}^{n}\langle f,\,(-1)^k\delta_a^{(k)}/k!\rangle\,(x-a)^k,
+
+which requires :math:`f` to be :math:`C^k` (a distributional pairing, not an
+:math:`L^2` inner product). This is why ``OrthSystem`` naturally produces
+interpolants and least-squares fits, while Taylor expansions are built
+separately in ``approx.rst``.
+
+Verification
+------------
+The identities above are checked numerically in ``verify_unified_approx.py``
+(Lagrange = :math:`L^2` projection, 1D and 2D; Taylor :math:`\neq`
+:math:`L^2` projection; distributional Taylor) and ``verify_least_squares.py``
+(least-squares = :math:`L^2` projection in the underdetermined regime, and the
+:math:`\dim V`-vs-atoms boundary). Both run in the ``IreneRewrite`` virtual
+environment.

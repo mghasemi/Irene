@@ -18,9 +18,11 @@ __pycache__/
 reports/
 plan_master.md
 execution_log.md
-README.rst
 create_tasks.py
 siyuan_push.py
+# NOTE: README.rst and pyProximation/ are intentionally NOT ignored —
+# setup.py reads README.rst and declares pyProximation as a package,
+# so the editable install inside the image needs both.
 
 # Coverage output (mounted as volume anyway)
 coverage-results/
@@ -34,4 +36,3 @@ benchmarks/results/*.csv
 
 # Examples and auxiliary
 examples/
-pyProximation/

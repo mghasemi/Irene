@@ -22,16 +22,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /code
 
 # Copy dependency manifests first (layer caching)
-COPY requirements.txt pyproject.toml setup.py ./
+COPY requirements.txt pyproject.toml ./
 
-# Install Python dependencies — pinned versions from requirements.txt
+# Install Python dependencies — pinned versions from requirements.txt.
+# The editable install is deferred until after `COPY . .` because setup.py
+# reads README.rst and declares the pyProximation package.
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir clarabel scs pytest pytest-timeout pytest-cov pyyaml && \
-    pip install --no-cache-dir -e .
+    pip install --no-cache-dir clarabel scs pytest pytest-timeout pytest-cov pyyaml
 
 # Copy source tree (invalidates cache on code change)
 COPY . .
+
+# Editable install — after the full source tree is present
+RUN pip install --no-cache-dir -e .
 
 # Validate solver availability at build time
 RUN python -c "\

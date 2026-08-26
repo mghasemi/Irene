@@ -1,70 +1,63 @@
 # ============================================================================
-# IreneRewrite — Local CI via Docker Compose (P5.9)
+# IreneRewrite — Local CI via Docker Compose (P4.1)
 # ============================================================================
+# Matrix: 2 Python versions x 3 solver backends = 6 jobs.
+#
+# Python versions: 3.11 (primary dev), 3.12 (forward-compat check).
+# Solver backends: CLARABEL, SCS, CVXOPT.
+#
+# NOTE on Python 3.10: the pinned baseline scientific stack in
+# requirements.txt (numpy==2.4.3, scipy==1.17.1, cvxpy==1.9.2) all declare
+# Requires-Python >=3.11. A 3.10 job cannot install the pinned stack, so 3.10
+# is intentionally excluded from the matrix. To add 3.10 back, the scientific
+# pins must be lowered to the last 3.10-compatible releases (numpy 2.2.x,
+# scipy 1.15.x, cvxpy 1.7.x) and re-validated.
+#
 # Usage:
-#   docker compose up          # Run all 6 jobs (3 Python × 2 solvers)
+#   docker compose up              # Build + run all 6 jobs
 #   docker compose up py311-clarabel  # Single job only
-#   docker compose run py311-test     # Interactive shell for debugging
+#   docker compose run py311-clarabel # Interactive shell for debugging
 # ============================================================================
 
 services:
-  # ------------------------------------------------------------------
-  # Python 3.10 jobs
-  # ------------------------------------------------------------------
-  py310-clarabel:
-    build:
-      context: .
-      dockerfile: Dockerfile.ci
-      args:
-        PYTHON_VERSION: "3.10"
-    environment:
-      - IRENE_CI_SOLVER=CLARABEL
-      - CI_PYTHON_VERSION=3.10
-    volumes:
-      - ./benchmarks/results:/code/benchmarks/results
-    command: ["test"]
-
-  py310-scs:
-    build:
-      context: .
-      dockerfile: Dockerfile.ci
-      args:
-        PYTHON_VERSION: "3.10"
-    environment:
-      - IRENE_CI_SOLVER=SCS
-      - CI_PYTHON_VERSION=3.10
-    volumes:
-      - ./benchmarks/results:/code/benchmarks/results
-    command: ["test"]
-
   # ------------------------------------------------------------------
   # Python 3.11 jobs (primary dev version)
   # ------------------------------------------------------------------
   py311-clarabel:
     build:
       context: .
-      dockerfile: Dockerfile.ci
+      dockerfile: Dockerfile
       args:
         PYTHON_VERSION: "3.11"
     environment:
       - IRENE_CI_SOLVER=CLARABEL
       - CI_PYTHON_VERSION=3.11
     volumes:
-      - ./benchmarks/results:/code/benchmarks/results
-    command: ["test"]
+      - ./benchmarks/results:/app/benchmarks/results
 
   py311-scs:
     build:
       context: .
-      dockerfile: Dockerfile.ci
+      dockerfile: Dockerfile
       args:
         PYTHON_VERSION: "3.11"
     environment:
       - IRENE_CI_SOLVER=SCS
       - CI_PYTHON_VERSION=3.11
     volumes:
-      - ./benchmarks/results:/code/benchmarks/results
-    command: ["test"]
+      - ./benchmarks/results:/app/benchmarks/results
+
+  py311-cvxopt:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: "3.11"
+    environment:
+      - IRENE_CI_SOLVER=CVXOPT
+      - CI_PYTHON_VERSION=3.11
+    volumes:
+      - ./benchmarks/results:/app/benchmarks/results
 
   # ------------------------------------------------------------------
   # Python 3.12 jobs (forward-compat check)
@@ -72,25 +65,35 @@ services:
   py312-clarabel:
     build:
       context: .
-      dockerfile: Dockerfile.ci
+      dockerfile: Dockerfile
       args:
         PYTHON_VERSION: "3.12"
     environment:
       - IRENE_CI_SOLVER=CLARABEL
       - CI_PYTHON_VERSION=3.12
     volumes:
-      - ./benchmarks/results:/code/benchmarks/results
-    command: ["test"]
+      - ./benchmarks/results:/app/benchmarks/results
 
   py312-scs:
     build:
       context: .
-      dockerfile: Dockerfile.ci
+      dockerfile: Dockerfile
       args:
         PYTHON_VERSION: "3.12"
     environment:
       - IRENE_CI_SOLVER=SCS
       - CI_PYTHON_VERSION=3.12
     volumes:
-      - ./benchmarks/results:/code/benchmarks/results
-    command: ["test"]
+      - ./benchmarks/results:/app/benchmarks/results
+
+  py312-cvxopt:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: "3.12"
+    environment:
+      - IRENE_CI_SOLVER=CVXOPT
+      - CI_PYTHON_VERSION=3.12
+    volumes:
+      - ./benchmarks/results:/app/benchmarks/results
