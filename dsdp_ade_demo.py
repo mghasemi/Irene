@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Differential-Algebraic SDP Demo — IreneRewrite Edition (Verified)
+Differential-Algebraic SDP Demo — Irene Edition (Verified)
 ===============================================================
 
 Demonstrates the full DSDP pipeline with correct ADE wiring. The key

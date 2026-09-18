@@ -95,7 +95,7 @@ Fields:
 - **reduction_method** (str): Basis reduction strategy. ``"none"`` uses the full monomial basis; ``"border_basis"`` applies border basis reduction; ``"newton_polytope"`` prunes via Newton polytope geometry; ``"sparsity"`` decomposes into independent SDP blocks.
 - **monomial_pruning** (bool): Whether to apply monomial-level pruning within the chosen method
 - **sparsity_detection** (bool): Whether to auto-detect and exploit correlative sparsity
-- **quotient_basis** (str): Quotient-ring reduction engine used by ``ReduceExp`` and ``ReducedMonomialBase``. ``"groebner"`` (default) uses the classical SymPy Groebner-basis reduction — the behavior of original Irene; ``"border"`` uses IreneRewrite's ``BorderBasis`` quotient-algebra reduction (numerically computed multiplication tables). The environment variable ``IRENE_QUOTIENT_BASIS=groebner|border`` sets the default when no explicit config is passed.
+- **quotient_basis** (str): Quotient-ring reduction engine used by ``ReduceExp`` and ``ReducedMonomialBase``. ``"groebner"`` (default) uses the classical SymPy Groebner-basis reduction — the behavior of original Irene; ``"border"`` uses Irene's ``BorderBasis`` quotient-algebra reduction (numerically computed multiplication tables). The environment variable ``IRENE_QUOTIENT_BASIS=groebner|border`` sets the default when no explicit config is passed.
 - **verbose_reduction** (bool): Print detailed reduction diagnostics during construction
 
 By default, reductions are disabled for compatibility. Enable them explicitly with
@@ -104,7 +104,7 @@ By default, reductions are disabled for compatibility. Enable them explicitly wi
 Two-Stage Hybrid Monoid-Graph Reduction Theorem
 ================================================
 
-The real power of IreneRewrite's reduction pipeline lies in the **synergistic
+The real power of Irene's reduction pipeline lies in the **synergistic
 combination** of algebraic quotienting and structural graph decomposition.  When
 all three reduction flags are enabled, the engine applies a two-stage reduction
 that composes monoid-theoretic elimination with chordal-graph decomposition.

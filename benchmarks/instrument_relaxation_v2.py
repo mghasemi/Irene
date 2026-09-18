@@ -4,7 +4,7 @@ Instrumented relaxation run v2 — directly patches engine methods BEFORE any Ir
 """
 import sys, os, time
 
-sys.path.insert(0, '/home/mehdi/Code/Python/IreneRewrite')
+sys.path.insert(0, '/home/mehdi/Code/Python/Irene')
 
 # ── Step 1: Import the engine and instrument it BEFORE any Irene module imports ──
 import Irene.symbolic_engine as se_mod

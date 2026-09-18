@@ -1,4 +1,4 @@
-"""Pytest configuration for IreneRewrite."""
+"""Pytest configuration for Irene."""
 import sys
 import os
 import pytest

@@ -77,3 +77,38 @@ bench_*.py
 benchmarks/
 dsdp_ade_demo*.py
 verify_*.py
+
+# Local benchmark experiments and outputs
+MeansResearch/
+ade_benchmark*.json
+dsdp_benchmark.json
+dsdp_phase_d_results*.json
+nonpopsdp_benchmark.json
+phase_c_benchmark.json
+mean_certificates.py
+run_ade_benchmark.py
+run_dsdp_benchmark.py
+run_dsdp_suite.py
+run_nonpopsdp_benchmark.py
+run_phase_c_benchmark.py
+run_phase_d_benchmark.py
+run_sqrt_exp_original.py
+
+# Local Lean experiments and downloaded tooling
+lean-3.51.1-linux/
+lean.tar.gz
+rustup_install.sh
+test.lean
+
+# Optional CI and container tooling
+.github/workflows/
+.dockerignore
+Dockerfile
+Dockerfile.ci
+ci_entrypoint.sh
+docker-compose.yml
+
+# Standalone solver artifact and DSDP demonstrations
+SDPRlx.rlx
+dsdp_ade_demo.py
+dsdp_ade_demo_tractable.py

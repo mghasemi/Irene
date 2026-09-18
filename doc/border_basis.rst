@@ -129,7 +129,7 @@ spans a complement of :math:`I \cap V_d` in :math:`V_d`.
 Integration with SDP Hierarchies
 ================================
 
-In the IreneRewrite relaxation pipeline, border bases are used to replace the
+In the Irene relaxation pipeline, border bases are used to replace the
 full monomial basis with a numerically stable quotient basis at each order. This
 reduces moment matrix dimension while preserving the algebraic structure needed
 for positive semidefinite constraints.
@@ -156,7 +156,7 @@ performs the quotient-ring reduction inside ``SDPRelaxations``:
 
 - ``quotient_basis="groebner"`` (default) — classical SymPy Groebner-basis
   reduction via ``sp.reduced``, matching original Irene.
-- ``quotient_basis="border"`` — IreneRewrite's ``BorderBasis`` quotient-algebra
+- ``quotient_basis="border"`` — Irene's ``BorderBasis`` quotient-algebra
   reduction via multiplication tables (``ReduceExp`` and ``ReducedMonomialBase``
   both use it).
 

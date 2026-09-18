@@ -1,5 +1,5 @@
 """
-Non-POP SDP Approximation Pipeline (NonPOPSDP) -- IreneRewrite port.
+Non-POP SDP Approximation Pipeline (NonPOPSDP) -- Irene port.
 
 Implements the canonical pipeline for applying Lasserre's moment-SOS hierarchy
 to non-polynomial optimization:
@@ -42,7 +42,7 @@ def taylor_approx(func, var, center, degree):
     """
     Taylor polynomial approximation of `func` around `center` to given `degree`.
 
-    NOTE (IreneRewrite port): the original implementation computed Taylor
+    NOTE (Irene port): the original implementation computed Taylor
     coefficients with naive central finite differences (h=1e-8), whose error
     grows like h^{-k} and produced garbage derivatives beyond k=3 (verified:
     error estimate ~1e36 for exp at degree 6). This port uses a high-order
@@ -128,7 +128,7 @@ def chebyshev_approx(func, var, domain, degree):
     least-squares fitting on the Clenshaw-Curtis extrema grid, then converts
     back to power basis.
 
-    NOTE (IreneRewrite port): the original implementation extracted Chebyshev
+    NOTE (Irene port): the original implementation extracted Chebyshev
     coefficients with a raw FFT whose scaling is incorrect for the extrema
     grid (verified: max error ~61.5 for exp of degree 6 on [-2, 2]; the true
     degree-6 Chebyshev error is ~2e-2) and evaluated the error on a shifted

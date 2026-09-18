@@ -7,7 +7,7 @@ constructor: SDPRelaxations(gens=[sympy_symbols], relations=[sympy_exprs]).
 import sys, os
 from math import exp, sqrt
 
-# Ensure original Irene is on path BEFORE IreneRewrite
+# Ensure original Irene is on path BEFORE Irene
 orig_irene_path = os.path.join(os.path.dirname(__file__), '..', 'Irene')
 if orig_irene_path not in sys.path:
     sys.path.insert(0, orig_irene_path)

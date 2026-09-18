@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""IreneRewrite documentation build configuration file."""
+"""Irene documentation build configuration file."""
 
 import os
 import sys
@@ -38,7 +38,7 @@ root_doc = 'index'
 
 # -- Project information --------------------------------------------------
 
-project = 'IreneRewrite'
+project = 'Irene'
 copyright = '2016-2026, Mehdi Ghasemi'
 author = 'Mehdi Ghasemi'
 version = '1.3'
@@ -73,7 +73,7 @@ latex_elements = {
 }
 
 latex_documents = [
-    (root_doc, 'IreneRewrite.tex', u'IreneRewrite Documentation',
+    (root_doc, 'Irene.tex', u'Irene Documentation',
      u'Mehdi Ghasemi', 'manual'),
 ]
 
@@ -83,7 +83,7 @@ latex_logo = './images/IreneLogoSmall.png'
 # -- Options for manual page output ---------------------------------------
 
 man_pages = [
-    (root_doc, 'irenerewrite', u'IreneRewrite Documentation',
+    (root_doc, 'irene', u'Irene Documentation',
      [author], 1)
 ]
 
@@ -91,8 +91,8 @@ man_pages = [
 # -- Options for Texinfo output -------------------------------------------
 
 texinfo_documents = [
-    (root_doc, 'IreneRewrite', u'IreneRewrite Documentation',
-     author, 'IreneRewrite',
+    (root_doc, 'Irene', u'Irene Documentation',
+     author, 'Irene',
      'Polynomial optimization via SDP, SONC, and mean polynomial hierarchies.',
      'Optimization'),
 ]

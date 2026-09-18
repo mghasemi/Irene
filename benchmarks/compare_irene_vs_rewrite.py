@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-Irene vs IreneRewrite Cross-Version Comparison Benchmark
+Irene vs Irene Cross-Version Comparison Benchmark
 ========================================================
 
 Runs the same set of polynomial optimization problems through both Irene
-and IreneRewrite, comparing relaxation bounds (SOS, SONC, SOS+SONC),
+and Irene, comparing relaxation bounds (SOS, SONC, SOS+SONC),
 wall-clock timing, and numerical results against Scipy optimization.
 
 Usage:
-  # Run with IreneRewrite:
-  /home/mehdi/Code/Python/IreneRewrite/.venv/bin/python3 benchmarks/compare_irene_vs_rewrite.py --mode irene_rewrite
+    # Run with Irene:
+    /home/mehdi/Code/Python/Irene/.venv/bin/python3 benchmarks/compare_irene_vs_rewrite.py --mode irene_rewrite
 
   # Run with original Irene:
   /home/mehdi/Code/Python/Irene/.venv/bin/python3 benchmarks/compare_irene_vs_rewrite.py --mode irene
@@ -37,7 +37,7 @@ MODE = None  # set by main()
 def setup_paths(mode: str):
     """Add the correct Irene package to sys.path based on mode."""
     if mode == "irene_rewrite":
-        irene_root = "/home/mehdi/Code/Python/IreneRewrite"
+        irene_root = "/home/mehdi/Code/Python/Irene"
     elif mode == "irene":
         irene_root = "/home/mehdi/Code/Python/Irene"
     else:
@@ -224,7 +224,7 @@ def build_problem(prob_def: dict, sga):
 
 
 def run_irene_rewrite(prob_def: dict, prog):
-    """Run using IreneRewrite's RelaxationEngine unified API."""
+    """Run using Irene's RelaxationEngine unified API."""
     from Irene.relaxation_api import RelaxationEngine
 
     results = {"sos": {}, "sonc": {}, "sosonc": {}}
@@ -443,7 +443,7 @@ def run_scipy_optimization(prob_def: dict) -> dict:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Irene vs IreneRewrite comparison benchmark")
+    parser = argparse.ArgumentParser(description="Irene vs Irene comparison benchmark")
     parser.add_argument("--mode", required=True, choices=["irene", "irene_rewrite"],
                         help="Which Irene variant to benchmark")
     parser.add_argument("--scipy", action="store_true",

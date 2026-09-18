@@ -1,10 +1,10 @@
-.. IreneRewrite documentation master file.
+.. Irene documentation master file.
    Updated for Phase 3 (2026).
 
-Welcome to IreneRewrite's Documentation!
+Welcome to Irene's Documentation!
 ========================================
 
-IreneRewrite is a Python toolkit for polynomial optimization via semidefinite
+Irene is a Python toolkit for polynomial optimization via semidefinite
 programming, geometric programming, and SONC/SOS hierarchies. It implements
 Lasserre's moment-SDP hierarchy, circuit-based SONC relaxations, mean polynomial
 forms, correlative sparsity detection, Newton polytope pruning, and differential

@@ -1,6 +1,6 @@
 {
  "mode": "irene_rewrite",
- "package_root": "/home/mehdi/Code/Python/IreneRewrite",
+ "package_root": "/home/mehdi/Code/Python/Irene",
  "backend": "symengine",
  "timestamp": "2026-08-09T20:54:42Z",
  "sections": {

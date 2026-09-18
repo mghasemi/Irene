@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================================
-# IreneRewrite — CI Entrypoint Script (P5.9)
+# Irene — CI Entrypoint Script (P5.9)
 # ============================================================================
 # Dispatches to: test, benchmark, shell
 # Usage: docker compose run <service> [test|benchmark|shell]
@@ -11,7 +11,7 @@ set -euo pipefail
 ACTION="${1:-test}"
 
 echo "=========================================="
-echo "IreneRewrite CI — $ACTION"
+echo "Irene CI — $ACTION"
 echo "Python: $(python --version 2>&1)"
 echo "Solver: ${IRENE_CI_SOLVER:-unset}"
 echo "=========================================="

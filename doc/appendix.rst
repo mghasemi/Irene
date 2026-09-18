@@ -7,7 +7,7 @@ Appendix
 Global Notation Index
 =====================
 
-This table standardizes notation used across all chapters of the IreneRewrite
+This table standardizes notation used across all chapters of the Irene
 manual.  Where a symbol has different meanings in different contexts, the
 primary usage is listed first.
 

@@ -1,5 +1,5 @@
 # ============================================================================
-# IreneRewrite — Pinned dependencies (derived from Irene/.venv/ baseline)
+# Irene — Pinned dependencies (derived from Irene/.venv/ baseline)
 # ============================================================================
 # Core symbolic engine
 sympy==1.14.0

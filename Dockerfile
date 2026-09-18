@@ -1,5 +1,5 @@
 # ============================================================================
-# IreneRewrite — Multi-stage Docker build for CI testing
+# Irene — Multi-stage Docker build for CI testing
 # ============================================================================
 # Usage:
 #   docker compose up --build py311-clarabel  # test one job
@@ -7,7 +7,7 @@
 #
 # Architecture:
 #   Stage 1 (base): system-level deps (gmp, mpfr, blas/lapack)
-#   Stage 2 (final): per-Python-version image with IreneRewrite + solver backends
+#   Stage 2 (final): per-Python-version image with Irene + solver backends
 #
 # Python versions: 3.11 (primary), 3.12 (forward-compat). 3.10 is excluded
 # because the pinned scientific stack (numpy/scipy/cvxpy) requires >=3.11.
@@ -20,7 +20,7 @@ ARG PYTHON_VERSION=3.11
 # ---------------------------------------------------------------------------
 FROM python:${PYTHON_VERSION}-slim AS base
 
-LABEL org.opencontainers.image.title="IreneRewrite" \
+LABEL org.opencontainers.image.title="Irene" \
       org.opencontainers.image.description="Polynomial optimization via SOS/SONC/SDP hierarchies" \
       org.opencontainers.image.authors="Mehdi Ghasemi" \
       org.opencontainers.image.version="1.2.5"
@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------------------------------------------
-# Stage 2: Final image — Python env + IreneRewrite + test deps
+# Stage 2: Final image — Python env + Irene + test deps
 # ---------------------------------------------------------------------------
 FROM base AS final
 

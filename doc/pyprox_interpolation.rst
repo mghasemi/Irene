@@ -227,5 +227,5 @@ The identities above are checked numerically in ``verify_unified_approx.py``
 (Lagrange = :math:`L^2` projection, 1D and 2D; Taylor :math:`\neq`
 :math:`L^2` projection; distributional Taylor) and ``verify_least_squares.py``
 (least-squares = :math:`L^2` projection in the underdetermined regime, and the
-:math:`\dim V`-vs-atoms boundary). Both run in the ``IreneRewrite`` virtual
+:math:`\dim V`-vs-atoms boundary). Both run in the ``Irene`` virtual
 environment.

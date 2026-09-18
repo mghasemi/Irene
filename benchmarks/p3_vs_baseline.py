@@ -136,7 +136,7 @@ def main():
             print(f"    Speedup:  {order_entry['speedup']}x")
 
     # Save results
-    out_path = "/home/mehdi/Code/Python/IreneRewrite/benchmarks/results/p3_vs_baseline.json"
+    out_path = "/home/mehdi/Code/Python/Irene/benchmarks/results/p3_vs_baseline.json"
     with open(out_path, "w") as f:
         json.dump(all_results, f, indent=2)
     print(f"\nResults saved to {out_path}")

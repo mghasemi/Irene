@@ -140,7 +140,7 @@ high-degree, or structure-rich instances.
 Modern API Quick Reference
 =============================
 
-IreneRewrite provides a unified pipeline for defining and solving polynomial
+Irene provides a unified pipeline for defining and solving polynomial
 optimization problems.  The core workflow is:
 
 1. **Build a semigroup algebra** from generators (``CommutativeSemigroup`` + ``SemigroupAlgebra``)
@@ -214,7 +214,7 @@ satisfied by the original functions.  For example:
   :math:`\mathcal{I} = \langle \text{ADE relations} \rangle` — see
   :doc:`dsdp_mean` for the differential-algebraic treatment.
 
-In IreneRewrite, algebraic relations are passed as the ``relations`` parameter
+In Irene, algebraic relations are passed as the ``relations`` parameter
 when constructing a ``SemigroupAlgebra`` or ``OptimizationProblem``.  The
 quotient basis is computed automatically (via Gröbner or border basis, as
 configured in :class:`RelaxationConfig`) and all subsequent moment matrix

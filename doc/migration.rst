@@ -3,7 +3,7 @@ Legacy API Migration Guide
 ========================================
 
 This chapter maps every construct from the original Irene API (``SDPRelaxations``,
-``Mom()``, ``Probability=False``, etc.) to the modern IreneRewrite pipeline
+``Mom()``, ``Probability=False``, etc.) to the modern Irene pipeline
 (``OptimizationProblem`` + ``RelaxationEngine``).
 
 The legacy API remains available for backward compatibility — existing code
@@ -18,7 +18,7 @@ Problem Construction
    :header-rows: 1
 
    * - Legacy API (original Irene)
-     - Modern API (IreneRewrite)
+    - Modern API (Irene)
    * - ``Rlx = SDPRelaxations([x, y, z])``
      - Use ``CommutativeSemigroup`` → ``SemigroupAlgebra`` → ``OptimizationProblem``
    * - ``Rlx = SDPRelaxations([x, y, f], relations=[...])``
@@ -165,7 +165,7 @@ Complete Example: Legacy vs Modern
    print(Rlx.Solution)
 
 .. code-block:: python
-   :caption: Modern (IreneRewrite)
+  :caption: Modern (Irene)
 
    from Irene.grouprings import CommutativeSemigroup, SemigroupAlgebra
    from Irene.program import OptimizationProblem

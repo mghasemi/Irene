@@ -3,7 +3,7 @@
 
 import json
 
-with open("/home/mehdi/Code/Python/IreneRewrite/benchmarks/results/gallery_20260808_201748Z.json") as f:
+with open("/home/mehdi/Code/Python/Irene/benchmarks/results/gallery_20260808_201748Z.json") as f:
     data = json.load(f)
 
 problems = data["results"]

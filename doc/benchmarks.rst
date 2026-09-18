@@ -2,7 +2,7 @@
 Benchmarks and Performance Evaluation
 ========================================
 
-This chapter documents the benchmarking infrastructure for IreneRewrite, including
+This chapter documents the benchmarking infrastructure for Irene, including
 the problem gallery system, performance comparison scripts, and representative
 examples using the current API.
 
@@ -154,7 +154,7 @@ Cross-Version Comparison
 ------------------------
 
 The ``benchmarks/compare_irene_vs_rewrite.py`` script runs the same problems through
-both the original Irene package and IreneRewrite to validate numerical consistency:
+both the original Irene package and Irene to validate numerical consistency:
 
 .. code-block:: bash
 
@@ -167,7 +167,7 @@ Constrained Optimization Examples
 =================================
 
 The following examples demonstrate constrained polynomial optimization using the
-current IreneRewrite API pattern with semigroup algebras.
+current Irene API pattern with semigroup algebras.
 
 Bounded Quartic Minimization
 ----------------------------
@@ -230,7 +230,7 @@ and adding the algebraic relations :math:`s_i^2 + c_i^2 = 1`:
 Performance Profiling Tools
 ===========================
 
-IreneRewrite includes several profiling scripts for diagnosing performance bottlenecks:
+Irene includes several profiling scripts for diagnosing performance bottlenecks:
 
 - **``instrument_relaxation_v2.py``**: Instruments the relaxation pipeline with per-stage timing (basis construction, matrix assembly, solver call)
 - **``profile_symengine_overhead.py``**: Measures SymEngine vs SymPy overhead in polynomial arithmetic operations
@@ -240,7 +240,7 @@ IreneRewrite includes several profiling scripts for diagnosing performance bottl
 Solver Routing Behavior
 =======================
 
-IreneRewrite routes SDP solves through multiple backends:
+Irene routes SDP solves through multiple backends:
 
 1. **CVXPY + CLARABEL** (default): Robust handling of ill-conditioned moment matrices and reliable infeasibility detection
 2. **Native CVXOPT**: Fallback path; note that infeasibility detection can differ from CLARABEL due to tolerance handling

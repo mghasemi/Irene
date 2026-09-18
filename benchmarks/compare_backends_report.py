@@ -3,7 +3,7 @@
 Backend comparison report generator.
 
 Reads the three backend benchmark JSON outputs and emits a markdown report
-comparing original Irene vs IreneRewrite (SymEngine) vs IreneRewrite (SymPy)
+comparing original Irene vs Irene (SymEngine) vs Irene (SymPy)
 across all benchmarked features.
 
 Usage:
@@ -55,14 +55,14 @@ def main():
 
     modes = {
         "original Irene (SymPy)": irene,
-        "IreneRewrite (SymEngine)": rw_se,
-        "IreneRewrite (SymPy)": rw_sp,
+        "Irene (SymEngine)": rw_se,
+        "Irene (SymPy)": rw_sp,
     }
 
     lines = []
     A = lines.append
 
-    A("# Irene vs IreneRewrite — Cross-Feature Backend Benchmark Report")
+    A("# Irene vs Irene — Cross-Feature Backend Benchmark Report")
     A("")
     A(f"_Generated {irene.get('timestamp', '?')} — {len(modes)} modes, 9 feature sections_")
     A("")
@@ -241,7 +241,7 @@ def main():
     A("## 11. Quotient-basis option (Groebner vs BorderBasis)")
     A("")
     A("The ``RelaxationConfig.quotient_basis`` option selects the quotient-ring")
-    A("reduction engine. Only IreneRewrite supports the border-basis engine;")
+    A("reduction engine. Only Irene supports the border-basis engine;")
     A("original Irene always uses Groebner bases.")
     A("")
     for mode_name, d in modes.items():
@@ -272,7 +272,7 @@ def main():
     # ------------------------------------------------------------------
     A("## 12. Feature parity summary")
     A("")
-    A("| Feature | Original Irene | IreneRewrite | Notes |")
+    A("| Feature | Original Irene | Irene | Notes |")
     A("|---------|---------------|--------------|-------|")
 
     parity = [

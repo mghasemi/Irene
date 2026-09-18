@@ -1,5 +1,5 @@
 # ============================================================================
-# IreneRewrite — CI Dockerfile (P5.9)
+# Irene — CI Dockerfile (P5.9)
 # ============================================================================
 # Multi-stage build for polynomial optimization SDP testing.
 # Build args: PYTHON_VERSION (3.10, 3.11, or 3.12)

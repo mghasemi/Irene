@@ -1,4 +1,4 @@
-# Irene vs IreneRewrite — Cross-Feature Backend Benchmark Report
+# Irene vs Irene — Cross-Feature Backend Benchmark Report
 
 _Generated 2026-08-09T20:54:38Z — 3 modes, 9 feature sections_
 
@@ -7,8 +7,8 @@ _Generated 2026-08-09T20:54:38Z — 3 modes, 9 feature sections_
 | Mode | Package root | Symbolic backend |
 |------|--------------|------------------|
 | original Irene (SymPy) | `/home/mehdi/Code/Python/Irene` | `sympy-direct (no symbolic_engine module)` |
-| IreneRewrite (SymEngine) | `/home/mehdi/Code/Python/IreneRewrite` | `symengine` |
-| IreneRewrite (SymPy) | `/home/mehdi/Code/Python/IreneRewrite` | `sympy` |
+| Irene (SymEngine) | `/home/mehdi/Code/Python/Irene` | `symengine` |
+| Irene (SymPy) | `/home/mehdi/Code/Python/Irene` | `sympy` |
 
 ## 2. SOS / SONC / SOS+SONC relaxations
 
@@ -127,7 +127,7 @@ rewrite `NewtonPruner` (basis pruning with `moment_matrix_dimension_reduction()`
 ## 11. Quotient-basis option (Groebner vs BorderBasis)
 
 The ``RelaxationConfig.quotient_basis`` option selects the quotient-ring
-reduction engine. Only IreneRewrite supports the border-basis engine;
+reduction engine. Only Irene supports the border-basis engine;
 original Irene always uses Groebner bases.
 
 **original Irene (SymPy):** original Irene has no border-basis option (Groebner only)
@@ -149,7 +149,7 @@ original Irene always uses Groebner bases.
 
 ## 12. Feature parity summary
 
-| Feature | Original Irene | IreneRewrite | Notes |
+| Feature | Original Irene | Irene | Notes |
 |---------|---------------|--------------|-------|
 | SDPRelaxations (SOS) | ✅ | ✅ | same API |
 | SONCRelaxations (GP) | ✅ | ✅ | same API |

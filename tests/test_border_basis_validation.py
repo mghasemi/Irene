@@ -4,7 +4,7 @@ Runs 6 mathematical test cases against known results from Greuel-Pfister theory.
 All tests must pass before P3.1 can be marked complete.
 """
 import sys
-sys.path.insert(0, '/home/mehdi/Code/Python/IreneRewrite')
+sys.path.insert(0, '/home/mehdi/Code/Python/Irene')
 
 from Irene.border_basis import BorderBasis
 from Irene.symbolic_engine import engine

@@ -1,4 +1,4 @@
-"""Pytest configuration for IreneRewrite CI.
+"""Pytest configuration for Irene CI.
 
 Provides the `ci_solver` fixture wired to the IRENE_CI_SOLVER environment variable,
 and a session-scoped timeout to prevent hung SDP solves in CI.

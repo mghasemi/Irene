@@ -6,7 +6,7 @@ quotient-ring reduction engine used by ``ReduceExp`` and
 
 - ``'groebner'`` (default): classical SymPy Groebner-basis reduction — the
   behavior of original Irene.
-- ``'border'``: IreneRewrite's BorderBasis quotient-algebra reduction using
+- ``'border'``: Irene's BorderBasis quotient-algebra reduction using
   numerically computed multiplication tables.
 
 Also covered: the ``IRENE_QUOTIENT_BASIS`` environment variable.
@@ -163,7 +163,7 @@ class TestEnvVarIntegration:
         out = subprocess.run(
             [sys.executable, "-c", code],
             capture_output=True, text=True, env=env,
-            cwd="/home/mehdi/Code/Python/IreneRewrite",
+            cwd="/home/mehdi/Code/Python/Irene",
         )
         assert out.returncode == 0, out.stderr
         assert "border" in out.stdout.strip()
@@ -180,7 +180,7 @@ class TestEnvVarIntegration:
         out = subprocess.run(
             [sys.executable, "-c", code],
             capture_output=True, text=True, env=env,
-            cwd="/home/mehdi/Code/Python/IreneRewrite",
+            cwd="/home/mehdi/Code/Python/Irene",
         )
         assert out.returncode == 0, out.stderr
         assert "groebner" in out.stdout.strip()

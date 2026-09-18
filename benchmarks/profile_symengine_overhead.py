@@ -13,7 +13,7 @@ Measures:
 import time, sys, os
 
 # Setup both backends
-sys.path.insert(0, '/home/mehdi/Code/Python/IreneRewrite')
+sys.path.insert(0, '/home/mehdi/Code/Python/Irene')
 from Irene.symbolic_engine import engine, to_sympy, to_symengine
 
 import symengine as se

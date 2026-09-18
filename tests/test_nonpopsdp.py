@@ -1,4 +1,4 @@
-"""Tests for the NonPOPSDP pipeline (IreneRewrite port).
+"""Tests for the NonPOPSDP pipeline (Irene port).
 
 Validates the polynomial-approximation layer (Taylor/Chebyshev), the
 transcendental surrogates, and the end-to-end Lasserre SDP solve for

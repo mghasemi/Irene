@@ -70,7 +70,7 @@ The ``SDPRelaxations`` class provides the primary interface:
 Solver Routing
 ==============
 
-IreneRewrite routes SDP solves through multiple backends automatically:
+Irene routes SDP solves through multiple backends automatically:
 
 **Primary path (CVXPY + CLARABEL)**: The default solver uses CVXPY's DCP-compliant
 formulation with the CLARABEL conic interior-point method. This provides robust

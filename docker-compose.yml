@@ -1,5 +1,5 @@
 # ============================================================================
-# IreneRewrite — Local CI via Docker Compose (P4.1)
+# Irene — Local CI via Docker Compose (P4.1)
 # ============================================================================
 # Matrix: 2 Python versions x 3 solver backends = 6 jobs.
 #

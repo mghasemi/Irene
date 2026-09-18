@@ -59,7 +59,7 @@ Doctest Integration
 ===================
 
 To ensure that code snippets in docstrings remain synchronized with the
-IreneRewrite codebase, Sphinx can be configured to run ``doctest`` blocks
+Irene codebase, Sphinx can be configured to run ``doctest`` blocks
 during documentation builds.
 
 Enable in ``conf.py``:

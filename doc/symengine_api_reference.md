@@ -1,10 +1,10 @@
 # SymEngine Python API Reference — installed version 0.14.1
 
-Extracted at runtime from the `symengine` package in the IreneRewrite venv
-(`/home/mehdi/Code/Python/IreneRewrite/.venv`, Python 3.11). Every symbol
+Extracted at runtime from the `symengine` package in the Irene venv
+(`/home/mehdi/Code/Python/Irene/.venv`, Python 3.11). Every symbol
 listed below was verified present via `hasattr` on the live module.
 This is the authoritative API surface for the Phase 1 SymPy->SymEngine
-refactor of IreneRewrite (grouprings.py, relaxations.py, matrices.py,
+refactor of Irene (grouprings.py, relaxations.py, matrices.py,
 sdp.py, sonc.py).
 
 ## Build capabilities (probed)
@@ -215,7 +215,7 @@ subs_oldnew
 xreplace
 ```
 
-Key patterns for IreneRewrite:
+Key patterns for Irene:
 
 ```python
 f.args                    # (3*x*y**3, x**2*y) — term children
@@ -331,7 +331,7 @@ Pi, Catalan, EulerGamma, GoldenRatio, Infinity, NegativeInfinity,
 ComplexInfinity, NaN, true, false, Integers, Rationals, Reals,
 UniversalSet, EmptySet`.
 
-## IreneRewrite integration notes
+## Irene integration notes
 
 - `Irene/symbolic_engine.py` wraps all of this: `engine.expand` uses
   `se.expand` (C++) for SymEngine objects; `engine.groebner`,

@@ -139,7 +139,7 @@ def _default_config():
     The environment variable selects the quotient-ring reduction engine:
       - 'groebner' (default): classical Groebner-basis reduction, matching
         the original Irene behavior.
-      - 'border': BorderBasis quotient-algebra reduction (IreneRewrite).
+    - 'border': BorderBasis quotient-algebra reduction (Irene).
     """
     qb = os.environ.get("IRENE_QUOTIENT_BASIS", "groebner").strip().lower()
     if qb not in ("groebner", "border"):
@@ -383,7 +383,7 @@ class SDPRelaxations(base):
         The reduction engine is selected by ``config.quotient_basis``:
             - 'groebner' (default): classical Groebner-basis reduction, the
               original Irene behavior.
-            - 'border': BorderBasis quotient-algebra reduction (IreneRewrite),
+            - 'border': BorderBasis quotient-algebra reduction (Irene),
               using the numerically computed multiplication tables.
         """
         try:

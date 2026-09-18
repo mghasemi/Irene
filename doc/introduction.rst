@@ -115,21 +115,21 @@ Common runtime signatures and first actions:
 Download
 ================
 
-`IreneRewrite <https://github.com/mghasemi/Irene>`_ can be obtained from GitHub.
+`Irene <https://github.com/mghasemi/Irene>`_ can be obtained from GitHub.
 
 Installation
 =========================
 
 **Using ``venv`` (recommended)**::
 
-    cd IreneRewrite
+    cd Irene
     python3 -m venv .venv
     source .venv/bin/activate  # On Windows: .venv\Scripts\activate
     pip install -e ".[dev]"
 
 **Using ``uv`` (faster alternative)**::
 
-    cd IreneRewrite
+    cd Irene
     uv venv
     source .venv/bin/activate
     uv pip install -e ".[dev]"

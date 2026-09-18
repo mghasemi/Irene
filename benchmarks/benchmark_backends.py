@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Comprehensive Irene vs IreneRewrite Backend Benchmark
+Comprehensive Irene vs Irene Backend Benchmark
 =====================================================
 
 Runs the SAME feature set through three configurations:
 
   --mode irene                Original Irene 1.2.5 (SymPy only)
-  --mode irene_rewrite        IreneRewrite 2.0 (SymEngine primary + SymPy fallback)
-  --mode irene_rewrite_sympy  IreneRewrite 2.0 forced to pure SymPy backend
+    --mode irene_rewrite        Irene 2.0 (SymEngine primary + SymPy fallback)
+    --mode irene_rewrite_sympy  Irene 2.0 forced to pure SymPy backend
                               (IRENE_SYMBOLIC_BACKEND=sympy)
 
 Feature sections covered:
@@ -27,9 +27,9 @@ can be compared apples-to-apples. Solver stdout is suppressed.
 Usage:
   /home/mehdi/Code/Python/Irene/.venv/bin/python3 \\      # original
       benchmarks/benchmark_backends.py --mode irene --output benchmarks/results/backend_irene.json
-  /home/mehdi/Code/Python/IreneRewrite/.venv/bin/python3 \\  # rewrite symengine
+    /home/mehdi/Code/Python/Irene/.venv/bin/python3 \\  # rewrite symengine
       benchmarks/benchmark_backends.py --mode irene_rewrite --output benchmarks/results/backend_rewrite_se.json
-  /home/mehdi/Code/Python/IreneRewrite/.venv/bin/python3 \\  # rewrite sympy
+    /home/mehdi/Code/Python/Irene/.venv/bin/python3 \\  # rewrite sympy
       benchmarks/benchmark_backends.py --mode irene_rewrite_sympy --output benchmarks/results/backend_rewrite_sp.json
 """
 from __future__ import annotations
@@ -67,7 +67,7 @@ def setup_mode(mode: str) -> str:
         root = "/home/mehdi/Code/Python/Irene"
         sys.path.insert(0, root)
     elif mode in ("irene_rewrite", "irene_rewrite_sympy"):
-        root = "/home/mehdi/Code/Python/IreneRewrite"
+        root = "/home/mehdi/Code/Python/Irene"
         sys.path.insert(0, root)
         if mode == "irene_rewrite_sympy":
             os.environ["IRENE_SYMBOLIC_BACKEND"] = "sympy"
@@ -520,7 +520,7 @@ def section_symbolic_micro():
 # =============================================================================
 
 def main():
-    parser = argparse.ArgumentParser(description="Irene vs IreneRewrite backend benchmark")
+    parser = argparse.ArgumentParser(description="Irene vs Irene backend benchmark")
     parser.add_argument("--mode", required=True,
                         choices=["irene", "irene_rewrite", "irene_rewrite_sympy"])
     parser.add_argument("--output", default=None, help="JSON output path")

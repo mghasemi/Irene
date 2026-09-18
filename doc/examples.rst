@@ -74,7 +74,7 @@ used in the repository and is paired with checks in ``tests/test_sonc_section3.p
 Benchmark Gallery System
 ========================
 
-IreneRewrite includes a gallery-based benchmark runner for systematic comparison
+Irene includes a gallery-based benchmark runner for systematic comparison
 across relaxation families:
 
 * ``benchmarks/gallery.yaml`` — YAML configuration defining problem sets, parameters, and solver options.
@@ -91,7 +91,7 @@ Backend Comparison Benchmark
 ============================
 
 The comprehensive cross-version / cross-backend benchmark runs the same feature
-set through original Irene (SymPy), IreneRewrite with SymEngine, and IreneRewrite
+set through original Irene (SymPy), Irene with SymEngine, and Irene
 forced to the SymPy backend::
 
     benchmarks/benchmark_backends.py --mode irene
@@ -112,7 +112,7 @@ and other specialized relaxation techniques:
 * ``examples/SOSONCSchickSeparating.py`` — Schick's SOS+SONC separating example.
 * ``examples/Rosenbrock.py``, ``examples/Giunta.py``, ``examples/Parsopoulos.py`` — Classic benchmark problems.
 * ``examples/McCormick.py`` — McCormick relaxation on non-convex objective.
-* ``benchmarks/compare_irene_vs_rewrite.py`` — Cross-version comparison of original Irene vs IreneRewrite results.
+* ``benchmarks/compare_irene_vs_rewrite.py`` — Cross-version comparison of original Irene vs Irene results.
 
 Regression Validation
 =====================

@@ -1,5 +1,5 @@
 """
-Execution telemetry for IreneRewrite SDP pipeline.
+Execution telemetry for Irene SDP pipeline.
 
 Provides zero-overhead phase timing, structured diagnostics collection,
 and JSON export for benchmarking.  Controlled by the environment variable

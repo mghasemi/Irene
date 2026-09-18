@@ -75,7 +75,7 @@ difference is only in how they report the status.
 
 - Use native CVXOPT when **correct infeasibility detection is critical**
   (e.g., proving a polynomial is NOT SOS, as in the Motzkin and Choi–Lam
-  gallery problems).  The IreneRewrite engine routes ``solver='cvxopt'``
+  gallery problems).  The Irene engine routes ``solver='cvxopt'``
   through CVXOPT's native C interface for this reason.
 - Prefer CLARABEL for **large-scale feasible problems** (up to ~500 moment
   variables) where its robust interior-point convergence is valuable and

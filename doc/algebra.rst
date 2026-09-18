@@ -48,7 +48,7 @@ in lower-bound certificates.
 Symbolic Engine: SymEngine Primary with SymPy Fallback
 ------------------------------------------------------
 
-IreneRewrite uses a dual-engine design for symbolic computation, implemented in
+Irene uses a dual-engine design for symbolic computation, implemented in
 ``symbolic_engine.py`` as the ``SymbolicEngine`` class (imported as ``engine``).
 
 **Design Rationale.** SymEngine provides a C++ backend that is significantly faster
@@ -86,7 +86,7 @@ SymPy/SymEngine::
     g = engine.groebner([f1, f2], x)      # auto-fallback to SymPy
     p = engine.Poly(expr, x)              # SymPy Poly (SymEngine lacks this)
 
-This pattern ensures that all symbolic code in IreneRewrite benefits from the
+This pattern ensures that all symbolic code in Irene benefits from the
 dual-engine routing without importing either backend directly.
 
 **Selecting the Symbolic Backend.** Users can choose between SymEngine and pure

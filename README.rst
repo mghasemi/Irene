@@ -1,8 +1,8 @@
 =============================
-IreneRewrite
+Irene
 =============================
 
-IreneRewrite is the actively developed modernization of Irene, a Python toolkit for constrained
+Irene is a Python toolkit for constrained
 polynomial optimization over commutative real algebras.
 
 It supports multiple relaxation families and backends:
