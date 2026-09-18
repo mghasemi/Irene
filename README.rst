@@ -124,6 +124,7 @@ For new code, prefer ``OptimizationProblem`` + ``RelaxationEngine``.
 Documentation
 =============================
 
+Read the hosted documentation at `irene.readthedocs.io <https://irene.readthedocs.io/>`_.
 Documentation sources are in ``doc/`` and include architecture, migration, solver, and benchmark
 chapters.
 
