@@ -1,0 +1,219 @@
+{
+ "mode": "irene",
+ "package_root": "/home/mehdi/Code/Python/Irene",
+ "backend": "sympy-direct (no symbolic_engine module)",
+ "timestamp": "2026-08-09T20:54:38Z",
+ "sections": {
+  "sos_sonc_sosonc": {
+   "quartic_1d": {
+    "true_min": -0.25,
+    "methods": {
+     "sos_r2": {
+      "value": -0.25,
+      "status": "optimal",
+      "elapsed_s": 0.0258
+     },
+     "sonc_r2": {
+      "value": -Infinity,
+      "status": "error",
+      "elapsed_s": 0.1295
+     },
+     "sosonc_r2": {
+      "value": -0.25,
+      "status": "optimal",
+      "elapsed_s": 0.0239
+     }
+    }
+   },
+   "motzkin": {
+    "true_min": 0.0,
+    "methods": {
+     "sos_r1": {
+      "value": -Infinity,
+      "status": "infeasible",
+      "elapsed_s": 0.1172
+     },
+     "sonc_r1": {
+      "value": 1e-07,
+      "status": "optimal",
+      "elapsed_s": 0.0073
+     },
+     "sosonc_r1": {
+      "value": 1e-07,
+      "status": "optimal",
+      "elapsed_s": 0.1452
+     }
+    }
+   },
+   "sphere_4": {
+    "true_min": 0.5,
+    "methods": {
+     "sos_r2": {
+      "value": 0.49999993,
+      "status": "optimal",
+      "elapsed_s": 0.0967
+     },
+     "sonc_r2": {
+      "value": -0.0,
+      "status": "optimal",
+      "elapsed_s": 0.009
+     },
+     "sosonc_r2": {
+      "value": 0.49999993,
+      "status": "optimal",
+      "elapsed_s": 0.0896
+     }
+    }
+   },
+   "schick": {
+    "true_min": 0.0,
+    "methods": {
+     "sos_r1": {
+      "value": -Infinity,
+      "status": "infeasible",
+      "elapsed_s": 0.1516
+     },
+     "sonc_r1": {
+      "value": -2.98780183,
+      "status": "optimal",
+      "elapsed_s": 0.0131
+     },
+     "sosonc_r1": {
+      "value": -2.98780183,
+      "status": "optimal",
+      "elapsed_s": 0.1094
+     }
+    }
+   },
+   "elapsed_s": 0.9534,
+   "status": "ok"
+  },
+  "gp": {
+   "objective": "-2.000 * x**2 + -1.000 * y",
+   "num_constraints": 2,
+   "solve_output": "-3.5931248461963006",
+   "elapsed_s": 0.0941,
+   "status": "ok"
+  },
+  "dsdp_mean": {
+   "problem": "choi_lam_M10",
+   "lower_bound": 4.985148532398173e-09,
+   "elapsed_s": 1.306,
+   "status": "ok"
+  },
+  "dsdp_kkt": {
+   "problem": "exp_decay_kkt",
+   "lower_bound": 6.443160454323557e-10,
+   "elapsed_s": 0.1982,
+   "status": "ok"
+  },
+  "ade_relations": {
+   "single_deriv_symbols": [
+    "d_x",
+    "d_u"
+   ],
+   "multi_deriv_symbols": [
+    "dy_y",
+    "dy_L",
+    "dy_v"
+   ],
+   "relations": [
+    "d_x - 1",
+    "d_u - u**2 - 1"
+   ],
+   "gens": [
+    "d_x",
+    "d_u",
+    "x",
+    "u"
+   ],
+   "build_ms": 0.113,
+   "elapsed_s": 0.0011,
+   "status": "ok"
+  },
+  "border_basis": {
+   "circle_xy": {
+    "api": "original(BorderBasis.polynomials/max_degree)",
+    "dimension": 6,
+    "normal_form_xy": "{x1 * x2: 1.0}",
+    "elapsed_s": 0.0009
+   },
+   "monomial": {
+    "api": "original(BorderBasis.polynomials/max_degree)",
+    "dimension": 5,
+    "normal_form_xy": "{x1 * x2: 1.0}",
+    "elapsed_s": 0.0002
+   },
+   "elapsed_s": 0.0012,
+   "status": "ok"
+  },
+  "sparsity": {
+   "api": "original(analyze_correlative_sparsity)",
+   "is_sparse": false,
+   "reduction_ratio": 0.6,
+   "summary": {
+    "nvars": 3,
+    "n_polynomials": 2,
+    "n_cliques": 1,
+    "clique_sizes": [
+     2
+    ],
+    "max_clique_size": 2,
+    "is_sparse": false,
+    "n_edges": 1
+   },
+   "elapsed_s": 0.0003,
+   "status": "ok"
+  },
+  "newton_polytope": {
+   "api": "original(prune_by_newton_polytope)",
+   "total_reduction_ratio": 0.6,
+   "summary": {
+    "n_polynomials": 1,
+    "relaxation_degree": 2,
+    "moment_degree": 4,
+    "total_original_monomials": 5,
+    "total_admissible_monomials": 3,
+    "total_pruned_monomials": 2,
+    "reduction_ratio": 0.6,
+    "per_polynomial": {
+     "poly_0": {
+      "original": 5,
+      "admissible": 3,
+      "pruned": 2,
+      "ratio": 0.6
+     }
+    }
+   },
+   "elapsed_s": 0.0007,
+   "status": "ok"
+  },
+  "symbolic_micro": {
+   "backend": "sympy-direct",
+   "ops": {
+    "expand_deg8": {
+     "elapsed_ms": 0.006
+    },
+    "poly_deg6": {
+     "elapsed_ms": 0.06
+    },
+    "groebner": {
+     "elapsed_ms": 0.206
+    },
+    "matrix_mul": {
+     "elapsed_ms": 0.059
+    },
+    "zeros_50": {
+     "elapsed_ms": 0.003
+    }
+   },
+   "elapsed_s": 0.0023,
+   "status": "ok"
+  },
+  "quotient_basis": {
+   "note": "original Irene has no border-basis option (Groebner only)",
+   "elapsed_s": 0.0,
+   "status": "ok"
+  }
+ }
+}

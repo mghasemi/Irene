@@ -1,0 +1,618 @@
+{
+ "modules": {
+  "base": {
+   "classes": {
+    "base": {
+     "__init__": "()",
+     "methods": {
+      "AvailableSDPSolvers": "(self)",
+      "which": "(program)"
+     }
+    }
+   },
+   "functions": {
+    "LaTeX": "(obj)"
+   }
+  },
+  "border_basis": {
+   "classes": {
+    "BorderBasis": {
+     "__init__": "(variables, generators, degree)",
+     "methods": {
+      "conditioning_diagnostic": "(self)",
+      "moment_matrix_structure": "(self)",
+      "reduce": "(self, expr)"
+     }
+    }
+   },
+   "functions": {}
+  },
+  "correlative_sparsity": {
+   "_import_error": "No module named 'Irene.correlative_sparsity'",
+   "classes": {},
+   "functions": {}
+  },
+  "cvxpy_solver": {
+   "classes": {
+    "CvxpySDPSolver": {
+     "__init__": "(solver: 'Optional[str]' = None)",
+     "methods": {
+      "AddConstantBlock": "(self, C)",
+      "AddConstraintBlock": "(self, A)",
+      "CvxOpt": "(self)",
+      "Option": "(self, param: 'str', val)",
+      "SetObjective": "(self, b)",
+      "solve": "(self) -> 'SDPResult'"
+     }
+    },
+    "SDPResult": {
+     "__init__": "()",
+     "methods": {
+      "to_info_dict": "(self) -> 'dict'"
+     }
+    }
+   },
+   "functions": {
+    "available_solvers": "() -> 'list[str]'"
+   }
+  },
+  "dsdp": {
+   "classes": {
+    "DSDPKKTRelaxation": {
+     "__init__": "(gens, relations=(), name='DSDPKKTRlx', diff_map=None, **kwargs) -> None",
+     "methods": {
+      "AddConstraint": "(self, cnst)",
+      "AvailableSDPSolvers": "(self)",
+      "Calpha": "(self, expn, Mmnt)",
+      "Commit": "(self, blk, c, idx)",
+      "Decompose": "(self)",
+      "ExponentsVec": "(self, deg)",
+      "InitSDP": "(self)",
+      "LocalizedMoment": "(self, p)",
+      "LocalizedMoment_": "(self, p)",
+      "Minimize": "(*args, **kwargs)",
+      "MomentConstraint": "(self, cnst)",
+      "MomentMat": "(self)",
+      "MomentsOrd": "(self, ordr)",
+      "PolyCoefFullVec": "(self)",
+      "ReduceExp": "(self, expr)",
+      "ReducedMonomialBase": "(self, deg)",
+      "RelaxationDeg": "(self)",
+      "Resume": "(self)",
+      "SaveState": "(self)",
+      "SetMonoOrd": "(self, ordr)",
+      "SetNumCores": "(self, num)",
+      "SetObjective": "(self, obj)",
+      "SetSDPSolver": "(self, solver)",
+      "State": "(self)",
+      "add_ade_moment_constraint": "(self, expr, rhs=0)",
+      "differentiate": "(self, expr, var=None)",
+      "from_problem": "(optim_prob: Irene.program.OptimizationProblem, name='SDPRlx', config=None)",
+      "getConstraint": "(self, idx)",
+      "getMomentConstraint": "(self, idx)",
+      "getObjective": "(self)",
+      "pInitSDP": "(*args, **kwargs)",
+      "sInitSDP": "(*args, **kwargs)",
+      "set_derivation": "(self, diff_map: dict) -> None",
+      "solve": "(self, order=None)",
+      "solve_kkt": "(self, order=None)",
+      "which": "(program)"
+     }
+    },
+    "DSDPMeanRelaxation": {
+     "__init__": "(gens, weights, q=1, p=0, relations=(), name='DSDPMeanRlx', **kwargs) -> None",
+     "methods": {
+      "AddConstraint": "(self, cnst)",
+      "AvailableSDPSolvers": "(self)",
+      "Calpha": "(self, expn, Mmnt)",
+      "Commit": "(self, blk, c, idx)",
+      "Decompose": "(self)",
+      "ExponentsVec": "(self, deg)",
+      "InitSDP": "(self)",
+      "LocalizedMoment": "(self, p)",
+      "LocalizedMoment_": "(self, p)",
+      "Minimize": "(*args, **kwargs)",
+      "MomentConstraint": "(self, cnst)",
+      "MomentMat": "(self)",
+      "MomentsOrd": "(self, ordr)",
+      "PolyCoefFullVec": "(self)",
+      "ReduceExp": "(self, expr)",
+      "ReducedMonomialBase": "(self, deg)",
+      "RelaxationDeg": "(self)",
+      "Resume": "(self)",
+      "SaveState": "(self)",
+      "SetMonoOrd": "(self, ordr)",
+      "SetNumCores": "(self, num)",
+      "SetObjective": "(self, obj)",
+      "SetSDPSolver": "(self, solver)",
+      "State": "(self)",
+      "add_ade_moment_constraint": "(self, expr, rhs=0)",
+      "construct_mean_moment_matrix": "(self)",
+      "differentiate": "(self, expr, var=None)",
+      "from_problem": "(optim_prob: Irene.program.OptimizationProblem, name='SDPRlx', config=None)",
+      "getConstraint": "(self, idx)",
+      "getMomentConstraint": "(self, idx)",
+      "getObjective": "(self)",
+      "pInitSDP": "(*args, **kwargs)",
+      "sInitSDP": "(*args, **kwargs)",
+      "set_derivation": "(self, diff_map: dict) -> None",
+      "solve": "(self, order=None)",
+      "solve_mean": "(self, order=None)",
+      "which": "(program)"
+     }
+    },
+    "DSDPRelaxations": {
+     "__init__": "(gens, relations=(), name='DSDPRlx', **kwargs) -> None",
+     "methods": {
+      "AddConstraint": "(self, cnst)",
+      "AvailableSDPSolvers": "(self)",
+      "Calpha": "(self, expn, Mmnt)",
+      "Commit": "(self, blk, c, idx)",
+      "Decompose": "(self)",
+      "ExponentsVec": "(self, deg)",
+      "InitSDP": "(self)",
+      "LocalizedMoment": "(self, p)",
+      "LocalizedMoment_": "(self, p)",
+      "Minimize": "(*args, **kwargs)",
+      "MomentConstraint": "(self, cnst)",
+      "MomentMat": "(self)",
+      "MomentsOrd": "(self, ordr)",
+      "PolyCoefFullVec": "(self)",
+      "ReduceExp": "(self, expr)",
+      "ReducedMonomialBase": "(self, deg)",
+      "RelaxationDeg": "(self)",
+      "Resume": "(self)",
+      "SaveState": "(self)",
+      "SetMonoOrd": "(self, ordr)",
+      "SetNumCores": "(self, num)",
+      "SetObjective": "(self, obj)",
+      "SetSDPSolver": "(self, solver)",
+      "State": "(self)",
+      "add_ade_moment_constraint": "(self, expr, rhs=0)",
+      "differentiate": "(self, expr, var=None)",
+      "from_problem": "(optim_prob: Irene.program.OptimizationProblem, name='SDPRlx', config=None)",
+      "getConstraint": "(self, idx)",
+      "getMomentConstraint": "(self, idx)",
+      "getObjective": "(self)",
+      "pInitSDP": "(*args, **kwargs)",
+      "sInitSDP": "(*args, **kwargs)",
+      "set_derivation": "(self, diff_map: dict) -> None",
+      "solve": "(self, order=None)",
+      "which": "(program)"
+     }
+    }
+   },
+   "functions": {}
+  },
+  "geometric": {
+   "classes": {
+    "GPRelaxations": {
+     "__init__": "(prog: Irene.program.OptimizationProblem, **kwargs) -> None",
+     "methods": {
+      "auto_transform_matrix": "(self) -> numpy.ndarray",
+      "compare_diags": "(vec: list[float]) -> tuple[int, list[float]]",
+      "h_plus": "(self, xprsn: Any, idn: Any = None) -> float",
+      "solve": "(*args, **kwargs)",
+      "transform_program": "(self) -> None"
+     }
+    }
+   },
+   "functions": {}
+  },
+  "grouprings": {
+   "classes": {
+    "AtomicSGElement": {
+     "__init__": "(semigroup: Irene.grouprings.CommutativeSemigroup, element: str)",
+     "methods": {
+      "LC": "(self) -> float",
+      "LM": "(self) -> sympy.core.expr.Expr",
+      "LT": "(self) -> 'SemigroupAlgebraElement'",
+      "constant": "(self) -> float",
+      "divide": "(self, fs: list) -> tuple[list, 'SemigroupAlgebraElement']",
+      "lt_divisible_by": "(self, expr: Any) -> bool",
+      "support": "(self) -> list"
+     }
+    },
+    "CommutativeSemigroup": {
+     "__init__": "(gens: list, is_semigroup: bool = True, is_abelian: bool = True)",
+     "methods": {
+      "add_relations": "(self, rels: list)",
+      "degree": "(self, expr) -> int",
+      "element_sub_lattice": "(self, elm: sympy.core.expr.Expr, ex: set = None) -> set",
+      "identity": "(self) -> sympy.core.expr.Expr",
+      "lattice_edges": "(self, degree: int) -> None",
+      "lattice_vertices": "(self) -> None",
+      "positive_exp": "(self, expr: sympy.core.expr.Expr) -> bool"
+     }
+    },
+    "SemigroupAlgebra": {
+     "__init__": "(semigroup: Irene.grouprings.CommutativeSemigroup)",
+     "methods": {
+      "add_derivative": "(self, base_map: dict) -> None",
+      "derivative": "(self, expr: Any, idx: int)",
+      "diff": "(self, expr: Any, base_map: dict)"
+     }
+    },
+    "SemigroupAlgebraElement": {
+     "__init__": "(terms: list, semigroup: Irene.grouprings.CommutativeSemigroup)",
+     "methods": {
+      "LC": "(self) -> float",
+      "LM": "(self) -> sympy.core.expr.Expr",
+      "LT": "(self) -> 'SemigroupAlgebraElement'",
+      "constant": "(self) -> float",
+      "divide": "(self, fs: list) -> tuple[list, 'SemigroupAlgebraElement']",
+      "lt_divisible_by": "(self, expr: Any) -> bool",
+      "support": "(self) -> list[sympy.core.expr.Expr]"
+     }
+    }
+   },
+   "functions": {}
+  },
+  "invariant": {
+   "classes": {
+    "InvariantPolynomial": {
+     "__init__": "(Prg)",
+     "methods": {
+      "ConjugateClosure": "(self, H)",
+      "GenMon": "(self, alpha)",
+      "OmegaFtilde": "(self)",
+      "QOmega": "(self)",
+      "RedPart": "(self, f, P)",
+      "Reynolds": "(self, f, G)",
+      "SigmaAlpha": "(self, sigma, alpha)",
+      "Stabilizer": "(self, G, alpha)",
+      "StblTldMax": "(self)",
+      "tildemax": "(self)"
+     }
+    }
+   },
+   "functions": {}
+  },
+  "matrices": {
+   "classes": {},
+   "functions": {
+    "find_psd_gram_matrix": "(polynomial)",
+    "get_gram_matrix": "(polynomial)",
+    "is_psd_numeric": "(matrix, tol=1e-08)",
+    "is_psd_symbolic": "(matrix)",
+    "numpy_to_latex": "(matrix, precision=3, env='bmatrix')"
+   }
+  },
+  "newton_polytope": {
+   "classes": {
+    "NewtonPruner": {
+     "__init__": "(num_vars: int, max_degree: int, polytope_vertices: Optional[numpy.ndarray] = None)",
+     "methods": {
+      "compute_pruned_basis": "(self, vars_list=None)",
+      "moment_matrix_dimension_reduction": "(self) -> Dict",
+      "summary": "(self) -> Dict"
+     }
+    }
+   },
+   "functions": {
+    "combined_newton_polytope": "(polynomials, vars_list=None)",
+    "minkowski_sum": "(polytope_a, polytope_b)",
+    "newton_polytope": "(expr, vars_list=None)",
+    "prune_basis_from_polys": "(polynomials, num_vars: int, max_degree: int) -> Irene.newton_polytope.NewtonPruner",
+    "prune_basis_from_problem": "(prog, max_degree: int) -> Irene.newton_polytope.NewtonPruner",
+    "scale_polytope": "(polytope, factor)"
+   }
+  },
+  "nonpopsdp": {
+   "_import_error": "No module named 'Irene.nonpopsdp'",
+   "classes": {},
+   "functions": {}
+  },
+  "program": {
+   "classes": {
+    "OptimizationProblem": {
+     "__init__": "(sga: Optional[Irene.grouprings.SemigroupAlgebra] = None, relations: Optional[list[Irene.grouprings.SemigroupAlgebraElement]] = None) -> None",
+     "methods": {
+      "add_constraints": "(self, const: list[Irene.grouprings.SemigroupAlgebraElement]) -> None",
+      "analyse_program": "(self) -> None",
+      "convex_combination": "(self, point: Sequence[float]) -> Optional[numpy.ndarray]",
+      "delta": "(self, xprsn: Irene.grouprings.SemigroupAlgebraElement, deg: int) -> dict[str, set]",
+      "delta_vertex": "(self, xprsn: Irene.grouprings.SemigroupAlgebraElement, vertices: list) -> None",
+      "has_symbol": "(symb: str, mono: Irene.grouprings.SemigroupAlgebraElement) -> tuple[bool, int]",
+      "in_newton": "(self, point: Sequence[float]) -> bool",
+      "linear_combination": "(self, point: Sequence[float]) -> numpy.ndarray",
+      "mono2ord_tuple": "(self, mono: Any) -> tuple[int, ...]",
+      "newton": "(self) -> None",
+      "omega": "(xprsn: Irene.grouprings.SemigroupAlgebraElement, deg: int) -> list[tuple[float, typing.Any]]",
+      "program_degree": "(self) -> int",
+      "set_objective": "(self, obj: Irene.grouprings.SemigroupAlgebraElement) -> None",
+      "square_exponent": "(xpnt: Any) -> bool",
+      "to_sympy": "(self, expr: Irene.grouprings.SemigroupAlgebraElement, sym_map: dict[str, sympy.core.symbol.Symbol])",
+      "tuple2mono": "(self, xpnt: Sequence[int])"
+     }
+    }
+   },
+   "functions": {}
+  },
+  "relaxation_api": {
+   "classes": {
+    "RelaxMethod": {
+     "__init__": "(value, names=None, *, module=None, qualname=None, type=None, start=1, boundary=None)",
+     "methods": {
+      "capitalize": "(self, /)",
+      "casefold": "(self, /)",
+      "center": "(self, width, fillchar=' ', /)",
+      "count": "<no signature>",
+      "encode": "(self, /, encoding='utf-8', errors='strict')",
+      "endswith": "<no signature>",
+      "expandtabs": "(self, /, tabsize=8)",
+      "find": "<no signature>",
+      "format": "<no signature>",
+      "format_map": "<no signature>",
+      "index": "<no signature>",
+      "isalnum": "(self, /)",
+      "isalpha": "(self, /)",
+      "isascii": "(self, /)",
+      "isdecimal": "(self, /)",
+      "isdigit": "(self, /)",
+      "isidentifier": "(self, /)",
+      "islower": "(self, /)",
+      "isnumeric": "(self, /)",
+      "isprintable": "(self, /)",
+      "isspace": "(self, /)",
+      "istitle": "(self, /)",
+      "isupper": "(self, /)",
+      "join": "(self, iterable, /)",
+      "ljust": "(self, width, fillchar=' ', /)",
+      "lower": "(self, /)",
+      "lstrip": "(self, chars=None, /)",
+      "maketrans": "<no signature>",
+      "partition": "(self, sep, /)",
+      "removeprefix": "(self, prefix, /)",
+      "removesuffix": "(self, suffix, /)",
+      "replace": "(self, old, new, count=-1, /)",
+      "rfind": "<no signature>",
+      "rindex": "<no signature>",
+      "rjust": "(self, width, fillchar=' ', /)",
+      "rpartition": "(self, sep, /)",
+      "rsplit": "(self, /, sep=None, maxsplit=-1)",
+      "rstrip": "(self, chars=None, /)",
+      "split": "(self, /, sep=None, maxsplit=-1)",
+      "splitlines": "(self, /, keepends=False)",
+      "startswith": "<no signature>",
+      "strip": "(self, chars=None, /)",
+      "swapcase": "(self, /)",
+      "title": "(self, /)",
+      "translate": "(self, table, /)",
+      "upper": "(self, /)",
+      "zfill": "(self, width, /)"
+     }
+    },
+    "RelaxResult": {
+     "__init__": "(value: 'float' = -inf, method: 'str' = '', status: 'str' = 'error', error_code: 'int' = 2, runtime: 'float' = 0.0, init_time: 'Optional[float]' = None, message: 'str' = '', certificate: 'Any' = None, solver_info: 'dict' = <factory>) -> None",
+     "methods": {}
+    },
+    "RelaxationEngine": {
+     "__init__": "(prog: 'OptimizationProblem', order: 'int' = 1, solver: 'str' = 'cvxopt', error_bound: 'float' = 1e-10, verbosity: 'int' = 1, use_local_solve: 'bool' = True, config=None) -> 'None'",
+     "methods": {
+      "compare": "(self, order: 'Optional[int]' = None, solver: 'Optional[str]' = None) -> 'dict[str, RelaxResult]'",
+      "solve": "(self, method: 'RelaxMethodStr | RelaxMethod' = 'sos', order: 'Optional[int]' = None, solver: 'Optional[str]' = None) -> 'RelaxResult'"
+     }
+    }
+   },
+   "functions": {
+    "compare_all": "(prog: 'OptimizationProblem', **kwargs: 'Any') -> 'dict[str, RelaxResult]'",
+    "relax": "(prog: 'OptimizationProblem', method: 'RelaxMethodStr | RelaxMethod' = 'sos', **kwargs: 'Any') -> 'RelaxResult'"
+   }
+  },
+  "relaxations": {
+   "classes": {
+    "Mom": {
+     "__init__": "(expr)",
+     "methods": {}
+    },
+    "RelaxationConfig": {
+     "__init__": "(reduction_method: str = 'none', monomial_pruning: bool = False, sparsity_detection: bool = False, sparsity_block_sdp: bool = False, border_basis_degree: int = 2, verbose_reduction: bool = False) -> None",
+     "methods": {}
+    },
+    "SDPRelaxations": {
+     "__init__": "(gens, relations=(), name='SDPRlx', config=None)",
+     "methods": {
+      "AddConstraint": "(self, cnst)",
+      "AvailableSDPSolvers": "(self)",
+      "Calpha": "(self, expn, Mmnt)",
+      "Commit": "(self, blk, c, idx)",
+      "Decompose": "(self)",
+      "ExponentsVec": "(self, deg)",
+      "InitSDP": "(self)",
+      "LocalizedMoment": "(self, p)",
+      "LocalizedMoment_": "(self, p)",
+      "Minimize": "(*args, **kwargs)",
+      "MomentConstraint": "(self, cnst)",
+      "MomentMat": "(self)",
+      "MomentsOrd": "(self, ordr)",
+      "PolyCoefFullVec": "(self)",
+      "ReduceExp": "(self, expr)",
+      "ReducedMonomialBase": "(self, deg)",
+      "RelaxationDeg": "(self)",
+      "Resume": "(self)",
+      "SaveState": "(self)",
+      "SetMonoOrd": "(self, ordr)",
+      "SetNumCores": "(self, num)",
+      "SetObjective": "(self, obj)",
+      "SetSDPSolver": "(self, solver)",
+      "State": "(self)",
+      "from_problem": "(optim_prob: Irene.program.OptimizationProblem, name='SDPRlx', config=None)",
+      "getConstraint": "(self, idx)",
+      "getMomentConstraint": "(self, idx)",
+      "getObjective": "(self)",
+      "pInitSDP": "(*args, **kwargs)",
+      "sInitSDP": "(*args, **kwargs)",
+      "which": "(program)"
+     }
+    },
+    "SDRelaxSol": {
+     "__init__": "(X, symdict={}, err_tol=1e-05)",
+     "methods": {
+      "ExtractSolution": "(self, mthd='LH', card=0)",
+      "ExtractSolutionLH": "(self, card=0)",
+      "ExtractSolutionScipy": "(self, card=0)",
+      "NumericalRank": "(self)",
+      "Pivot": "(self, arr)",
+      "SetScipySolver": "(self, solver)",
+      "StblRedEch": "(self, A)",
+      "Term2Mmnt": "(self, trm, rnk, X)"
+     }
+    }
+   },
+   "functions": {
+    "Calpha_": "(expn, Mmnt)",
+    "Calpha__": "(expn, Mmnt, ii, q)"
+   }
+  },
+  "sdp": {
+   "classes": {
+    "sdp": {
+     "__init__": "(solver='cvxopt', solver_path=None)",
+     "methods": {
+      "AddConstantBlock": "(self, C)",
+      "AddConstraintBlock": "(self, A)",
+      "AvailableSDPSolvers": "(self)",
+      "CvxOpt": "(self)",
+      "Option": "(self, param, val)",
+      "SetObjective": "(self, b)",
+      "VEC": "(M)",
+      "csdp": "(self)",
+      "parse_solution_matrix": "(iterator)",
+      "read_csdp_out": "(self, filename, txt)",
+      "read_sdpa_out": "(self, filename)",
+      "sdpa": "(self)",
+      "sdpa_param": "(self)",
+      "solve": "(*args, **kwargs)",
+      "which": "(program)",
+      "write_sdpa_dat": "(self, filename)",
+      "write_sdpa_dat_sparse": "(self, filename)"
+     }
+    }
+   },
+   "functions": {}
+  },
+  "sonc": {
+   "classes": {
+    "SONCRelaxations": {
+     "__init__": "(prog: Irene.program.OptimizationProblem, **kwargs) -> None",
+     "methods": {
+      "solve": "(*args, **kwargs)"
+     }
+    }
+   },
+   "functions": {}
+  },
+  "sosonc": {
+   "classes": {
+    "SOSONCRelaxSol": {
+     "__init__": "() -> None",
+     "methods": {}
+    },
+    "SOSONCRelaxations": {
+     "__init__": "(prog: Irene.program.OptimizationProblem, **kwargs) -> None",
+     "methods": {
+      "globalMinSONC": "(self) -> Irene.sosonc.SOSONCRelaxSol",
+      "globalMinSOS": "(self) -> Irene.sosonc.SOSONCRelaxSol",
+      "globalMinSOSPSONC": "(self, first: str = 'sos') -> Irene.sosonc.SOSONCRelaxSol"
+     }
+    }
+   },
+   "functions": {
+    "sosonc_bounds": "(prog: Irene.program.OptimizationProblem, **kwargs) -> dict[str, float]"
+   }
+  },
+  "sparsity": {
+   "classes": {
+    "CorrelativeSparsity": {
+     "__init__": "(num_vars: int, var_names: Optional[List] = None)",
+     "methods": {
+      "add_poly_terms": "(self, exponent_dict: Dict[Tuple[int, ...], object]) -> None",
+      "add_term": "(self, var_indices: List[int]) -> None",
+      "finalize": "(self) -> List[List[int]]",
+      "moment_matrix_partition": "(self, deg: int) -> Dict[int, List[Tuple[int, ...]]]",
+      "reduction_factor": "(self, deg: int) -> float",
+      "summary": "(self) -> Dict"
+     }
+    },
+    "UnionFind": {
+     "__init__": "(n: int)",
+     "methods": {
+      "find": "(self, x: int) -> int",
+      "get_components": "(self) -> Dict[int, List[int]]",
+      "union": "(self, x: int, y: int) -> bool"
+     }
+    }
+   },
+   "functions": {
+    "detect_sparsity_from_polys": "(polynomials, num_vars: int) -> Irene.sparsity.CorrelativeSparsity",
+    "detect_sparsity_from_problem": "(prog) -> Irene.sparsity.CorrelativeSparsity"
+   }
+  },
+  "symbolic_engine": {
+   "classes": {
+    "SymbolicEngine": {
+     "__init__": "(use_symengine=True)",
+     "methods": {
+      "Abs": "(self, expr)",
+      "DomainMatrix": "(self, matrix, domain)",
+      "Function": "(self, name)",
+      "Matrix": "(self, *args, **kwargs)",
+      "Poly": "(self, expr, *gens)",
+      "PolyMatrix": "(self, matrix, *gens)",
+      "Symbol": "(self, name, **kwargs)",
+      "clear_fallback_log": "(self)",
+      "expand": "(self, expr)",
+      "fallback_stats": "(self)",
+      "groebner": "(self, polys, *gens, order='lex')",
+      "lambdify": "(self, symbols, expressions, modules='numpy')",
+      "latex": "(self, expr)",
+      "reduced": "(self, expr, groebner_basis)",
+      "sqrt": "(self, expr)",
+      "symbols": "(self, names, **kwargs)",
+      "sympify": "(self, obj)",
+      "zeros": "(self, rows, cols)"
+     }
+    }
+   },
+   "functions": {
+    "fallback_to_sympy": "(func)",
+    "to_symengine": "(obj)",
+    "to_sympy": "(obj)"
+   }
+  },
+  "telemetry": {
+   "classes": {
+    "PhaseTiming": {
+     "__init__": "(wall_clock_s: 'float' = 0.0) -> None",
+     "methods": {}
+    },
+    "TelemetryContext": {
+     "__init__": "(phase: 'str', **kwargs)",
+     "methods": {
+      "set": "(self, key: 'str', value: 'Any')"
+     }
+    },
+    "TelemetryRecord": {
+     "__init__": "(phase: 'str' = '', timings: 'Dict[str, PhaseTiming]' = <factory>, metadata: 'Dict[str, Any]' = <factory>) -> None",
+     "methods": {
+      "to_dict": "(self) -> 'dict[str, Any]'"
+     }
+    }
+   },
+   "functions": {
+    "clear_telemetry": "()",
+    "export_json": "(path: 'str') -> 'str'",
+    "get_active_record": "() -> 'Optional[dict]'",
+    "get_telemetry": "() -> 'list[dict]'",
+    "timed": "(phase: 'str')"
+   }
+  },
+  "unified_reductions": {
+   "_import_error": "No module named 'Irene.unified_reductions'",
+   "classes": {},
+   "functions": {}
+  }
+ },
+ "package": "?"
+}

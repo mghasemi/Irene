@@ -33,7 +33,7 @@ the set :math:`[0, 1]\times[-1, 0]`::
 	# define a set called S
 	S = [(0, 1), (-1, 0)]
 	# find the measure of the set S
-	print M.measure(S)
+	print(M.measure(S))
 
 Discrete measure spaces
 -------------------------
@@ -55,7 +55,7 @@ The following is a sample code for discrete case::
 	# define a set called S
 	S = ['x2', 'x3']
 	# find the measure of the set S
-	print M.measure(S)
+	print(M.measure(S))
 
 Integrals
 =======================
@@ -75,7 +75,7 @@ Otherwise, `f` is simply a numerical function::
 	# set f(x) = x^2
 	f = lambda x: x**2
 	# integrate f(x) w.r.t. w(x)
-	print M.integral(f)
+	print(M.integral(f))
 
 Or in two dimensions::
 
@@ -90,7 +90,7 @@ Or in two dimensions::
 	# set f(x, y) = x^2 + y
 	f = lambda x, y: x**2 + y
 	# integrate f(x, y) w.r.t. w(x, y)
-	print M.integral(f)
+	print(M.integral(f))
 
 `p`-norms
 =========================

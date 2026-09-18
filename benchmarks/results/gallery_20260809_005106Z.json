@@ -1,0 +1,216 @@
+{
+  "timestamp": "2026-08-09T00:51:06.785528+00:00",
+  "solver": "clarabel",
+  "tolerance": 0.0001,
+  "total_problems": 4,
+  "passed": 3,
+  "failed": 1,
+  "errors": 0,
+  "results": [
+    {
+      "id": "quad_1d",
+      "name": "1D Quadratic",
+      "category": "unconstrained",
+      "degree": 2,
+      "build_time_s": 0.0002,
+      "total_elapsed_s": 0.1696,
+      "relaxations": {
+        "sos": {
+          "r1": {
+            "value": -5e-10,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0229
+          }
+        },
+        "sonc": {
+          "r1": {
+            "value": null,
+            "status": "error",
+            "error_code": 2,
+            "elapsed_s": 0.1288
+          }
+        },
+        "sosonc": {
+          "r1": {
+            "value": -5e-10,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0176
+          }
+        }
+      },
+      "validation": {
+        "valid": true,
+        "best_bound": -5e-10,
+        "best_method": "sos_r1",
+        "true_min": 0.0,
+        "gap": 5e-10,
+        "within_tolerance": true
+      }
+    },
+    {
+      "id": "quartic_1d",
+      "name": "1D Quartic (x^4 - x^2)",
+      "category": "unconstrained",
+      "degree": 4,
+      "build_time_s": 0.0003,
+      "total_elapsed_s": 0.102,
+      "relaxations": {
+        "sos": {
+          "r1": {
+            "value": -0.2499999986,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0235
+          },
+          "r2": {
+            "value": -0.2499999986,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0219
+          }
+        },
+        "sonc": {
+          "r1": {
+            "value": null,
+            "status": "error",
+            "error_code": 2,
+            "elapsed_s": 0.0022
+          },
+          "r2": {
+            "value": null,
+            "status": "error",
+            "error_code": 2,
+            "elapsed_s": 0.0017
+          }
+        },
+        "sosonc": {
+          "r1": {
+            "value": -0.2499999986,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0269
+          },
+          "r2": {
+            "value": -0.2499999986,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0255
+          }
+        }
+      },
+      "validation": {
+        "valid": true,
+        "best_bound": -0.2499999986,
+        "best_method": "sos_r1",
+        "true_min": -0.25,
+        "gap": 1.4e-09,
+        "within_tolerance": true
+      }
+    },
+    {
+      "id": "constrained_1d",
+      "name": "Constrained 1D (x^2 + y^2 on unit circle)",
+      "category": "constrained",
+      "degree": 2,
+      "build_time_s": 0.0069,
+      "total_elapsed_s": 0.0953,
+      "relaxations": {
+        "sos": {
+          "r1": {
+            "value": 0.9999999908,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0469
+          }
+        },
+        "sonc": {
+          "r1": {
+            "value": null,
+            "status": "error",
+            "error_code": 2,
+            "elapsed_s": 0.0013
+          }
+        },
+        "sosonc": {
+          "r1": {
+            "value": 0.9999999908,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0402
+          }
+        }
+      },
+      "validation": {
+        "valid": true,
+        "best_bound": 0.9999999908,
+        "best_method": "sos_r1",
+        "true_min": 1.0,
+        "gap": 9.2e-09,
+        "within_tolerance": true
+      }
+    },
+    {
+      "id": "polynomial_on_sphere",
+      "name": "x^4 + y^4 on Unit Sphere",
+      "category": "constrained",
+      "degree": 4,
+      "build_time_s": 0.0068,
+      "total_elapsed_s": 0.466,
+      "relaxations": {
+        "sos": {
+          "r1": {
+            "value": 0.4999999259,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1399
+          },
+          "r2": {
+            "value": 0.4999999259,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0943
+          }
+        },
+        "sonc": {
+          "r1": {
+            "value": -0.0,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0089
+          },
+          "r2": {
+            "value": -0.0,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.008
+          }
+        },
+        "sosonc": {
+          "r1": {
+            "value": 0.4999999259,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1053
+          },
+          "r2": {
+            "value": 0.4999999259,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1027
+          }
+        }
+      },
+      "validation": {
+        "valid": false,
+        "best_bound": -0.0,
+        "best_method": "sonc_r1",
+        "true_min": 0.5,
+        "gap": 0.5,
+        "within_tolerance": false
+      }
+    }
+  ],
+  "total_elapsed_s": 0.833
+}

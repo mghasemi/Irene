@@ -126,6 +126,35 @@ the constrained GP model.
 Repository Anchors
 =================================
 
-1. ``examples/SONCExample.py``: minimal SONC run path.
-2. ``examples/SONCExample33.py``: Section 3.3-style benchmark trace.
-3. ``tests/test_sonc_section3.py``: checks for barycentric weights, setup, and solve behavior.
+1. ``tests/test_sonc_section3.py``: unit tests for barycentric weights, support
+   points, delta sets, and end-to-end solve behavior.
+2. The benchmark suite in ``benchmarks/`` includes SONC traces via the gallery system.
+
+Runnable Example
+=================================
+
+The following example reproduces Example 3.3 from the constrained SONC paper,
+minimizing :math:`1 + 2x^2y^4 + \tfrac{1}{2}x^3y^2` subject to
+:math:`\tfrac{1}{3} - x^6y^2 \geqslant 0`::
+
+    from Irene.grouprings import CommutativeSemigroup, SemigroupAlgebra
+    from Irene.program import OptimizationProblem
+    from Irene.sonc import SONCRelaxations
+
+    sg = CommutativeSemigroup(['x', 'y'])
+    sga = SemigroupAlgebra(sg)
+    x, y = sga['x'], sga['y']
+
+    prog = OptimizationProblem(sga)
+    prog.set_objective(1 + 2 * x**2 * y**4 + 0.5 * x**3 * y**2)
+    prog.add_constraints([(1.0 / 3.0) - x**6 * y**2])
+
+    sonc = SONCRelaxations(prog, verbosity=0)
+    lower_bound = sonc.solve(verbosity=0)
+    print(f"SONC lower bound: {lower_bound:.6f}")
+
+The ``verbosity`` keyword controls GP solver output. The returned value is a
+certified lower bound on the global minimum over the feasible set. To verify
+barycentric weight correctness, inspect ``sonc._build_beta_info(...)`` which
+returns convex-combination weights :math:`\sum_j \lambda_j^{(\beta)} = 1` for
+each active term :math:`\beta`.

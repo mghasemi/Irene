@@ -1,0 +1,858 @@
+{
+  "timestamp": "2026-08-08T07:09:31.286583+00:00",
+  "solver": "clarabel",
+  "tolerance": 0.0001,
+  "total_problems": 12,
+  "passed": 4,
+  "failed": 8,
+  "errors": 0,
+  "results": [
+    {
+      "id": "quad_1d",
+      "name": "1D Quadratic",
+      "category": "unconstrained",
+      "degree": 2,
+      "build_time_s": 0.0002,
+      "total_elapsed_s": 0.1705,
+      "relaxations": {
+        "sos": {
+          "r1": {
+            "value": 2e-10,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0269
+          }
+        },
+        "sonc": {
+          "r1": {
+            "value": null,
+            "status": "error",
+            "error_code": 2,
+            "elapsed_s": 0.1235
+          }
+        },
+        "sosonc": {
+          "r1": {
+            "value": 2e-10,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0199
+          }
+        }
+      },
+      "validation": {
+        "valid": true,
+        "best_bound": 2e-10,
+        "best_method": "sos_r1",
+        "true_min": 0.0,
+        "gap": 2e-10,
+        "within_tolerance": true
+      }
+    },
+    {
+      "id": "quartic_1d",
+      "name": "1D Quartic (x^4 - x^2)",
+      "category": "unconstrained",
+      "degree": 4,
+      "build_time_s": 0.0003,
+      "total_elapsed_s": 0.1085,
+      "relaxations": {
+        "sos": {
+          "r1": {
+            "value": -0.2499999921,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0261
+          },
+          "r2": {
+            "value": -0.2499999921,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0265
+          }
+        },
+        "sonc": {
+          "r1": {
+            "value": null,
+            "status": "error",
+            "error_code": 2,
+            "elapsed_s": 0.0044
+          },
+          "r2": {
+            "value": null,
+            "status": "error",
+            "error_code": 2,
+            "elapsed_s": 0.0014
+          }
+        },
+        "sosonc": {
+          "r1": {
+            "value": -0.2499999921,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.026
+          },
+          "r2": {
+            "value": -0.2499999921,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0238
+          }
+        }
+      },
+      "validation": {
+        "valid": true,
+        "best_bound": -0.2499999921,
+        "best_method": "sos_r1",
+        "true_min": -0.25,
+        "gap": 7.9e-09,
+        "within_tolerance": true
+      }
+    },
+    {
+      "id": "motzkin",
+      "name": "Motzkin Polynomial",
+      "category": "separating",
+      "degree": 6,
+      "build_time_s": 0.0094,
+      "total_elapsed_s": 0.9566,
+      "relaxations": {
+        "sos": {
+          "r1": {
+            "value": -526.0811407059,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1723
+          },
+          "r2": {
+            "value": -526.0811407059,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1625
+          },
+          "r3": {
+            "value": -526.0811407059,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1657
+          }
+        },
+        "sonc": {
+          "r1": {
+            "value": 9.68e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0076
+          },
+          "r2": {
+            "value": 9.68e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0055
+          },
+          "r3": {
+            "value": 9.68e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0056
+          }
+        },
+        "sosonc": {
+          "r1": {
+            "value": 9.68e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1295
+          },
+          "r2": {
+            "value": 9.68e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1319
+          },
+          "r3": {
+            "value": 9.68e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1664
+          }
+        }
+      },
+      "validation": {
+        "valid": false,
+        "best_bound": -526.0811407059,
+        "best_method": "sos_r1",
+        "true_min": 0.0,
+        "gap": 526.0811407059,
+        "within_tolerance": false
+      }
+    },
+    {
+      "id": "choi_lam",
+      "name": "Choi-Lam Polynomial",
+      "category": "separating",
+      "degree": 6,
+      "build_time_s": 0.0106,
+      "total_elapsed_s": 0.8726,
+      "relaxations": {
+        "sos": {
+          "r1": {
+            "value": -10.4408243389,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1233
+          },
+          "r2": {
+            "value": -10.4408243389,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1204
+          },
+          "r3": {
+            "value": -10.4408243389,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1629
+          }
+        },
+        "sonc": {
+          "r1": {
+            "value": null,
+            "status": "error",
+            "error_code": 2,
+            "elapsed_s": 0.0008
+          },
+          "r2": {
+            "value": null,
+            "status": "error",
+            "error_code": 2,
+            "elapsed_s": 0.0008
+          },
+          "r3": {
+            "value": null,
+            "status": "error",
+            "error_code": 2,
+            "elapsed_s": 0.0008
+          }
+        },
+        "sosonc": {
+          "r1": {
+            "value": -10.4408243389,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.163
+          },
+          "r2": {
+            "value": -10.4408243389,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.165
+          },
+          "r3": {
+            "value": -10.4408243389,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.125
+          }
+        }
+      },
+      "validation": {
+        "valid": false,
+        "best_bound": -10.4408243389,
+        "best_method": "sos_r1",
+        "true_min": 0.0,
+        "gap": 10.4408243389,
+        "within_tolerance": false
+      }
+    },
+    {
+      "id": "robinson",
+      "name": "Robinson Polynomial",
+      "category": "separating",
+      "degree": 6,
+      "build_time_s": 0.0104,
+      "total_elapsed_s": 0.8786,
+      "relaxations": {
+        "sos": {
+          "r1": {
+            "value": -0.3703703695,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1579
+          },
+          "r2": {
+            "value": -0.3703703695,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1588
+          },
+          "r3": {
+            "value": -0.3703703695,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1148
+          }
+        },
+        "sonc": {
+          "r1": {
+            "value": null,
+            "status": "error",
+            "error_code": 2,
+            "elapsed_s": 0.0012
+          },
+          "r2": {
+            "value": null,
+            "status": "error",
+            "error_code": 2,
+            "elapsed_s": 0.0012
+          },
+          "r3": {
+            "value": null,
+            "status": "error",
+            "error_code": 2,
+            "elapsed_s": 0.0012
+          }
+        },
+        "sosonc": {
+          "r1": {
+            "value": -0.3703703695,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1209
+          },
+          "r2": {
+            "value": -0.3703703695,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1546
+          },
+          "r3": {
+            "value": -0.3703703695,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1576
+          }
+        }
+      },
+      "validation": {
+        "valid": false,
+        "best_bound": -0.3703703695,
+        "best_method": "sos_r1",
+        "true_min": 0.0,
+        "gap": 0.3703703695,
+        "within_tolerance": false
+      }
+    },
+    {
+      "id": "schick_separating",
+      "name": "Schick Separating SOS+SONC",
+      "category": "separating",
+      "degree": 6,
+      "build_time_s": 0.0181,
+      "total_elapsed_s": 1.0053,
+      "relaxations": {
+        "sos": {
+          "r1": {
+            "value": -79.6566482366,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1292
+          },
+          "r2": {
+            "value": -79.6566482366,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.165
+          },
+          "r3": {
+            "value": -79.6566482366,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1659
+          }
+        },
+        "sonc": {
+          "r1": {
+            "value": -2.9878022337,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.013
+          },
+          "r2": {
+            "value": -2.9878022337,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0127
+          },
+          "r3": {
+            "value": -2.9878022337,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0125
+          }
+        },
+        "sosonc": {
+          "r1": {
+            "value": -2.9878022337,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1818
+          },
+          "r2": {
+            "value": -2.9878022337,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1336
+          },
+          "r3": {
+            "value": -2.9878022337,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1734
+          }
+        }
+      },
+      "validation": {
+        "valid": false,
+        "best_bound": -79.6566482366,
+        "best_method": "sos_r1",
+        "true_min": 0.0,
+        "gap": 79.6566482366,
+        "within_tolerance": false
+      }
+    },
+    {
+      "id": "constrained_1d",
+      "name": "Constrained 1D (x^2 + y^2 on unit circle)",
+      "category": "constrained",
+      "degree": 2,
+      "build_time_s": 0.0067,
+      "total_elapsed_s": 0.0968,
+      "relaxations": {
+        "sos": {
+          "r1": {
+            "value": 0.9999999878,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0453
+          }
+        },
+        "sonc": {
+          "r1": {
+            "value": null,
+            "status": "error",
+            "error_code": 2,
+            "elapsed_s": 0.0012
+          }
+        },
+        "sosonc": {
+          "r1": {
+            "value": 0.9999999878,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0436
+          }
+        }
+      },
+      "validation": {
+        "valid": true,
+        "best_bound": 0.9999999878,
+        "best_method": "sos_r1",
+        "true_min": 1.0,
+        "gap": 1.22e-08,
+        "within_tolerance": true
+      }
+    },
+    {
+      "id": "motzkin_constrained",
+      "name": "Motzkin on Box",
+      "category": "constrained",
+      "degree": 6,
+      "build_time_s": 0.0113,
+      "total_elapsed_s": 3.3775,
+      "relaxations": {
+        "sos": {
+          "r1": {
+            "value": -1.6882462139,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.4843
+          },
+          "r2": {
+            "value": -1.6882462139,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.4706
+          },
+          "r3": {
+            "value": -1.6882462139,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.6337
+          }
+        },
+        "sonc": {
+          "r1": {
+            "value": 1.97e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0095
+          },
+          "r2": {
+            "value": 1.97e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0093
+          },
+          "r3": {
+            "value": 1.97e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0099
+          }
+        },
+        "sosonc": {
+          "r1": {
+            "value": 1.97e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.5036
+          },
+          "r2": {
+            "value": 1.97e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.6095
+          },
+          "r3": {
+            "value": 1.97e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.6357
+          }
+        }
+      },
+      "validation": {
+        "valid": false,
+        "best_bound": -1.6882462139,
+        "best_method": "sos_r1",
+        "true_min": 0.0,
+        "gap": 1.6882462139,
+        "within_tolerance": false
+      }
+    },
+    {
+      "id": "polynomial_on_sphere",
+      "name": "x^4 + y^4 on Unit Sphere",
+      "category": "constrained",
+      "degree": 4,
+      "build_time_s": 0.0068,
+      "total_elapsed_s": 0.4952,
+      "relaxations": {
+        "sos": {
+          "r1": {
+            "value": 0.4999999997,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.105
+          },
+          "r2": {
+            "value": 0.4999999997,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.145
+          }
+        },
+        "sonc": {
+          "r1": {
+            "value": -0.0,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0079
+          },
+          "r2": {
+            "value": -0.0,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0078
+          }
+        },
+        "sosonc": {
+          "r1": {
+            "value": 0.4999999997,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1153
+          },
+          "r2": {
+            "value": 0.4999999997,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1075
+          }
+        }
+      },
+      "validation": {
+        "valid": false,
+        "best_bound": -0.0,
+        "best_method": "sonc_r1",
+        "true_min": 0.5,
+        "gap": 0.5,
+        "within_tolerance": false
+      }
+    },
+    {
+      "id": "mean_poly_sweep_motzkin",
+      "name": "Mean Poly Sweep \u2014 Motzkin",
+      "category": "mean_poly",
+      "degree": 6,
+      "build_time_s": 0.0097,
+      "total_elapsed_s": 0.9257,
+      "relaxations": {
+        "sos": {
+          "r1": {
+            "value": -526.0811407059,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1643
+          },
+          "r2": {
+            "value": -526.0811407059,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.167
+          },
+          "r3": {
+            "value": -526.0811407059,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1687
+          }
+        },
+        "sonc": {
+          "r1": {
+            "value": 9.68e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0056
+          },
+          "r2": {
+            "value": 9.68e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0058
+          },
+          "r3": {
+            "value": 9.68e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0057
+          }
+        },
+        "sosonc": {
+          "r1": {
+            "value": 9.68e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1339
+          },
+          "r2": {
+            "value": 9.68e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1325
+          },
+          "r3": {
+            "value": 9.68e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1324
+          }
+        }
+      },
+      "validation": {
+        "valid": false,
+        "best_bound": -526.0811407059,
+        "best_method": "sos_r1",
+        "true_min": 0.0,
+        "gap": 526.0811407059,
+        "within_tolerance": false
+      }
+    },
+    {
+      "id": "dense_bivariate_deg8",
+      "name": "Dense Bivariate Degree-8",
+      "category": "unconstrained",
+      "degree": 8,
+      "build_time_s": 0.0349,
+      "total_elapsed_s": 2.4442,
+      "relaxations": {
+        "sos": {
+          "r1": {
+            "value": -2.946e-07,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.3047
+          },
+          "r2": {
+            "value": -2.946e-07,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.2586
+          },
+          "r3": {
+            "value": -2.946e-07,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.2557
+          },
+          "r4": {
+            "value": -2.946e-07,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.2634
+          }
+        },
+        "sonc": {
+          "r1": {
+            "value": null,
+            "status": "error",
+            "error_code": 2,
+            "elapsed_s": 0.0322
+          },
+          "r2": {
+            "value": null,
+            "status": "error",
+            "error_code": 2,
+            "elapsed_s": 0.0318
+          },
+          "r3": {
+            "value": null,
+            "status": "error",
+            "error_code": 2,
+            "elapsed_s": 0.0323
+          },
+          "r4": {
+            "value": null,
+            "status": "error",
+            "error_code": 2,
+            "elapsed_s": 0.0323
+          }
+        },
+        "sosonc": {
+          "r1": {
+            "value": -2.946e-07,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.291
+          },
+          "r2": {
+            "value": -2.946e-07,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.2896
+          },
+          "r3": {
+            "value": -2.946e-07,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.2908
+          },
+          "r4": {
+            "value": -2.946e-07,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.3267
+          }
+        }
+      },
+      "validation": {
+        "valid": true,
+        "best_bound": -2.946e-07,
+        "best_method": "sos_r1",
+        "true_min": 0.0,
+        "gap": 2.946e-07,
+        "within_tolerance": true
+      }
+    },
+    {
+      "id": "sparse_trinomial",
+      "name": "Sparse Trinomial Benchmark",
+      "category": "unconstrained",
+      "degree": 6,
+      "build_time_s": 0.0083,
+      "total_elapsed_s": 0.9238,
+      "relaxations": {
+        "sos": {
+          "r1": {
+            "value": 2.1e-09,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1335
+          },
+          "r2": {
+            "value": 2.1e-09,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.13
+          },
+          "r3": {
+            "value": 2.1e-09,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1648
+          }
+        },
+        "sonc": {
+          "r1": {
+            "value": 9.68e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0055
+          },
+          "r2": {
+            "value": 9.68e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0057
+          },
+          "r3": {
+            "value": 9.68e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.0052
+          }
+        },
+        "sosonc": {
+          "r1": {
+            "value": 9.68e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1709
+          },
+          "r2": {
+            "value": 9.68e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1708
+          },
+          "r3": {
+            "value": 9.68e-08,
+            "status": "optimal",
+            "error_code": 0,
+            "elapsed_s": 0.1289
+          }
+        }
+      },
+      "validation": {
+        "valid": false,
+        "best_bound": 2.1e-09,
+        "best_method": "sos_r1",
+        "true_min": -0.5,
+        "gap": 0.5000000021,
+        "within_tolerance": false
+      }
+    }
+  ],
+  "total_elapsed_s": 12.2556
+}

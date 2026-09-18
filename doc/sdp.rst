@@ -1,173 +1,151 @@
-=============================
-Semidefinite Programming
-=============================
+========================================
+Semidefinite Programming Relaxations
+========================================
 
-A *positive semidefinite* matrix is a symmetric real matrix whose eigenvalues are all nonnegative.
-A semidefinite programming problem is simply a linear program where the solutions are positive
-semidefinite matrices instead of points in Euclidean space.
-
-Primal and Dual formulations
-=============================
-
-A typical semidefinite program (SDP for short) in the primal form is the following optimization problem:
+The SDP module implements Lasserre's hierarchy of semidefinite programming
+relaxations for polynomial optimization problems. Given a problem
 
 .. math::
-	\left\lbrace
-	\begin{array}{lll}
-		\min & \sum_{i=1}^m b_i x_i & \\
-		\textrm{subject to} & & \\
-			& \sum_{i=1}^m A_{ij}x_i - C_j \succeq 0 & j=1,\dots,k.
-	\end{array}\right.
 
-The dual program associated to the above SDP will be the following:
+   \min \{f(x) : g_1(x) \geq 0, \dots, g_m(x) \geq 0, x \in K\},
 
-.. math::
-	\left\lbrace
-	\begin{array}{lll}
-		\max & \sum_{j=1}^k tr(C_j\times Z_j) & \\
-		\textrm{subject to} & & \\
-			& \sum_{j=1}^k tr(A_{ij}\times Z_j) = b_i & i=1,\dots,m,\\
-			& Z_j \succeq 0 & j=1,\dots,k.
-	\end{array}\right.
+the hierarchy constructs a sequence of SDPs whose optimal values converge
+monotonically to the true optimum under mild topological conditions.
 
-For convenience, we use a block representation for the matrices as follows:
+Moment and Localizing Matrices
+==============================
+
+At relaxation order :math:`t`, the method introduces moment variables
+:math:`y_\alpha` for each exponent :math:`\alpha \in \Lambda_t = \{\alpha : |\alpha| \leq t\}`
+and requires that the **moment matrix** :math:`M_t(y)` and all **localizing matrices**
+:math:`M_t(g_i y)` be positive semidefinite.
+
+The moment matrix has entries indexed by monomials in the basis :math:`B_t`:
 
 .. math::
-	C = \left(
-	\begin{array}{cccc}
-		C_1 & 0 & 0 & \dots \\
-		0 & C_2 & 0 & \dots \\
-		\vdots & \dots & \ddots & \vdots \\
-		0 & \dots & 0 & C_k
-	\end{array}
-	\right),
 
-and 
+   M_t(y)_{\alpha, \beta} = y_{\alpha + \beta}, \quad \alpha, \beta \in B_t.
+
+For each constraint :math:`g_i(x) = \sum_\gamma h_{i,\gamma} x^\gamma`, the localizing
+matrix is defined by:
 
 .. math::
-	A_i = \left(
-	\begin{array}{cccc}
-		A_{i1} & 0 & 0 & \dots \\
-		0 & A_{i2} & 0 & \dots \\
-		\vdots & \dots & \ddots & \vdots \\
-		0 & \dots & 0 & A_{ik}
-	\end{array}
-	\right).
 
-This simplifies the :math:`k` constraints of the primal form in to one constraint 
-:math:`\sum_{i=1}^m A_i x_i - C \succeq 0` and the objective and constraints of the 
-dual form as :math:`tr(C\times Y)` and :math:`tr(A_i\times Z_i) = b_i` for :math:`i=1,\dots,m`.
+   M_t(g_i y)_{\alpha, \beta} = \sum_\gamma h_{i,\gamma} y_{\alpha + \beta + \gamma}.
 
-
-The ``sdp`` class
-=============================
-
-The ``sdp`` class provides an interface to solve semidefinite programs using various range of
-well-known SDP solvers. Currently, the following solvers are supported:
-
-``CVXOPT``
-----------------------------
-
-This is a python native convex optimization solver which can be obtained from `CVXOPT <http://cvxopt.org/>`_.
-Beside semidefinite programs, it has various other solvers to handle convex optimization problems.
-In order to use this solver, the python package ``CVXOPT`` must be installed.
-
-``DSDP``
-----------------------------
-
-If `DSDP <http://www.mcs.anl.gov/hs/software/DSDP/>`_ and ``CVXOPT`` are installed and ``DSDP`` is callable from command line, 
-then it can be used as a SDP solver. Note that the current implementation uses ``CVXOPT`` to call ``DSDP``, so ``CVXOPT`` is a
-requirement too.
-
-``SDPA``
-----------------------------
-
-In case one manages to install `SDPA <http://sdpa.sourceforge.net/>`_ and it can be called from command line, one can use
-``SDPA`` as a SDP solver.
-
-``CSDP``
-----------------------------
-
-Also, if `csdp <https://projects.coin-or.org/Csdp/>`_ is installed and can be reached from command, then it can be used to solve
-SDP problems through ``sdp`` class.
-
-To initialize and set the solver to one of the above simply use::
-
-	SDP = sdp('cvxopt') # initializes and uses `cvxopt` as solver.
-
-.. note::
-	In windows, one can provide the path to each of the above solvers as the second parameter of the constructor::
-
-		SDP = sdp('csdp', {'csdp':"Path to executable csdp"}) # initializes and uses `csdp` as solver existing at the given path.
-
-Set the :math:`b` vector:
-----------------------------
-
-To set the vector :math:`b=(b_1,\dots,b_m)` one should use the method ``sdp.SetObjective`` which takes a list or a numpy array of
-numbers as :math:`b`.
-
-Set a block constraint:
-----------------------------
-
-To introduce the block of matrices :math:`A_{i1},\dots, A_{ik}` associated with :math:`x_i`, one should use the method
-``sdp.AddConstraintBlock`` that takes a list of matrices as blocks.
-
-Set the constant block `C`:
-----------------------------
-
-The method ``sdp.AddConstantBlock`` takes a list of square matrices and use them to construct :math:`C`.
-
-Solve the input SDP:
-----------------------------
-
-To solve the input SDP simply call the method ``sdp.solve()``. This will call the selected solver on the entered SDP and
-the output of the solver will be set as dictionary in ``sdp.Info`` with the following keys:
-
-	+ ``PObj``: The value of the primal objective.
-	+ ``DObj``: The value of the dual objective.
-	+ ``X``: The final :math:`X` matrix.
-	+ ``Z``: The final :math:`Z` matrix.
-	+ ``Status``: The final status of the solver.
-	+ ``CPU``: Total run time of the solver.
-
-Example:
-----------------------------
-Consider the following SDP:
+The SDP at order :math:`t` reads:
 
 .. math::
-	\left\lbrace
-	\begin{array}{lll}
-		\min & x_1 - x_2 + x_3 \\
-		\textrm{subject to} & \\
-			& \left(\begin{array}{cc}7 & 11\\ 11 & -3 \end{array}\right)x_1 + 
-			\left(\begin{array}{cc}-7 & 18\\ 18 & -8 \end{array}\right)x_2 +
-			\left(\begin{array}{cc} 2 & 8\\ 8 & -1 \end{array}\right)x_3
-			\succeq\left(\begin{array}{cc} -33 & 9\\ 9 & -26 \end{array}\right) \\
-			& \left(\begin{array}{ccc}21 & 11 & 0\\ 11 & -10 & -8\\ 0 & -8 & -5\end{array}\right)x_1 + 
-			\left(\begin{array}{ccc}0 & -10 & -16\\ -10 & 10 & 10\\ -16 & 10 & -3\end{array}\right)x_2 +
-			\left(\begin{array}{ccc} 5 & -2 & 17\\ -2 & 6 & -8\\ 17 & -8 & -6\end{array}\right)x_3
-			\succeq\left(\begin{array}{ccc} -14 & -9 & -40\\ -9 & -91 & -10\\ -40 & -10 & -15\end{array}\right) \\
-	\end{array}
-	\right.
 
-The following code solves the above program::
+   \min y_f = \sum_\alpha f_\alpha y_\alpha \quad \text{s.t.} \quad M_t(y) \succeq 0, \;\; M_t(g_i y) \succeq 0.
 
-	from numpy import matrix
-	from Irene import sdp
-	b = [1, -1, 1]
-	C = [matrix([[-33, 9], [9, -26]]),
-	     matrix([[-14, -9, -40], [-9, -91, -10], [-40, -10, -15]])]
-	A1 = [matrix([[7, 11], [11, -3]]),
-	      matrix([[21, 11, 0], [11, -10, -8], [0, -8, -5]])]
-	A2 = [matrix([[-7, 18], [18, -8]]),
-	      matrix([[0, -10, -16], [-10, 10, 10], [-16, 10, -3]])]
-	A3 = [matrix([[2, 8], [8, -1]]),
-	      matrix([[5, -2, 17], [-2, 6, -8], [17, -8, -6]])]
-	SDP = sdp('cvxopt')
-	SDP.SetObjective(b)
-	SDP.AddConstantBlock(C)
-	SDP.AddConstraintBlock(A1)
-	SDP.AddConstraintBlock(A2)
-	SDP.AddConstraintBlock(A3)
-	SDP.solve()
-	print SDP.Info
+API Overview
+============
+
+The ``SDPRelaxations`` class provides the primary interface:
+
+.. code-block:: python
+
+   from Irene.grouprings import CommutativeSemigroup, SemigroupAlgebraElement
+   from Irene.program import OptimizationProblem
+   from Irene.relaxations import SDPRelaxations
+
+   # Define semigroup and variables
+   sg = CommutativeSemigroup(['x', 'y'])
+   x, y = sg.generators[0], sg.generators[1]
+
+   # Build problem with semigroup algebra elements
+   objective = SemigroupAlgebraElement(sg, {sg.one: 1, sg.monomial({0: 2}): -1})  # x^2
+   constraint = SemigroupAlgebraElement(sg, {sg.one: 1, sg.monomial({0: 2, 1: 2}): 1})  # 1 + x^2*y^2
+
+   prog = OptimizationProblem(sg, objective)
+   prog.add_constraint(constraint >= 0)
+
+   # Solve with SDP hierarchy
+   sdp = SDPRelaxations(prog)
+   result = sdp.solve(order=4)
+   print(f"Lower bound: {result['value']:.6f}")
+   print(f"Solver status: {result['status']}")
+
+Solver Routing
+==============
+
+IreneRewrite routes SDP solves through multiple backends automatically:
+
+**Primary path (CVXPY + CLARABEL)**: The default solver uses CVXPY's DCP-compliant
+formulation with the CLARABEL conic interior-point method. This provides robust
+handling of ill-conditioned moment matrices and reliable infeasibility detection.
+
+**Fallback path (native CVXOPT)**: If CVXPY or CLARABEL are unavailable, the solver
+falls back to the native CVXOPT implementation. Note that CVXOPT's infeasibility
+detection can differ from CLARABEL — problems declared infeasible by CLARABEL may
+return unbounded solutions in CVXOPT due to different tolerance handling.
+
+**External solvers (DSDP, SDPA, CSDP)**: For very large instances, external CLI-based
+solvers can be invoked. These require separate installation and are configured via
+the solver parameter.
+
+.. code-block:: python
+
+   # Explicit solver selection
+   result = sdp.solve(order=4, solver='clarabel')    # CLARABEL via CVXPY (default)
+   result = sdp.solve(order=4, solver='cvxopt')      # Native CVXOPT path
+   result = sdp.solve(order=4, solver='dsdp')        # External DSDP CLI
+
+Return Structure
+----------------
+
+The ``solve()`` method returns a dictionary with the following keys:
+
+- ``value`` (float): Primal objective value (lower bound on minimum)
+- ``status`` (str): Solver status string ('optimal', 'infeasible', etc.)
+- ``order`` (int): Relaxation order used
+- ``basis_size`` (int): Number of moment variables
+- ``time_init`` (float): SDP construction time in seconds
+- ``time_solve`` (float): Solver runtime in seconds
+
+Practical Example: Bounded Polynomial
+=====================================
+
+.. code-block:: python
+
+   from Irene.grouprings import CommutativeSemigroup, SemigroupAlgebraElement
+   from Irene.program import OptimizationProblem
+   from Irene.relaxations import SDPRelaxations
+
+   sg = CommutativeSemigroup(['x'])
+   x = sg.generators[0]
+
+   # Minimize (x - 2)^2 subject to x^2 <= 4
+   objective = SemigroupAlgebraElement(sg, {sg.monomial({0: 1}): -4, sg.monomial({0: 2}): 1})  # x^2 - 4x
+   # Add constant term separately if needed
+   constraint = SemigroupAlgebraElement(sg, {sg.one: 4, sg.monomial({0: 2}): -1})  # 4 - x^2
+
+   prog = OptimizationProblem(sg, objective)
+   prog.add_constraint(constraint >= 0)
+
+   sdp = SDPRelaxations(prog)
+   for t in range(1, 5):
+       result = sdp.solve(order=t)
+       print(f"Order {t}: bound = {result['value']:.6f}, "
+             f"time = {result['time_solve']:.3f}s, "
+             f"basis = {result['basis_size']}")
+
+Hierarchy Convergence
+=====================
+
+Under the Archimedean condition (the set :math:`K` is contained in a compact
+spectrahedron), Putinar's Positivstellensatz guarantees that the hierarchy
+terminates: for some finite order :math:`t^*`, the SDP at order :math:`t^*`
+returns the exact global minimum. In practice, convergence is often achieved
+at much lower orders than the theoretical bound suggests.
+
+For non-Archimedean sets, the hierarchy still provides valid lower bounds that
+converge asymptotically, but termination is not guaranteed at any finite order.
+
+References
+==========
+
+- Lasserre, J.-B. (2001). "Global optimization with polynomials and the problem of sums of squares." *SIAM Journal on Optimization*, 11(3), 793–812.
+- Parrilo, P. A. (2000). "Structured semidefinite programs and semialgebraic geometry methods in robustness and optimization." *Caltech PhD Thesis*.
+- Laurent, M. (2009). "Sums of squares, moment matrices and optimization over polynomials." *Developments in Mathematics*, 14, 157–270.

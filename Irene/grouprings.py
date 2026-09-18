@@ -24,6 +24,7 @@ This module also provides the following functions:
 from itertools import combinations_with_replacement
 from typing import Any, Iterator
 
+# Structural SymPy imports -- combinatorics layer (free groups) is the algebraic backbone
 from sympy import Expr
 from sympy.combinatorics.fp_groups import FpGroup
 from sympy.combinatorics.free_groups import free_group, FreeGroupElement
@@ -239,11 +240,13 @@ class CommutativeSemigroup(object):
             degree (int): The degree of the lattice.
         """
         elements = []
+        seen = set()
         lst = list(combinations_with_replacement(self.generators + [self.G.identity], degree))
         for tpl in lst:
             lmnt = self._reduce(self._lst_prod(tpl))
-            if (self.degree(lmnt) <= degree) and (lmnt not in elements):
+            if (self.degree(lmnt) <= degree) and (lmnt not in seen):
                 elements.append(lmnt)
+                seen.add(lmnt)
         elements.sort()
         self.edges = elements
 

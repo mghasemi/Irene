@@ -1,0 +1,29 @@
+[
+  {
+    "problem": "motzkin",
+    "name": "Motzkin poly (deg 6)",
+    "order": 3,
+    "basis_2d": 28,
+    "basis_d": 10,
+    "num_constraints": 0,
+    "init_time_s": 0.1052
+  },
+  {
+    "problem": "choi_lam",
+    "name": "Choi-Lam poly (deg 6)",
+    "order": 3,
+    "basis_2d": 28,
+    "basis_d": 10,
+    "num_constraints": 0,
+    "init_time_s": 0.0711
+  },
+  {
+    "problem": "dense_deg8",
+    "name": "Dense bivariate deg 8",
+    "order": 3,
+    "basis_2d": 28,
+    "basis_d": 10,
+    "num_constraints": 0,
+    "init_time_s": 0.1721
+  }
+]
