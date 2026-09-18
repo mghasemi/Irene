@@ -2,6 +2,13 @@
 Revision History
 =============================
 
+**Version 1.3.1 (Sep 18, 2026)**
+
+	- Added SOS+SONC relaxations, correlative sparsity detection, and border-basis reduction.
+	- Updated documentation branding and hosted documentation links for Irene.
+	- Removed redundant page-level tables of contents for compatibility with the Furo theme.
+	- Updated the external optimizer reference from pyOpt to pyOptSparse and linked to its current documentation.
+
 **Version 1.2.6 (Jun 12, 2026)**
 
 	- Improved documentation build portability by defaulting ``SPHINXBUILD`` to the repository virtual environment (``../.venv/bin/python -m sphinx``).
@@ -39,7 +46,7 @@ Revision History
 	- Adding ``SDPRelaxations.Probability`` and ``SDPRelaxations.PSDMoment`` to give more flexibility over moments and enables rational minimization.
 	- SOS decomposition implemented.
 	- ``__str__`` method for ``SDPRelaxations``.
-	- Using `pyOpt` as the external optimizer.
+	- Using `pyOptSparse` as the external optimizer.
 	- More benchmark examples.
 
 **Version 1.0.0 (Dec 07, 2016)**

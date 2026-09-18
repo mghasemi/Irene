@@ -97,17 +97,17 @@ pyProximation
 for function approximation in Hilbert spaces. Full documentation is included in this
 manual — see the :doc:`pyProximation <pyprox_intro>` section.
 
-.. _pyOptRef:
+.. _pyOptSparseRef:
 
-pyOpt
+pyOptSparse
 ===================
 
-`pyOpt <http://www.pyopt.org/>`_ is a Python-based package for formulating and solving 
+`pyOptSparse <https://mdolab-pyoptsparse.readthedocs-hosted.com/en/latest/>`_ is a Python-based package for formulating and solving
 nonlinear constrained optimization problems in an efficient, reusable and portable manner.
 It is an open-source software distributed under the terms of the 
 `GNU Lesser General Public License <http://www.gnu.org/licenses/lgpl.html>`_.
 
-`pyOpt` provides unified interface to the following nonlinear optimizers:
+`pyOptSparse` provides a unified interface to nonlinear optimizers.
 	+ SNOPT - Sparse NOlinear OPTimizer
 	+ NLPQL - Non-Linear Programming by Quadratic Lagrangian
 	+ NLPQLP - NonLinear Programming with Non-Monotone and Distributed Line Search
@@ -131,7 +131,7 @@ It is an open-source software distributed under the terms of the
 
 Basic usage:
 -------------------
-`pyOpt` is design to solve general constrained nonlinear optimization problems:
+`pyOptSparse` is designed to solve general constrained nonlinear optimization problems:
 
 .. math::
 	\begin{aligned}
@@ -152,7 +152,7 @@ where:
 	+ :math:`m_e` is the number of equality constraints
 	+ :math:`m` is the total number of constraints (number of equality constraints: :math:`m_i=m-m_e`).
 
-The following is a pseudo-code demonstrating the basic usage of ``pyOpt``::
+The following is illustrative pseudo-code for a ``pyOptSparse`` optimization workflow::
 
 	# General Objective Function Template:
 	def obj_fun(x, *args, **kwargs):
@@ -198,7 +198,7 @@ The following is a pseudo-code demonstrating the basic usage of ``pyOpt``::
 	# Output:
 	print opt_prob
 
-For more details, see `pyOpt documentation <http://www.pyopt.org/quickguide/quickguide.html>`_.
+For installation and usage details, see the `pyOptSparse documentation <https://mdolab-pyoptsparse.readthedocs-hosted.com/en/latest/>`_.
 
 LaTeX support
 ===================
