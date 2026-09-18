@@ -43,11 +43,11 @@ def get_gram_matrix(polynomial):
     product_map = {}
 
     for i in range(n):
-        for j in range(n):
+        for j in range(i, n):
             prod = Z[i] * Z[j]
             if prod not in product_map:
                 product_map[prod] = []
-            product_map[prod].append((i, j))
+            product_map[prod].append((i, j, 1 if i == j else 2))
 
     # 5. Fill the Matrix Q
     terms = poly.as_expr().as_coefficients_dict()
@@ -58,12 +58,14 @@ def get_gram_matrix(polynomial):
 
         if monom in product_map:
             pairs = product_map[monom]
-            num_pairs = len(pairs)
+            num_pairs = sum(weight for _, _, weight in pairs)
 
             value = coeff / num_pairs
 
-            for (i, j) in pairs:
+            for (i, j, _) in pairs:
                 Q[i, j] += value
+                if i != j:
+                    Q[j, i] += value
 
     # Convert to numpy -- engine handles the .evalf() path via SymPy fallback
     from Irene.symbolic_engine import to_sympy

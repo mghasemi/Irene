@@ -39,6 +39,12 @@ Known current gap:
 - Phase 3 reduction modules are implemented and tested, but full end-to-end integration through all
   legacy ``relaxations.py`` code paths is still in progress.
 
+Reduction defaults:
+
+- Structural reductions are opt-in for compatibility. Pass ``RelaxationConfig`` to
+  ``RelaxationEngine`` to enable Newton-polytope pruning, border-basis reduction, or
+  correlative sparsity detection.
+
 Requirements
 =============================
 

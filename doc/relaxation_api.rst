@@ -48,7 +48,7 @@ Constructor Parameters
 
 - **prog** (OptimizationProblem): The problem to relax
 - **order** (int): Relaxation order :math:`t`
-- **solver** (str, optional): Solver backend — ``"clarabel"`` (default), ``"cvxopt"``, ``"dsdp"``
+- **solver** (str, optional): Solver backend — ``"cvxopt"`` (default), ``"clarabel"``, ``"dsdp"``
 - **verbosity** (int, optional): Output level 0–2 (default: 1)
 - **config** (RelaxationConfig, optional): Reduction pipeline configuration
 
@@ -63,7 +63,8 @@ Accepts ``method`` as one of:
 
 - **``"sos"``**: Sum-of-squares relaxation via moment matrix PSD constraints
 - **``"sonc"``**: SONC relaxation via geometric programming
-- **``"sosonc"``**: Combined SOS+SONC two-step optimization
+- **``"sosonc_sos_first"``**: Combined SOS+SONC optimization, solving SOS first
+- **``"sosonc_sonc_first"``**: Combined SOS+SONC optimization, solving SONC first
 
 Returns a result object with attributes:
 
@@ -96,6 +97,9 @@ Fields:
 - **sparsity_detection** (bool): Whether to auto-detect and exploit correlative sparsity
 - **quotient_basis** (str): Quotient-ring reduction engine used by ``ReduceExp`` and ``ReducedMonomialBase``. ``"groebner"`` (default) uses the classical SymPy Groebner-basis reduction — the behavior of original Irene; ``"border"`` uses IreneRewrite's ``BorderBasis`` quotient-algebra reduction (numerically computed multiplication tables). The environment variable ``IRENE_QUOTIENT_BASIS=groebner|border`` sets the default when no explicit config is passed.
 - **verbose_reduction** (bool): Print detailed reduction diagnostics during construction
+
+By default, reductions are disabled for compatibility. Enable them explicitly with
+``reduction_method`` or the corresponding boolean flags.
 
 Two-Stage Hybrid Monoid-Graph Reduction Theorem
 ================================================

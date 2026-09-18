@@ -169,6 +169,7 @@ class RelaxationEngine:
         # P5.4: cached SDPRelaxations instance -- Groebner basis + AuxSyms
         # are identical across methods for the same problem, so we reuse it.
         self._sdp_relax_cache = None
+        self._sdp_relax_revision = None
 
     def _get_sdp_relax(self):
         """Return a cached SDPRelaxations instance for ``self.prog``.
@@ -179,10 +180,13 @@ class RelaxationEngine:
         """
         from .relaxations import SDPRelaxations
 
-        if self._sdp_relax_cache is None:
+        revision = getattr(self.prog, "_revision", None)
+        if (self._sdp_relax_cache is None
+                or self._sdp_relax_revision != revision):
             self._sdp_relax_cache = SDPRelaxations.from_problem(
                 self.prog, config=self.config
             )
+            self._sdp_relax_revision = revision
         return self._sdp_relax_cache
 
     # -- public API ----------------------------------------

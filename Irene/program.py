@@ -70,6 +70,7 @@ class OptimizationProblem(object):
         self.total_degree = 2
         self.newton_polytope = None
         self.vertices = None
+        self._revision = 0
 
     def set_objective(self, obj: SemigroupAlgebraElement) -> None:
         """
@@ -96,6 +97,7 @@ class OptimizationProblem(object):
             - Computes and stores objective_half_degree (ceiling of degree/2)
         """
         self.objective = obj
+        self._revision += 1
         if self.semigroup != obj.semigroup:
             self.semigroup = obj.semigroup
         self.objective_degree = _degree(obj.LM())
@@ -125,6 +127,7 @@ class OptimizationProblem(object):
             - Computes and stores degree and half-degree for each constraint
         """
         for exp in const:
+            self._revision += 1
             if self.semigroup != exp.semigroup:
                 self.semigroup = exp.semigroup
             self.constraints.append(exp)

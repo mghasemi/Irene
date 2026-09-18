@@ -240,11 +240,13 @@ class CommutativeSemigroup(object):
             degree (int): The degree of the lattice.
         """
         elements = []
+        seen = set()
         lst = list(combinations_with_replacement(self.generators + [self.G.identity], degree))
         for tpl in lst:
             lmnt = self._reduce(self._lst_prod(tpl))
-            if (self.degree(lmnt) <= degree) and (lmnt not in elements):
+            if (self.degree(lmnt) <= degree) and (lmnt not in seen):
                 elements.append(lmnt)
+                seen.add(lmnt)
         elements.sort()
         self.edges = elements
 

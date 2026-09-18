@@ -45,6 +45,7 @@ htmlcov/
 doc/_build/
 doc/_static/*
 !doc/_static/custom.css
+doc/*.pdf
 doc/release-notes-1.2.5.md
 doc/INTEGRATION_PLAN.md
 doc/documentation-update-plan.md
@@ -70,6 +71,8 @@ execution_log.md
 # Local helper scripts
 siyuan_push.py
 create_tasks.py
+scripts/
+tmp_*.py
 bench_*.py
 benchmarks/
 dsdp_ade_demo*.py

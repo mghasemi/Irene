@@ -451,7 +451,7 @@ class BorderBasis:
     def moment_matrix_structure(self):
         """Return the block structure of the moment matrix induced by the border basis.
 
-        The moment matrix M_\\alpha has entries M_{\\alpha,\\beta} = y_{\\alpha+\\beta} where y are the
+        The moment matrix ``M_alpha`` has entries ``M_{alpha,beta} = y_{alpha+beta}`` where the
         moment variables. The border basis partitions this into blocks based
         on which monomials appear in the basis vs the border.
 

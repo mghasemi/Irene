@@ -176,7 +176,7 @@ class CorrelativeSparsity:
         Returns the ratio of total work with sparsity vs without. A value < 1
         means sparsity helps. For a problem decomposed into k components of
         sizes n_1, ..., n_k, the reduction is roughly:
-            sum_i (2*deg choose n_i) / (2*deg choose n)
+        ``sum_i (2*deg choose n_i) / (2*deg choose n)``
 
         Args:
             deg: Relaxation degree.

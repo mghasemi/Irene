@@ -558,7 +558,10 @@ class SDPRelaxations(base):
 
         # Newton polytope pruning: restrict to exponents in the Minkowski hull
         if self.NewtonPruning or self.config.reduction_method == "newton_polytope":
-            pruned = self._pruned_exponents(deg)
+            pruned = self._pruned_basis_from_module(deg)
+            if pruned is None:
+                pruned = self._pruned_exponents(deg)
+            pruned = set(pruned)
             req_monos = filter(lambda x: x in pruned, req_monos)
 
         monos = [reduce(mul, [self.AuxSyms[i] ** expn[i]
