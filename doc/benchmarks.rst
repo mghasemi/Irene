@@ -6,10 +6,6 @@ This chapter documents the benchmarking infrastructure for Irene, including
 the problem gallery system, performance comparison scripts, and representative
 examples using the current API.
 
-.. contents::
-   :local:
-   :depth: 2
-
 Benchmark Problem Gallery
 =========================
 

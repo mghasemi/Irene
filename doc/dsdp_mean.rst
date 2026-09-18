@@ -7,10 +7,6 @@ bridged through SymEngine for symbolic computation. It extends the standard mome
 hierarchy to handle optimization problems where polynomial terms include functions
 that are solutions of algebraic differential equations (ADEs).
 
-.. contents::
-   :local:
-   :depth: 2
-
 Differential SDP Connection
 ===========================
 

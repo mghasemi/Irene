@@ -7,10 +7,6 @@ geometry. By computing the convex hull of exponent vectors in a polynomial syste
 the pruner eliminates monomials that cannot appear in any valid relaxation at the
 given order, reducing moment matrix dimensions without loss of correctness.
 
-.. contents::
-   :local:
-   :depth: 2
-
 Theory
 ======
 

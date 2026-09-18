@@ -7,10 +7,6 @@ and SOSONC relaxations through a single engine class. It wraps the individual
 relaxation modules behind a consistent API and offers convenience functions for
 comparing multiple relaxation methods side by side.
 
-.. contents::
-   :local:
-   :depth: 2
-
 RelaxationEngine
 ================
 

@@ -8,11 +8,6 @@ nonnegative circuit polynomials*, Universität Konstanz). It provides combined
 SOS+SONC lower bounds for unconstrained polynomial optimization, translating
 Schick's MATLAB toolbox to Python and integrating it into the Irene framework.
 
-.. contents::
-   :local:
-   :depth: 2
-
-
 Theory
 =================================
 

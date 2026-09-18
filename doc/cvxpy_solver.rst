@@ -6,10 +6,6 @@ The ``cvxpy_solver.py`` module provides a DCP-compliant solver layer that bridge
 Irene's SDP relaxation constructs to modern convex optimization backends via CVXPY.
 It supports CLARABEL (default), SCS, and native CVXOPT as solver backends.
 
-.. contents::
-   :local:
-   :depth: 2
-
 Architecture
 ============
 

@@ -7,10 +7,6 @@ quotient algebras :math:`\mathbb{R}[x_1, \dots, x_n] / I` at a fixed degree.
 Border bases offer numerical advantages over Gröbner bases for polynomial
 optimization, particularly for moment matrix constructions in SDP hierarchies.
 
-.. contents::
-   :local:
-   :depth: 2
-
 Theory
 ======
 

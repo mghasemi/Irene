@@ -7,10 +7,6 @@ in polynomial optimization problems. Correlative sparsity exploits the structure
 of variable interactions to decompose large moment matrices into smaller block-
 diagonal components, dramatically reducing SDP solve times.
 
-.. contents::
-   :local:
-   :depth: 2
-
 Theory
 ======
 
