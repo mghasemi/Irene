@@ -90,17 +90,11 @@ and writes structured results to ``benchmarks/results/``.
 Backend Comparison Benchmark
 ============================
 
-The comprehensive cross-version / cross-backend benchmark runs the same feature
-set through original Irene (SymPy), Irene with SymEngine, and Irene
-forced to the SymPy backend::
+The cross-backend benchmark (SymEngine vs SymPy) has been archived to
+``benchmarks/archive/`` since the rewrite branch was merged into master.
+The gallery runner remains the primary benchmark entry point::
 
-    benchmarks/benchmark_backends.py --mode irene
-    benchmarks/benchmark_backends.py --mode irene_rewrite
-    benchmarks/benchmark_backends.py --mode irene_rewrite_sympy
-
-Each mode covers SOS/SONC/SOSONC relaxations, GP, DSDP mean and KKT relaxations,
-ADE relation building, border bases, correlative sparsity, Newton polytope
-pruning, and symbolic-engine micro-benchmarks.
+    python benchmarks/run_gallery.py
 
 Additional Examples
 ===================
@@ -112,7 +106,6 @@ and other specialized relaxation techniques:
 * ``examples/SOSONCSchickSeparating.py`` — Schick's SOS+SONC separating example.
 * ``examples/Rosenbrock.py``, ``examples/Giunta.py``, ``examples/Parsopoulos.py`` — Classic benchmark problems.
 * ``examples/McCormick.py`` — McCormick relaxation on non-convex objective.
-* ``benchmarks/compare_irene_vs_rewrite.py`` — Cross-version comparison of original Irene vs Irene results.
 
 Regression Validation
 =====================
