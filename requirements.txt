@@ -6,8 +6,8 @@ sympy==1.14.0
 symengine==0.14.1
 
 # Numerical stack
-numpy==2.4.3
-scipy==1.17.1
+numpy>=1.26.0,<2.3
+scipy>=1.11.0
 
 # Solver backends (CVXPY + three solvers)
 cvxpy==1.9.2
