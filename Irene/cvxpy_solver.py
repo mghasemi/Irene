@@ -150,6 +150,7 @@ class CvxpySDPSolver:
         self.A: list[list[np.ndarray]] = []       # A[i][j] for var i, block j
         self.C: list[np.ndarray] = []             # C[j] constant blocks
         self.BlockStruct: list[int] = []          # block sizes [d_1, ..., d_k]
+        self._eqs: list[tuple[np.ndarray, float]] = []  # affine equalities
 
         # Solver options (override defaults)
         self.solver_options: dict = {}
@@ -168,6 +169,11 @@ class CvxpySDPSolver:
             Coefficients of the linear objective ``min b^T x``.
         """
         self.b = np.asarray(b, dtype=np.float64).ravel()
+        for a, _ in self._eqs:
+            if len(a) != len(self.b):
+                raise ValueError(
+                    "Objective length %d does not match equality length %d"
+                    % (len(self.b), len(a)))
 
     def AddConstraintBlock(self, A):
         """Add constraint matrices for one primal variable.
@@ -200,6 +206,29 @@ class CvxpySDPSolver:
         else:
             self.BlockStruct = BlkStc
         self.C = [np.asarray(m, dtype=np.float64) for m in C]
+
+    def AddEquality(self, a, b):
+        """Add one affine equality constraint ``a^T x = b``.
+
+        Needed by moment-spectrahedron formulations (e.g. the K_t set of
+        Baumbach--Bender: normalization ``Lambda(1) = 1`` and prolongation
+        constraints ``Lambda(f) = 0``), which the PSD blocks alone do not
+        express.
+
+        Parameters
+        ----------
+        a : array-like of shape (m,)
+            Coefficient vector; ``m`` must match the objective length set by
+            ``SetObjective``.
+        b : float
+            Right-hand side.
+        """
+        a = np.asarray(a, dtype=np.float64).ravel()
+        if self.b is not None and len(a) != len(self.b):
+            raise ValueError(
+                "Equality length %d does not match objective length %d"
+                % (len(a), len(self.b)))
+        self._eqs.append((a, float(b)))
 
     def Option(self, param: str, val):
         """Set a solver option.
@@ -244,13 +273,21 @@ class CvxpySDPSolver:
 
         # Constraints: for each block j, sum_i A[i][j] * x[i] - C[j] >> 0
         # Each A[i][j] is a (d_j x d_j) matrix; x[i] is a scalar CVXPY variable.
-        constraints = []
+        psd_constraints = []
         for j in range(k):
             block_expr = sum(
                 (x[i] * self.A[i][j] for i in range(m)),
                 start=np.zeros((self.BlockStruct[j], self.BlockStruct[j])),
             ) - self.C[j]
-            constraints.append(block_expr >> 0)
+            psd_constraints.append(block_expr >> 0)
+
+        # Affine equalities a^T x = b (e.g. moment normalization / prolongations)
+        eq_constraints = []
+        for a, rhs in self._eqs:
+            lhs = sum(a[i] * x[i] for i in range(m))
+            eq_constraints.append(lhs == rhs)
+
+        constraints = psd_constraints + eq_constraints
 
         problem = cp.Problem(objective, constraints)
 
@@ -292,7 +329,7 @@ class CvxpySDPSolver:
 
             # Extract dual variables for PSD constraints (these are the Z matrices)
             # Each constraint c_idx corresponds to block j
-            for idx, constr in enumerate(constraints):
+            for idx, constr in enumerate(psd_constraints):
                 dual_val = constr.dual_value
                 if dual_val is not None:
                     d = self.BlockStruct[idx]

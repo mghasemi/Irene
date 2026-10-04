@@ -41,8 +41,8 @@ root_doc = 'index'
 project = 'Irene'
 copyright = '2016-2026, Mehdi Ghasemi'
 author = 'Mehdi Ghasemi'
-version = '1.3'
-release = '1.3.1'
+version = '1.4'
+release = '1.4.0'
 language = 'en'
 
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']

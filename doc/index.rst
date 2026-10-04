@@ -37,6 +37,7 @@ Contents:
    :caption: Phase 3 — Algebraic Reductions
 
    border_basis
+   sparse_moment
    sparsity
    newton_polytope
    relaxation_api

@@ -37,6 +37,9 @@ Code Documentation
 .. automodule:: Irene.relaxation_api
    :members:
 
+.. automodule:: Irene.sparse_moment
+   :members:
+
 .. automodule:: Irene.symbolic_engine
    :members:
 
