@@ -129,7 +129,10 @@ class TestLegacyDeprecation:
         import warnings
         from Irene.sdp import sdp
 
-        sd = sdp('SDPA')
+        try:
+            sd = sdp('SDPA')
+        except ImportError:
+            pytest.skip("SDPA solver not installed in this environment")
         # Set up minimal SDP data so the method can be called
         sd.b = [1.0]
         sd.C = [np.array([[1.0]])]

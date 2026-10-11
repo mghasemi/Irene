@@ -163,7 +163,7 @@ class TestEnvVarIntegration:
         out = subprocess.run(
             [sys.executable, "-c", code],
             capture_output=True, text=True, env=env,
-            cwd="/home/mehdi/Code/Python/Irene",
+            cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
         )
         assert out.returncode == 0, out.stderr
         assert "border" in out.stdout.strip()
@@ -180,7 +180,7 @@ class TestEnvVarIntegration:
         out = subprocess.run(
             [sys.executable, "-c", code],
             capture_output=True, text=True, env=env,
-            cwd="/home/mehdi/Code/Python/Irene",
+            cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
         )
         assert out.returncode == 0, out.stderr
         assert "groebner" in out.stdout.strip()
