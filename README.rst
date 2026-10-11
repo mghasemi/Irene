@@ -68,21 +68,19 @@ Symbolic backend selection:
 - ``IRENE_SYMBOLIC_BACKEND=auto``
 
 Installation
-=============================
+============================
 
-Create and activate a virtual environment, then install from source.
+From PyPI::
 
-Base install::
+    pip install irene
 
-	pip install .
+or from source (development)::
 
-Install with SymEngine + solver extras::
+    pip install .[symengine,solvers]
 
-	pip install .[symengine,solvers]
+Development dependencies::
 
-Install development dependencies::
-
-	pip install .[dev,symengine,solvers]
+    pip install .[dev,symengine,solvers]
 
 Testing
 =============================
@@ -131,6 +129,14 @@ chapters.
 Build docs locally::
 
 	make -C doc html
+
+Related Work
+============================
+
+The theoretical foundations of the relaxation hierarchies implemented here are developed in:
+
+- M. Ghasemi, J. B. Lasserre, M. Marshall, *Lower Bounds on the Global Minimum of a Polynomial*, Computational Optimization and Applications 56(1), 2013. `arXiv:1209.3049 <https://arxiv.org/abs/1209.3049>`_
+- M. Ghasemi, M. Marshall, *Lower Bounds for Polynomials Using Geometric Programming*, SIAM Journal on Optimization 22(2), 460–473, 2012. `DOI:10.1137/110836869 <https://doi.org/10.1137/110836869>`_
 
 License
 =============================

@@ -8,7 +8,7 @@ version = "1.4.0"
 description = "Polynomial optimization via SOS/SONC/SDP hierarchies — modernized rewrite with SymEngine, CVXPY, and structural reductions."
 readme = "README.rst"
 license = "MIT"
-license-files = ["License.txt"]
+license-files = ["LICENSE"]
 authors = [
     {name = "Mehdi Ghasemi", email = "mehdi.ghasemi@gmail.com"},
 ]
@@ -30,6 +30,11 @@ dependencies = [
     "gpkit>=1.0",
     "multiprocess>=0.70",
 ]
+
+[project.urls]
+Homepage = "https://github.com/mghasemi/Irene"
+Repository = "https://github.com/mghasemi/Irene"
+Documentation = "https://irene.readthedocs.io/"
 
 [project.optional-dependencies]
 # SymEngine C++ symbolic backend (default when installed; falls back to SymPy).
