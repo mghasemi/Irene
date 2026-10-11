@@ -90,11 +90,16 @@ class RelaxationConfig:
         Which reduction strategy to apply before building the moment matrix.
         One of ``'none'``, ``'newton_polytope'``, ``'border_basis'``, or
         ``'sparsity'`` (correlative sparsity decomposition).  Default
-        ``'newton_polytope'``.
+        ``'none'``.
     monomial_pruning : bool
-        Enable Newton-polytope pruning of the monomial basis.  When True,
-        only exponent vectors inside ``2\\cdotNewt(f)`` are retained.
-        Default ``True``.
+        Enable Newton-polytope pruning of the monomial basis via the
+        newton_polytope module (Minkowski hull of the objective + constraint
+        supports).  Until a complete SOS-support certificate exists, this path
+        retains the full degree-bounded support (hull membership alone does not
+        certify that an exponent is removable from the moment/Gram basis -- see
+        ``_pruned_basis_from_module``), so enabling it currently changes no SDP;
+        the option is kept so a certified reduction can be activated later.
+        Default ``False``.
     sparsity_detection : bool
         Run correlative-sparsity analysis on the problem polynomials and
         decompose the moment matrix into independent blocks when possible.
@@ -791,6 +796,17 @@ class SDPRelaxations(base):
         This is an alternative to the built-in ``_pruned_exponents`` that uses
         the full NewtonPruner class with convex hull testing for tighter pruning.
 
+        Safety (paper Decision #5): Minkowski-hull membership alone does not
+        certify that a monomial is unnecessary from an SOS Gram/moment basis --
+        over-pruning removed PSD coupling entries and left the order-3 Motzkin
+        SDP with an unbounded recession ray even though every objective-support
+        exponent was retained.  Until a complete SOS-support certificate exists,
+        this method therefore passes the full degree-bounded support as
+        ``required_support``, which makes the returned basis identical to the
+        one from :meth:`_pruned_exponents` (no relaxation change); the hull test
+        still runs and a certified subset can be substituted here later without
+        touching the assembly code.
+
         Args:
             deg: Maximum degree for the moment matrix.
 
@@ -802,7 +818,10 @@ class SDPRelaxations(base):
 
         try:
             polys = [self.RedObjective] + self.Constraints
-            pruner = prune_basis_from_polys(polys, self.NumGenerators, deg)
+            required = set(product(range(deg + 1), repeat=self.NumGenerators))
+            required = {e for e in required if sum(e) <= deg}
+            pruner = prune_basis_from_polys(polys, self.NumGenerators, deg,
+                                            required_support=required)
             if self.config.verbose_reduction:
                 info = pruner.moment_matrix_dimension_reduction()
                 print(f"[SDPRlx] Newton pruning: {info['full_basis_size']} -> "

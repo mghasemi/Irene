@@ -1,9 +1,21 @@
 """Newton polytope monomial pruning for moment matrix dimension reduction.
 
-For a polynomial optimization problem, the Newton polytope of the objective
-and constraints defines which monomials can actually appear in the relaxation.
-Monomials outside 2\\cdotNewt(f) are provably unnecessary, reducing the moment
+For a polynomial optimization problem, the Newton polytopes of the objective
+and constraints identify exponent candidates that are *potentially* relevant:
+an exponent outside ``2\\cdotNewt(f)`` can never occur as a term of ``g*h`` with
+``supp(g), supp(h)`` inside the Minkowski-sum support, so it is never needed in
+the objective coefficient vector.  Filtering on this hull reduces the moment
 matrix size -- sometimes by orders of magnitude for sparse problems.
+
+Safety contract: hull membership alone is *not* a certificate that an exponent
+may be removed from the moment/Gram basis of a Lasserre SDP.  Removing exponents
+drops PSD coupling entries and can introduce recession directions (or force
+invalid objective values) even when every objective-support exponent is kept;
+the Motzkin polynomial at order 3 is such a counterexample (the pruned SDP has
+an unbounded rank-one recession ray while the full one is bounded).  Until a
+complete SOS-support certificate exists, callers must pass ``required_support``
+with the exponents that must be retained regardless of hull membership; the
+certified safe choice at present is the full degree-bounded support.
 
 Key references:
     - Parrilo (2000), "Structured Semidefinite Programs and Semialgebraic Geometry"
@@ -11,7 +23,8 @@ Key references:
     - Kim & Kojima (2014), "Sparse SOS decompositions via Newton polytopes"
 
 The implementation computes the Minkowski sum of scaled Newton polytopes,
-then filters the full monomial basis to only those inside the hull.
+then filters the full monomial basis to those inside the hull, always retaining
+``required_support``.
 """
 
 from typing import List, Dict, Tuple, Optional, Set
@@ -148,26 +161,34 @@ class NewtonPruner:
     """Filter monomial basis using Newton polytope pruning.
 
     Given the combined Newton polytope of an optimization problem's
-    polynomials, this class filters the full monomial basis to only those
-    exponent vectors that lie within the convex hull of 2\\cdotNewt(f).
+    polynomials, this class filters the full monomial basis to those exponent
+    vectors that lie within the convex hull of ``2\\cdotNewt(f)``, always
+    retaining every exponent in ``required_support`` (see module docstring for
+    why hull membership alone is not a removal certificate).
 
     Args:
         num_vars: Number of variables in the problem.
         max_degree: Maximum degree for moment matrix construction.
         polytope_vertices: Precomputed vertices of 2\\cdotcombined Newton polytope.
             If None, will be computed from polynomials later.
+        required_support: Exponent tuples that must appear in the returned basis
+            regardless of hull membership (degree-bounded to ``max_degree``).
+            Pass the full degree-bounded support until a complete SOS-support
+            certificate is available; pass a smaller certified set once one exists.
 
     Attributes:
         full_basis_size: Size of unpruned monomial basis.
-        pruned_basis_size: Size after Newton polytope filtering.
+        pruned_basis_size: Size after Newton polytope filtering (plus required support).
         reduction_ratio: Fraction of basis retained (lower = more pruning).
     """
 
     def __init__(self, num_vars: int, max_degree: int,
-                 polytope_vertices: Optional[np.ndarray] = None):
+                 polytope_vertices: Optional[np.ndarray] = None,
+                 required_support: Optional[Set[Tuple[int, ...]]] = None):
         self.num_vars = num_vars
         self.max_degree = max_degree
         self.polytope_vertices = polytope_vertices
+        self.required_support = set(required_support) if required_support else set()
         self._hull = None
         self.full_basis_size = 0
         self.pruned_basis_size = 0
@@ -228,14 +249,16 @@ class NewtonPruner:
     def compute_pruned_basis(self, vars_list=None):
         """Compute the pruned monomial basis.
 
-        Iterates over all monomials up to max_degree and filters those
-        outside the Newton polytope.
+        Iterates over all monomials up to ``max_degree``, filters those outside
+        the Newton polytope, and then retains every exponent of
+        ``required_support`` (degree-bounded) regardless of hull membership.
 
         Args:
             vars_list: Optional variable list (for compatibility).
 
         Returns:
-            List of exponent tuples forming the pruned basis.
+            List of exponent tuples forming the pruned basis; always a superset
+            of ``{e in required_support : sum(e) <= max_degree}``.
         """
         if self._hull is None:
             self._build_hull()
@@ -253,6 +276,16 @@ class NewtonPruner:
         for exp_vec in all_monos:
             if self._point_in_polytope(exp_vec):
                 pruned.append(tuple(exp_vec))
+
+        # Safety contract (see module docstring): always retain the required
+        # support.  With the certified full degree-bounded support this makes
+        # the result identical to the unpruned basis; with a future certified
+        # subset it re-enables genuine reduction without touching this code path.
+        pruned_set = set(pruned)
+        for expn in sorted(self.required_support):
+            if sum(expn) <= self.max_degree and expn not in pruned_set:
+                pruned.append(expn)
+                pruned_set.add(expn)
 
         self.pruned_basis_size = len(pruned)
         self.reduction_ratio = self.pruned_basis_size / max(self.full_basis_size, 1)
@@ -297,13 +330,18 @@ class NewtonPruner:
         }
 
 
-def prune_basis_from_polys(polynomials, num_vars: int, max_degree: int) -> NewtonPruner:
+def prune_basis_from_polys(polynomials, num_vars: int, max_degree: int,
+                           required_support: Optional[Set[Tuple[int, ...]]] = None) -> NewtonPruner:
     """Convenience function: compute pruned basis from a list of polynomials.
 
     Args:
         polynomials: List of symbolic polynomial expressions (objective + constraints).
         num_vars: Number of variables in the problem.
         max_degree: Maximum degree for moment matrix construction (usually 2*d).
+        required_support: Exponents that must be retained regardless of hull
+            membership (see :class:`NewtonPruner`).  Default ``None`` keeps only
+            hull-interior exponents -- callers building relaxation bases should
+            pass the certified safe set.
 
     Returns:
         Configured NewtonPruner with pruned basis computed.
@@ -318,17 +356,22 @@ def prune_basis_from_polys(polynomials, num_vars: int, max_degree: int) -> Newto
     # Compute combined Newton polytope with shared variable list
     vertices = combined_newton_polytope(polynomials, vars_list=canonical_vars)
 
-    pruner = NewtonPruner(num_vars, max_degree, vertices)
+    pruner = NewtonPruner(num_vars, max_degree, vertices, required_support=required_support)
     pruner.compute_pruned_basis()
     return pruner
 
 
-def prune_basis_from_problem(prog, max_degree: int) -> NewtonPruner:
+def prune_basis_from_problem(prog, max_degree: int,
+                             required_support: Optional[Set[Tuple[int, ...]]] = None) -> NewtonPruner:
     """Convenience function: compute pruned basis from an OptimizationProblem.
 
     Args:
         prog: An OptimizationProblem with set_objective() and add_constraint().
         max_degree: Maximum degree for moment matrix construction.
+        required_support: Exponents that must be retained regardless of hull
+            membership (see :class:`NewtonPruner`).  Default ``None`` keeps only
+            hull-interior exponents -- callers building relaxation bases should
+            pass the certified safe set.
 
     Returns:
         Configured NewtonPruner with pruned basis computed.
@@ -356,4 +399,4 @@ def prune_basis_from_problem(prog, max_degree: int) -> NewtonPruner:
             polys.append(cnst)
 
     nvars = prog.semigroup.numgens if hasattr(prog.semigroup, 'numgens') else len(prog.sga.gens)
-    return prune_basis_from_polys(polys, nvars, max_degree)
+    return prune_basis_from_polys(polys, nvars, max_degree, required_support=required_support)
