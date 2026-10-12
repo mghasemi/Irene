@@ -265,5 +265,5 @@ The ``solve()`` method returns a dictionary with these keys:
 References
 ==========
 
-- Lasserre, J.-B. (2001). "Global optimization with polynomials and the problem of sums of squares." *SIAM Journal on Optimization*, 11(3), 793–812.
+- Lasserre, J.-B. (2001). "Global optimization with polynomials and the problem of moments." *SIAM Journal on Optimization*, 11(3), 796–817.
 - Parrilo, P. A. (2000). "Structured semidefinite programs and semialgebraic geometry methods in robustness and optimization." *Caltech PhD Thesis*.

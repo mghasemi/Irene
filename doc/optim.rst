@@ -135,7 +135,7 @@ complementary certificates that can be more suitable for specific sparse,
 high-degree, or structure-rich instances.
 
 .. [GIKM] M\. Ghasemi, M. Infusino, S. Kuhlmann and M. Marshall, *Truncated Moment Problem for unital commutative real algebras*, to appear.
-.. [JBL] J-B. Lasserre, *Global optimization with polynomials and the problem of moments*, SIAM J. Optim. 11(3) 796-817 (2000).
+.. [JBL] J-B. Lasserre, *Global optimization with polynomials and the problem of moments*, SIAM J. Optim. 11(3) 796-817 (2001).
 
 Modern API Quick Reference
 =============================

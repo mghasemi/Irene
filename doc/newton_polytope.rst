@@ -40,7 +40,7 @@ given problem structure.
 Scaled Newton Bodies and Basis Pruning
 --------------------------------------
 
-The key theorem (see Parrilo 2000, Lasserre 2003) states that the moment matrix
+The key theorem (see Parrilo 2000, Lasserre 2006) states that the moment matrix
 can be restricted to exponents in:
 
 .. math::
@@ -181,5 +181,5 @@ References
 ==========
 
 - Parrilo, P. A. (2000). "Structured semidefinite programs and semialgebraic geometry methods in robustness and optimization." *Caltech PhD Thesis*.
-- Lasserre, J.-B. (2003). "Moment inequalities, and a global optimization approach to polynomial optimization with sparse polynomials." *SIAM Journal on Optimization*, 17(4), 822–843.
+- Lasserre, J.-B. (2006). "Convergent SDP-relaxations in polynomial optimization with sparsity." *SIAM Journal on Optimization*, 17(3), 822–843. DOI: 10.1137/05064504x.
 - Iliman, S. & de Wolff, T. (2016). "Lower Bounds for Polynomials with Simplex Newton Polytopes Based on Geometric Programming." *SIAM Journal on Optimization*, 26(2), 1128–1146. DOI: 10.1137/140962425.
