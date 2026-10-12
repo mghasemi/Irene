@@ -32,6 +32,61 @@ import numpy as np
 from itertools import product as iter_product
 
 
+def _coerce_to_sympy(expr):
+    """Normalize supported polynomial inputs to a SymPy expression.
+
+    Accepts scalars, SymPy expressions, and semigroup-algebra elements.  Ring
+    elements are converted term-by-term with the same rule as
+    ``OptimizationProblem.to_sympy`` (Irene/program.py): each monomial is
+    rebuilt from its generator names, so all elements of one algebra map to
+    expressions in the same symbols and therefore consistent exponent columns.
+
+    Args:
+        expr: A scalar, SymPy expression, or SemigroupAlgebra element.
+
+    Returns:
+        sympy.Expr (or the original scalar).
+
+    Raises:
+        TypeError: If ``expr`` is none of the supported types.  Callers must
+            not receive a silently degraded Newton polytope for input this
+            module cannot understand.
+    """
+    import sympy as sp
+
+    if isinstance(expr, (int, float)):
+        return expr
+    if isinstance(expr, sp.Basic):
+        return expr
+
+    content = getattr(expr, "content", None)
+    semigroup = getattr(expr, "semigroup", None)
+    if content is not None and semigroup is not None:
+        sym_map = {}
+        sympy_expr = sp.sympify(0)
+        for coeff, mono in content:
+            term = sp.sympify(coeff)
+            if not mono.array_form:  # identity monomial (constant term)
+                sympy_expr += term
+                continue
+            for gen, expn in mono.array_form:
+                sym = sym_map.get(gen.name)
+                if sym is None:
+                    sym = sp.Symbol(gen.name)
+                    sym_map[gen.name] = sym
+                term *= sym ** expn
+            sympy_expr += term
+        return sympy_expr
+
+    raise TypeError(
+        "newton_polytope() expects a scalar, a SymPy expression, or a "
+        f"SemigroupAlgebra element; got {type(expr).__name__!r}. Convert the "
+        "input before calling (e.g. via OptimizationProblem.to_sympy) so that "
+        "a parse failure is reported here instead of producing a degenerate "
+        "Newton polytope."
+    )
+
+
 def newton_polytope(expr, vars_list=None):
     """Compute the Newton polytope of a polynomial expression.
 
@@ -39,21 +94,40 @@ def newton_polytope(expr, vars_list=None):
     with nonzero coefficients in the polynomial.
 
     Args:
-        expr: A symbolic polynomial expression (SymPy or SymEngine).
+        expr: A symbolic polynomial expression (SymPy or SymEngine), a scalar,
+            or a SemigroupAlgebra element (converted to SymPy automatically).
         vars_list: List of variables to extract exponents for. If None, inferred.
 
     Returns:
         np.ndarray: Array of shape (num_terms, num_vars) of exponent vectors.
+
+    Raises:
+        ValueError: If the input cannot be parsed as a polynomial.  This
+            function never returns a silently degraded (origin-only) polytope;
+            unparseable input is an explicit error instead.
     """
     from .symbolic_engine import engine
 
+    expr = _coerce_to_sympy(expr)
+
+    # Scalar constants: the Newton polytope of any constant is exactly {origin}.
+    # Use this function's 0-variable convention (same shape as the constant path
+    # below); combined_newton_polytope() skips 0-column rows when combining.
+    # This is a correct result, not a fallback -- genuinely unparseable input
+    # still raises further down.
+    import sympy as sp
+    if not isinstance(expr, sp.Basic) or expr.is_number:
+        return np.zeros((1, 0), dtype=int)
+
     try:
         poly = engine.Poly(expr)
-    except Exception:
-        # Constant or unsupported expression -- return zero vector
-        if vars_list is not None:
-            return np.zeros((1, len(vars_list)), dtype=int)
-        return np.zeros((1, 0), dtype=int)
+    except Exception as exc:
+        raise ValueError(
+            f"newton_polytope() could not parse {type(expr).__name__!r} "
+            f"(vars={list(map(str, vars_list)) if vars_list is not None else 'inferred'}): "
+            f"{exc}. Pass a SymPy polynomial expression, a SemigroupAlgebra element, "
+            "or a scalar."
+        ) from exc
 
     if vars_list is None:
         vars_list = poly.gens
@@ -117,16 +191,16 @@ def combined_newton_polytope(polynomials, vars_list=None):
     if not polynomials:
         return None
 
-    # Get all polytopes
+    # Get all polytopes.  newton_polytope() raises on input it cannot parse;
+    # propagating here keeps unparseable polynomials from being silently
+    # dropped (which would shrink the hull without any warning).
     polytopes = []
     for expr in polynomials:
-        try:
-            pts = newton_polytope(expr, vars_list)
-            # Skip degenerate polytopes (0 columns = no variables detected)
-            if pts.shape[1] > 0:
-                polytopes.append(pts)
-        except Exception:
-            continue
+        pts = newton_polytope(expr, vars_list)
+        # Skip degenerate polytopes (0 columns = no variables detected), e.g.
+        # constant-only terms.
+        if pts.shape[1] > 0:
+            polytopes.append(pts)
 
     if not polytopes:
         return None
@@ -335,7 +409,10 @@ def prune_basis_from_polys(polynomials, num_vars: int, max_degree: int,
     """Convenience function: compute pruned basis from a list of polynomials.
 
     Args:
-        polynomials: List of symbolic polynomial expressions (objective + constraints).
+        polynomials: List of symbolic polynomial expressions (objective +
+            constraints).  SymPy expressions, scalars, and SemigroupAlgebra
+            elements are all accepted; ring elements are converted to SymPy
+            automatically (see :func:`newton_polytope`).
         num_vars: Number of variables in the problem.
         max_degree: Maximum degree for moment matrix construction (usually 2*d).
         required_support: Exponents that must be retained regardless of hull
@@ -345,6 +422,9 @@ def prune_basis_from_polys(polynomials, num_vars: int, max_degree: int,
 
     Returns:
         Configured NewtonPruner with pruned basis computed.
+
+    Raises:
+        ValueError: If any polynomial cannot be parsed (no silent fallback).
     """
     # Build a canonical variable list so all polynomials use the same
     # variable ordering and dimension. Without this, polynomials that
@@ -365,6 +445,11 @@ def prune_basis_from_problem(prog, max_degree: int,
                              required_support: Optional[Set[Tuple[int, ...]]] = None) -> NewtonPruner:
     """Convenience function: compute pruned basis from an OptimizationProblem.
 
+    The objective and constraint polynomials may be SymPy expressions or
+    SemigroupAlgebra elements; ring elements are converted to SymPy
+    automatically (see :func:`newton_polytope`), so problems built via
+    Irene's documented construction path work directly.
+
     Args:
         prog: An OptimizationProblem with set_objective() and add_constraint().
         max_degree: Maximum degree for moment matrix construction.
@@ -375,6 +460,9 @@ def prune_basis_from_problem(prog, max_degree: int,
 
     Returns:
         Configured NewtonPruner with pruned basis computed.
+
+    Raises:
+        ValueError: If any polynomial cannot be parsed (no silent fallback).
     """
     polys = []
 

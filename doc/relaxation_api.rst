@@ -187,13 +187,28 @@ All three reductions are activated simultaneously through ``RelaxationConfig``:
    )
    engine = RelaxationEngine(prog, order=2, config=config)
 
-When ``verbose_reduction=True``, the engine reports the combined effect::
+When ``verbose_reduction=True``, the engine prints one line per reduction stage
+that actually ran.  For example, on Motzkin at order 3 with the Newton-polytope
+pipeline (``reduction_method="newton_polytope"``, ``monomial_pruning=True``,
+``sparsity_detection=True``) the measured output is::
 
-   Reduction pipeline (order 2):
-     Step 1 - Border basis:    28 → 22 monomials (1.27×)
-     Step 2 - Newton pruning:  22 → 17 monomials (1.29×)  [cumulative 1.65×]
-     Step 3 - Chordal decomp:  3 cliques, mean block size 6.3
-       Estimated SDP speedup: ~8.4×
+   [SDPRlx] Newton pruning: 28 -> 28 (100.00% retained)
+   [SDPRlx] Newton pruning: 10 -> 10 (100.00% retained)
+
+The two lines are the moment-matrix basis (degree :math:`2t = 6`, 28 monomials)
+and the order-:math:`t` basis (degree 3, 10 monomials).  The border-basis stage
+is a no-op on this instance: Motzkin has no free relations, so the quotient ring
+is the full polynomial ring and no border basis is built.  Correlative-sparsity
+decomposition likewise does not apply here: every non-constant term of Motzkin
+couples both variables, so the sparsity graph is a single component covering
+the whole basis and the moment matrix stays dense.  Newton pruning itself is
+also a designed no-op on this dense instance -- until a certified SOS-support
+reduction exists, the pipeline retains the full degree-bounded support as
+``required_support``, which makes the relaxed SDP identical to the unpruned
+baseline (bound ``-526.08114071``, status ``optimal`` at orders 1--3).
+Measured runtimes in ``benchmarks/results/p3_vs_baseline.json`` give speedups of
+0.69x--1.32x across the three test problems and all orders; no larger speedup
+is claimed on instances of this size.
 
 compare_all()
 =============

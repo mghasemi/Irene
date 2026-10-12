@@ -267,4 +267,3 @@ References
 
 - Lasserre, J.-B. (2001). "Global optimization with polynomials and the problem of sums of squares." *SIAM Journal on Optimization*, 11(3), 793–812.
 - Parrilo, P. A. (2000). "Structured semidefinite programs and semialgebraic geometry methods in robustness and optimization." *Caltech PhD Thesis*.
-- De Klerk, E. & Pasechnik, D. V. (2002). "Computational antilipschitz optimization." *SIAM Journal on Optimization*, 12(4), 1072–1090.

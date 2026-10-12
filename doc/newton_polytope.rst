@@ -3,9 +3,13 @@ Newton Polytope Pruning
 ========================================
 
 The ``newton_polytope.py`` module implements basis pruning via Newton polytope
-geometry. By computing the convex hull of exponent vectors in a polynomial system,
-the pruner eliminates monomials that cannot appear in any valid relaxation at the
-given order, reducing moment matrix dimensions without loss of correctness.
+geometry: it computes the convex hull of the exponent vectors of a polynomial
+system, filters candidate monomials by membership in the scaled Newton body, and
+always retains every exponent passed as ``required_support``.  The relaxation
+pipeline currently passes the full degree-bounded support -- hull membership
+alone does not certify that an exponent is removable from a Gram/moment basis --
+so until a certified sparsity set exists, the reduction is a designed no-op (see
+Theory).
 
 Theory
 ======
@@ -36,7 +40,7 @@ given problem structure.
 Scaled Newton Bodies and Basis Pruning
 --------------------------------------
 
-The key theorem (see Parrilo 2000, Lasserre 2006) states that the moment matrix
+The key theorem (see Parrilo 2000, Lasserre 2003) states that the moment matrix
 can be restricted to exponents in:
 
 .. math::
@@ -44,19 +48,27 @@ can be restricted to exponents in:
    \Lambda_t^{\text{pruned}} = \Lambda_t \cap t \cdot \text{New}(F) \cap \mathbb{N}^n.
 
 This intersection removes monomials whose exponents lie outside the scaled Newton
-body while preserving all monomials needed for valid SDP relaxations. The pruning
-is **exact** — it does not weaken the relaxation bound.
+body while preserving all monomials needed for valid SDP relaxations.  In
+practice, however, hull membership alone is *not* a certificate that an exponent
+may be removed from a Gram/moment basis (the order-3 Motzkin instance is a known
+counterexample: hull-only over-pruning left the relaxed SDP with an unbounded
+recession ray).  Until such a certificate exists, the relaxation pipeline retains
+the full degree-bounded support via ``required_support``, which makes the prune a
+designed no-op on dense instances; see "Integration with Relaxation Pipeline".
 
 Dimension Reduction in Practice
 -------------------------------
 
-For a bivariate degree-6 problem like Motzkin (:math:`x^4 y^2 + x^2 y^4 + 1 - 3x^2 y^2`),
-the full basis at order 3 has :math:`\binom{2+6}{6} = 28` elements. Newton polytope
-pruning can reduce this to ~15–18 elements by eliminating exponents outside the
-scaled Newton body of the polynomial system.
+For a bivariate degree-6 problem like Motzkin (:math:`x^4 y^2 + x^2 y^4 - 3x^2 y^2 + 1`),
+the full basis at order 3 has :math:`\binom{8}{2} = 28` elements.  The hull-only Newton
+prune (no required support) reduces this to **10** monomials -- a factor of 2.8x -- because
+18 exponents of total degree at most 6 lie outside :math:`2\,\text{New}(f)`, where
+:math:`\text{New}(f) = \operatorname{conv}\{(0,0), (2,2), (2,4), (4,2)\}`.
 
-In higher dimensions, the reduction factor grows exponentially with :math:`n`, making
-Newton pruning one of the most impactful optimizations for multivariate problems.
+In higher dimensions, the hull-only reduction factor grows exponentially with :math:`n`
+for sparse polynomial systems, making Newton pruning one of the most impactful
+optimizations there; the pipeline activates it as soon as a certified sparsity set
+replaces today's full-support retention.
 
 Minkowski Sum Computation
 -------------------------
@@ -82,19 +94,26 @@ NewtonPruner Class
 
    from Irene.newton_polytope import NewtonPruner, prune_basis_from_polys
 
-   # Prune basis from a list of polynomials at given order
-   result = prune_basis_from_polys([objective, g1, g2], order=3, n_vars=2)
+   # Prune the monomial basis of a polynomial system at degree bound 6
+   pruner = prune_basis_from_polys([objective, g1, g2], num_vars=2, max_degree=6)
 
-The ``prune_basis_from_polys`` function returns a dictionary with:
+``prune_basis_from_polys`` (and ``prune_basis_from_problem``) return a configured
+:class:`NewtonPruner` with the pruned basis already computed.  Key attributes:
 
-- **full_basis_size** (int): Number of monomials in the unpruned basis :math:`\Lambda_t`
-- **pruned_basis_size** (int): Number of monomials after Newton polytope pruning
-- **reduction_factor** (float): Ratio ``full / pruned``
-- **pruned_basis** (list[tuple]): Exponent tuples in the pruned basis
-- **newton_polytope_vertices** (list[tuple]): Vertices of the combined Newton polytope
+- **full_basis_size** (int): Number of monomials in the unpruned degree-bounded basis :math:`\Lambda_t`
+- **pruned_basis_size** (int): Number of monomials after Newton polytope filtering, plus every exponent in ``required_support``
+- **reduction_ratio** (float): Fraction of the basis retained (1.0 = nothing pruned; smaller means more pruning).  The reduction factor is its reciprocal, e.g. a ratio of :math:`10/28 \approx 0.36` corresponds to a factor of 2.8x.
+
+Extra detail (``matrix_entry_reduction``, ``entries_saved``) is available via
+``pruner.summary()`` or ``pruner.moment_matrix_dimension_reduction()``, and the exponent
+tuples themselves via ``pruner.compute_pruned_basis()``.
 
 Example Usage
 -------------
+
+The classic bivariate degree-6 test case is Motzkin's polynomial.  Built through
+Irene's documented semigroup-algebra construction path, it prunes from the full
+28-monomial basis to the 10 monomials inside the scaled Newton body:
 
 .. code-block:: python
 
@@ -105,13 +124,19 @@ Example Usage
    sga = SemigroupAlgebra(sg)
    x, y = sga['x'], sga['y']
 
-   # Motzkin polynomial
+   # Motzkin polynomial (total degree 6)
    motzkin = x**4 * y**2 + x**2 * y**4 + 1 - 3 * x**2 * y**2
 
-   result = prune_basis_from_polys([motzkin], order=3, n_vars=2)
-   print(f"Full basis: {result['full_basis_size']}")
-   print(f"Pruned basis: {result['pruned_basis_size']}")
-   print(f"Reduction: {result['reduction_factor']:.2f}x")
+   pruner = prune_basis_from_polys([motzkin], num_vars=2, max_degree=6)
+   print(pruner.full_basis_size)    # 28
+   print(pruner.pruned_basis_size)  # 10
+   print(pruner.reduction_ratio)    # ~0.357 (retained fraction; factor = 28/10 = 2.8x)
+
+Plain SymPy input works identically: ``prune_basis_from_polys([f], num_vars=2,
+max_degree=6)`` with :math:`f = x^4 y^2 + x^2 y^4 - 3x^2 y^2 + 1` returns the same
+28 to 10 counts.  The exponent tuples are obtained from
+``pruner.compute_pruned_basis()``; ``prune_basis_from_problem(prog, max_degree=6)``
+accepts an :class:`~Irene.program.OptimizationProblem` directly and gives the same result.
 
 Integration with Relaxation Pipeline
 ====================================
@@ -131,15 +156,18 @@ Newton polytope pruning is activated via the relaxation configuration:
    engine = RelaxationEngine(prog, order=3, config=config)
    result = engine.solve("sos")
 
-When ``verbose_reduction=True``, the pruner reports:
+When ``verbose_reduction=True``, the pipeline prints one measured line per monomial
+basis it builds -- e.g., on Motzkin at order 3::
 
-.. code-block:: text
+   [SDPRlx] Newton pruning: 28 -> 28 (100.00% retained)
 
-   Newton polytope pruning at order 3:
-     Full basis size: 28
-     Pruned basis size: 17
-     Reduction factor: 1.65x
-     Removed 11 monomials outside scaled Newton body
+The standalone hull-only call in "Example Usage" above reduces the same basis from 28 to
+10, but the relaxation pipeline passes the full degree-bounded support as
+``required_support`` (certified-safe retention): until a certified SOS-support reduction
+exists, hull membership alone does not justify dropping an exponent from the Gram/moment
+basis, so on dense instances like Motzkin the pruned basis is identical to the unpruned
+one by design -- and the relaxed SDP (bound ``-526.08114071``) matches the baseline at
+every order.
 
 Practical Notes
 ===============
@@ -153,5 +181,5 @@ References
 ==========
 
 - Parrilo, P. A. (2000). "Structured semidefinite programs and semialgebraic geometry methods in robustness and optimization." *Caltech PhD Thesis*.
-- Lasserre, J.-B. (2006). "Cutting corners: faster algorithms for the polynomial optimization problem." *Mathematics of Operations Research*, 31(3), 457–474.
-- Demmel, J., Grigoriev, D. & Yagati, V. (2018). "Newton polytopes and geometric approaches to sums-of-squares." *SIAM Journal on Applied Algebra and Geometry*, 2(3), 356–379.
+- Lasserre, J.-B. (2003). "Moment inequalities, and a global optimization approach to polynomial optimization with sparse polynomials." *SIAM Journal on Optimization*, 17(4), 822–843.
+- Iliman, S. & de Wolff, T. (2016). "Lower Bounds for Polynomials with Simplex Newton Polytopes Based on Geometric Programming." *SIAM Journal on Optimization*, 26(2), 1128–1146. DOI: 10.1137/140962425.
