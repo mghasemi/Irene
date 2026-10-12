@@ -93,10 +93,18 @@ def test_relaxation_api_doc_walkthrough(capsys):
 
     Mirrors the configuration in doc/relaxation_api.rst: Motzkin at order 3,
     reduction_method="newton_polytope", monomial_pruning=True,
-    sparsity_detection=True, verbose_reduction=True.  The verbose output must
+    sparsity_detection=True, verbose_reduction=True. The verbose output must
     contain the measured moment-basis diagnostic (28 -> 28, certified-safe
-    retention), and the returned value must equal the documented
-    -526.08114071 -- i.e. identical to the unpruned baseline at every order.
+    retention).
+
+    The objective value is asserted against an unpruned baseline run in the
+    SAME environment rather than a hardcoded number: this order-3 Motzkin SDP
+    is ill-conditioned (moment-matrix condition ~1e14), so the absolute
+    optimum drifts by O(1) across solver/BLAS/python environments, while the
+    structural claim -- that the reduction pipeline is a designed no-op on
+    this dense instance -- holds in every environment.  The documented value
+    (-526.08114071) was measured on the maintainer's machine (Python 3.11,
+    Clarabel 0.11.1).
     """
     prog = build_motzkin()
     config = RelaxationConfig(
@@ -112,9 +120,19 @@ def test_relaxation_api_doc_walkthrough(capsys):
 
     captured = capsys.readouterr().out
     assert "[SDPRlx] Newton pruning: 28 -> 28 (100.00% retained)" in captured
-
     assert result.status == "optimal"
-    assert abs(result.value - (-526.08114071)) < 1e-6
+
+    # Same environment, reduction pipeline disabled: must return the identical
+    # SDP value (fresh problem instance so no state leaks between engines).
+    baseline = RelaxationEngine(
+        build_motzkin(), order=3, solver="clarabel", verbosity=0,
+        config=RelaxationConfig(sparsity_detection=True),
+    ).solve("sos")
+    assert baseline.status == "optimal"
+    assert abs(result.value - baseline.value) <= 1e-6 * max(1.0, abs(baseline.value)), (
+        f"P3 ({result.value}) deviates from unpruned baseline ({baseline.value}): "
+        "the reduction pipeline must be a designed no-op on this dense instance"
+    )
 
 
 def test_benchmark_json_p3_matches_baseline():
