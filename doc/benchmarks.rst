@@ -62,7 +62,10 @@ Representative Gallery Problems
 -------------------------------
 
 **Motzkin Polynomial**: The canonical separating example. Nonnegative by AM-GM but
-not SOS. SONC certificate exists at order 6.
+not SOS: it is itself a single nonnegative circuit polynomial (support
+{(4,2), (2,4), (0,0)}, total degree 6 — the negative term -3x^2 y^2 sits at
+(2,2) = 1/3(4,2) + 1/3(2,4) + 1/3(0,0)), so the SONC-vs-SOS separation is stated
+at total degree rather than at a relaxation order.
 
 .. code-block:: python
 
@@ -78,8 +81,9 @@ not SOS. SONC certificate exists at order 6.
    motzkin = x**4 * y**2 + x**2 * y**4 + 1 - 3 * x**2 * y**2
    prog.set_objective(motzkin)
 
-   sosonc = SOSONCRelaxations(prog)
-   result = sosonc.globalMinSOS(order=3)
+   # order is set via the constructor kwarg (globalMinSOS takes no arguments)
+   sosonc = SOSONCRelaxations(prog, relaxation_order=3)
+   result = sosonc.globalMinSOS()
    print(f"SOS lower bound (order 3): {result:.6f}")
 
 **Choi-Lam Polynomial**: Nonnegative on :math:`\mathbb{R}^2`, not SOS. Zero at
