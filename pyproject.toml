@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Irene"
-version = "1.4.0"
+version = "1.5.0"
 description = "Polynomial optimization via SOS/SONC/SDP hierarchies — modernized rewrite with SymEngine, CVXPY, and structural reductions."
 readme = "README.rst"
 license = "MIT"

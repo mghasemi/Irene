@@ -17,7 +17,7 @@ Repository Status (2026-08-09)
 --------------------------------------
 
 - Development status: active
-- Packaging target: ``2.0.0.dev0`` (defined in ``pyproject.toml``)
+- Versioning: stable 1.x line — current version defined in ``pyproject.toml`` (see ``CHANGELOG.md``)
 - Phases 1-3 modernization work: completed
 - Current focus: integration hardening, CI/benchmark automation, and remaining reduction wiring
 
