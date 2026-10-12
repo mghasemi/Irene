@@ -18,15 +18,19 @@ not taken from prose.
 """
 
 import json
+import math
 from pathlib import Path
 
+import yaml
 from sympy import symbols
 
 from benchmarks.p3_vs_baseline import build_motzkin
+from benchmarks.run_gallery import build_problem
 from Irene.grouprings import CommutativeSemigroup, SemigroupAlgebra
 from Irene.newton_polytope import prune_basis_from_polys, prune_basis_from_problem
 from Irene.relaxation_api import RelaxationEngine
 from Irene.relaxations import RelaxationConfig
+from Irene.sosonc import SOSONCRelaxations
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -157,4 +161,58 @@ def test_benchmark_json_p3_matches_baseline():
                 f"{problem} order {cell['order']}: P3 deviates from baseline "
                 f"({p3['value']} vs {base['value']}) -- the reduction pipeline "
                 "must be a designed no-op on these dense instances"
+            )
+
+
+# ---------------------------------------------------------------------------
+# benchmarks/gallery.yaml -- CI smoke subset (JOSS reproducibility gate)
+# ---------------------------------------------------------------------------
+
+def test_gallery_smoke_subset():
+    """Two small gallery problems run end-to-end at orders 1-2, solver=clarabel.
+
+    Per-push smoke subset of the full catalog in ``benchmarks/gallery.yaml``
+    (the heavy full-catalog sweep lives in the benchmark workflow step).
+    Problems picked by catalog order: Motzkin (first separating example) and
+    constrained_1d (smallest constrained problem, degree 2, exact at order 1).
+
+    Pinned constants were measured on commit a507e3d in the repo ``.venv``
+    (Python 3.11.15, cvxpy 1.9.2) with solver "clarabel" and match the
+    committed CI artifacts ``benchmarks/results/gallery_20260808_070931Z.json``
+    and ``gallery_20260808_201748Z.json`` (both solver=clarabel, tol=1e-4) to
+    displayed precision; those artifacts cover motzkin sos r1-r3 and
+    constrained_1d sos r1. The Motzkin cell is a weak lower bound by design:
+    the catalog marks its SOS relaxations "infeasible_or_weak", and see
+    ``test_relaxation_api_doc_walkthrough`` for the documented O(1)
+    cross-environment drift of this ill-conditioned SDP.
+    """
+    with open(REPO_ROOT / "benchmarks" / "gallery.yaml") as f:
+        by_id = {p["id"]: p for p in yaml.safe_load(f)["gallery"]}
+
+    pinned = {
+        ("motzkin", 1): -526.081140705874,
+        ("motzkin", 2): -526.081140705874,
+        ("constrained_1d", 1): 0.9999999877800618,
+        ("constrained_1d", 2): 0.9999999968011417,
+    }
+
+    for pid, orders in (("motzkin", (1, 2)), ("constrained_1d", (1, 2))):
+        prog = build_problem(by_id[pid])
+        for r in orders:
+            engine = SOSONCRelaxations(
+                prog, verbosity=0, relaxation_order=r, solver="clarabel"
+            )
+            res = engine.globalMinSOS()
+
+            expected = pinned[(pid, r)]
+            assert res.status == "optimal", (
+                f"{pid} order {r}: status={res.status!r}, "
+                f"error_code={getattr(res, 'error_code', None)}"
+            )
+            assert res.val is not None and math.isfinite(res.val), (
+                f"{pid} order {r}: non-finite bound {res.val!r}"
+            )
+            assert math.isclose(res.val, expected, rel_tol=1e-6), (
+                f"{pid} order {r}: val={res.val}, pinned={expected} "
+                "(measured on commit a507e3d, solver=clarabel)"
             )
