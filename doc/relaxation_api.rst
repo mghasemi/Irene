@@ -62,12 +62,16 @@ Accepts ``method`` as one of:
 - **``"sosonc_sos_first"``**: Combined SOS+SONC optimization, solving SOS first
 - **``"sosonc_sonc_first"``**: Combined SOS+SONC optimization, solving SONC first
 
-Returns a result object with attributes:
+Returns a :class:`RelaxResult` with attributes:
 
-- **value** (float): Lower bound on the global minimum
-- **status** (str): Solver status (``"optimal"``, ``"infeasible"``, etc.)
-- **order** (int): Relaxation order used
-- **basis_size** (int): Number of moment variables after pruning
+- **value** (float): Lower bound on the global minimum (``-inf`` when the solver reports infeasibility)
+- **status** (str): ``"optimal"``, ``"infeasible"``, or ``"error"``
+- **method** (str): The relaxation method that was run
+- **runtime**, **init_time** (float): Wall-clock seconds for solve and setup phases
+- **certificate**: SOS certificate when available (SDP path)
+- **solver_info** (dict): Backend diagnostics; on the SDP path includes the relaxation order actually used under ``"order"`` plus the raw solver status string
+
+The unified engine does not expose a moment-basis size in this contract: basis-size telemetry comes from the reduction pipeline (set ``verbose_reduction=True`` to print measured lines such as ``[SDPRlx] Newton pruning: 28 -> 28``) or from the legacy ``SDPRelaxations`` interface documented in ``sdp.rst``, whose result dict includes ``basis_size``.
 
 RelaxationConfig
 ================
