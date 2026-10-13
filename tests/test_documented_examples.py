@@ -176,25 +176,36 @@ def test_gallery_smoke_subset():
     Problems picked by catalog order: Motzkin (first separating example) and
     constrained_1d (smallest constrained problem, degree 2, exact at order 1).
 
-    Pinned constants were measured on commit a507e3d in the repo ``.venv``
-    (Python 3.11.15, cvxpy 1.9.2) with solver "clarabel" and match the
-    committed CI artifacts ``benchmarks/results/gallery_20260808_070931Z.json``
-    and ``gallery_20260808_201748Z.json`` (both solver=clarabel, tol=1e-4) to
-    displayed precision; those artifacts cover motzkin sos r1-r3 and
-    constrained_1d sos r1. The Motzkin cell is a weak lower bound by design:
-    the catalog marks its SOS relaxations "infeasible_or_weak", and see
-    ``test_relaxation_api_doc_walkthrough`` for the documented O(1)
-    cross-environment drift of this ill-conditioned SDP.
+    ``constrained_1d`` pins point values (well-conditioned): measured on commit
+    a507e3d in the repo .venv (Python 3.11.15, cvxpy 1.9.2) with solver
+    "clarabel", matching the committed CI artifacts
+    ``benchmarks/results/gallery_20260808_070931Z.json`` and
+    ``gallery_20260808_201748Z.json`` (both solver=clarabel, tol=1e-4) to
+    displayed precision.
+
+    The Motzkin cell is a weak lower bound by design: the catalog marks its SOS
+    relaxations "infeasible_or_weak", and this SDP is ill-conditioned (moment
+    matrix condition number ~5e14). Solver outputs are early stops whose values
+    drift O(1) across CPU classes — -526.08 on local runs and the CI artifacts
+    above, but -504.62 on two GitHub runner legs of the first push (2026-10-12)
+    — so it is checked against a documented band rather than a pinned constant
+    (same reasoning as ``test_relaxation_api_doc_walkthrough``; see also
+    ``search/motzkin_order3_findings.md``).
     """
     with open(REPO_ROOT / "benchmarks" / "gallery.yaml") as f:
         by_id = {p["id"]: p for p in yaml.safe_load(f)["gallery"]}
 
+    # Well-conditioned cell: point pin (see docstring for provenance).
     pinned = {
-        ("motzkin", 1): -526.081140705874,
-        ("motzkin", 2): -526.081140705874,
         ("constrained_1d", 1): 0.9999999877800618,
         ("constrained_1d", 2): 0.9999999968011417,
     }
+
+    # Ill-conditioned cell: documented early-stop band covering the observed
+    # spread [-526.08 (local + CI artifacts), -504.62 (GitHub runners)] with
+    # margin; tight enough to catch regressions, wide enough for the
+    # cross-environment drift documented above.
+    motzkin_band = (-555.0, -475.0)
 
     for pid, orders in (("motzkin", (1, 2)), ("constrained_1d", (1, 2))):
         prog = build_problem(by_id[pid])
@@ -204,7 +215,6 @@ def test_gallery_smoke_subset():
             )
             res = engine.globalMinSOS()
 
-            expected = pinned[(pid, r)]
             assert res.status == "optimal", (
                 f"{pid} order {r}: status={res.status!r}, "
                 f"error_code={getattr(res, 'error_code', None)}"
@@ -212,7 +222,16 @@ def test_gallery_smoke_subset():
             assert res.val is not None and math.isfinite(res.val), (
                 f"{pid} order {r}: non-finite bound {res.val!r}"
             )
-            assert math.isclose(res.val, expected, rel_tol=1e-6), (
-                f"{pid} order {r}: val={res.val}, pinned={expected} "
-                "(measured on commit a507e3d, solver=clarabel)"
-            )
+            if pid == "motzkin":
+                lo, hi = motzkin_band
+                assert lo < res.val < hi, (
+                    f"motzkin order {r}: val={res.val} outside documented "
+                    f"early-stop band ({lo}, {hi}) -- see docstring and "
+                    "search/motzkin_order3_findings.md"
+                )
+            else:
+                expected = pinned[(pid, r)]
+                assert math.isclose(res.val, expected, rel_tol=1e-6), (
+                    f"{pid} order {r}: val={res.val}, pinned={expected} "
+                    "(measured on commit a507e3d, solver=clarabel)"
+                )
