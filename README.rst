@@ -34,10 +34,12 @@ Implemented modernization highlights in this repository:
 - Unified relaxation entrypoint in ``Irene/relaxation_api.py``
 - Runtime telemetry helpers in ``Irene/telemetry.py``
 
-Known current gap:
-
-- Phase 3 reduction modules are implemented and tested, but full end-to-end integration through all
-  legacy ``relaxations.py`` code paths is still in progress.
+Structural reduction modules (border basis, correlative sparsity detection, Newton polytope
+pruning) are implemented, unit-tested, and integrated into the unified relaxation pipeline
+(``relaxation_api.py`` / ``relaxations.py``); they are opt-in via ``RelaxationConfig`` for
+backward compatibility. On dense instances the certified-safe Newton-pruning retention set
+currently retains the full basis by design (no size reduction) until certified sparsity sets
+are available for sparse instances — see the paper's Section 4 for measured behavior.
 
 Reduction defaults:
 
