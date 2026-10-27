@@ -318,9 +318,13 @@ Theory-to-code map
 Further reading
 ------------------------------
 
-Primary references are collected at the end of :doc:`sdp` (Lasserre 2001,
-Parrilo 2000, Laurent 2009); the border-basis and SONC chapters cite their own
-sources, and :doc:`dsdp_mean` documents the CGIK convergence framework for the
-truncated moment problem on unital commutative algebras. For the package-level
+The consolidated bibliography is :doc:`references`: the truncated moment problem
+on unital commutative algebras (Curto--Ghasemi--Infusino--Kuhlmann, 2023), the
+moment/SOS hierarchy (Lasserre 2001; Parrilo 2000; Laurent 2009; Lasserre 2015;
+Marshall 2008), geometric-programming bounds (Ghasemi--Marshall 2012; Iliman--de
+Wolff 2016), the SONC and SOS+SONC literature (Dressler--Iliman--de Wolff 2019;
+Schick 2025; Papp 2023), and the mean-form and differential-algebra sources.
+:doc:`dsdp_mean` documents how the CGIK framework specializes to the
+differential setting. For the package-level
 narrative -- layer structure, solver routing, benchmark evidence and limitations
 -- see the companion paper's Sections 3 to 7.

@@ -46,7 +46,7 @@ Convergence Theory: CGIK Framework and Archimedean Conditions
 
 The convergence of the differential SDP hierarchy is grounded in the
 **Curto–Ghasemi–Infusino–Kuhlmann (CGIK)** framework for the truncated moment
-problem on unital commutative algebras [GIKM]_.  In the differential setting,
+problem on unital commutative algebras [CGIK]_.  In the differential setting,
 the algebra is the quotient
 
 .. math::
@@ -143,8 +143,8 @@ References
 ==========
 
 - Ghasemi, M. (2026). "Mean Polynomials: Generalizing SOS and SONC via Power Mean Forms." *Companion manuscript*, Chapters 1–7.
+- Curto, R. E., Ghasemi, M., Infusino, M., & Kuhlmann, S. (2023). "The truncated moment problem for unital commutative :math:`\mathbb{R}`-algebras." *Journal of Operator Theory*, 90(1), 223–261. DOI: 10.7900/jot.2021nov26.2392.
 - Ritt, J. F. (1950). "Differential Algebra." American Mathematical Society Colloquium Publications.
 - Kolchin, E. R. (1973). "Differential Algebra and Algebraic Groups." Academic Press.
 
-.. [GIKM] M. Ghasemi, M. Infusino, S. Kuhlmann and M. Marshall, *Truncated Moment Problem for unital commutative real algebras*, to appear.
 .. [Stochel2001] J. Stochel, *Solving the truncated moment problem solves the full moment problem*, Glasgow Math. J. 43(3), 335–341 (2001).

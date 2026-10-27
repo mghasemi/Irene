@@ -17,7 +17,7 @@ Pipeline
 4. **Solve** the SDP (CVXOPT by default; other backends via
    ``SDPRelaxations``).
 
-Per Josz--Henrion (2014), a redundant ball constraint is ALWAYS added to the
+Per Josz--Henrion [JH16]_, a redundant ball constraint is ALWAYS added to the
 relaxation to guarantee strong duality (no primal--dual gap).
 
 Quick Example

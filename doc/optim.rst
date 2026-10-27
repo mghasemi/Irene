@@ -66,7 +66,7 @@ Let :math:`B\subseteq A` be a linear subspace. If :math:`L:A\longrightarrow\math
 on :math:`B`. But generally, :math:`K`-positive maps on :math:`B` do not extend to :math:`K`-positive one on :math:`A` and hence
 existence of integral representations are not guaranteed. Under a rather mild condition, this issue can be resolved:
 
-**Theorem.** [GIKM]_ Let :math:`K\subseteq X` be compact, :math:`B\subseteq A` a linear subspace such that there exists :math:`p\in B` strictly 
+**Theorem.** [CGIK]_ Let :math:`K\subseteq X` be compact, :math:`B\subseteq A` a linear subspace such that there exists :math:`p\in B` strictly 
 positive on :math:`K`. Then every linear functional :math:`L:B\longrightarrow\mathbb{R}` satisfying :math:`L(Psd_B(K))\subseteq[0,\infty)` 
 admits an integral representation via a Borel measure supported on :math:`K`.
 
@@ -79,14 +79,15 @@ SDP is equal to :math:`\rho` since
 	+ there may not exist a decomposition of :math:`f-\rho` as in :eq:`sosdecomp` inside :math:`B` (i.e., the summands may not belong to :math:`B`).
 
 Thus, the optimum value gives only a lower bound for :math:`\rho`. However,
-walking through a :math:`K`-frame, as explained in [GIKM]_, constructs a net
+walking through a :math:`K`-frame, as explained in [CGIK]_, constructs a net
 of lower bounds for :math:`\rho` that eventually approaches :math:`\rho`.
 
 In practice, one needs a sufficiently large finite-dimensional linear space
 that contains :math:`f, g_1,\dots,g_m` and admits a :eq:`sosdecomp`
 decomposition of :math:`f-\rho` within that space. Therefore, convergence
 happens in finitely many steps, subject to finding a suitable :math:`K`-frame
-for the problem.
+for the problem. The same truncation viewpoint for compact semialgebraic sets is
+developed in the A-truncated K-moment problem of Nie [JNie]_.
 
 The significance of this method is that it converts an optimization problem into
 finitely many semidefinite programs whose optimum values approach the optimum
@@ -134,8 +135,7 @@ These alternatives do not replace the SDP hierarchy. Instead, they provide
 complementary certificates that can be more suitable for specific sparse,
 high-degree, or structure-rich instances.
 
-.. [GIKM] M\. Ghasemi, M. Infusino, S. Kuhlmann and M. Marshall, *Truncated Moment Problem for unital commutative real algebras*, to appear.
-.. [JBL] J-B. Lasserre, *Global optimization with polynomials and the problem of moments*, SIAM J. Optim. 11(3) 796-817 (2001).
+.. A consolidated bibliography for these citations is in :doc:`references`.
 
 Modern API Quick Reference
 =============================
@@ -244,7 +244,7 @@ When the SDP is feasible, the dual solution provides:
    (when the moment matrix has the expected rank, i.e., the flat extension
    condition holds).
 3. **Support extraction**: the minimizers can be recovered from the moment
-   matrix via the Lasserre–Henrion eigenvalue method or via scipy-based moment
+   matrix via the Lasserre–Henrion eigenvalue method [HL]_ or via scipy-based moment
    matching.
 
 The modern API returns a :class:`RelaxResult` object with attributes
@@ -263,7 +263,7 @@ bounds :math:`\{\gamma_t\}_{t \ge t_0}` satisfying
    \gamma_t \le \gamma_{t+1} \le \cdots \le \rho,
 
 and :math:`\gamma_t \to \rho` as :math:`t \to \infty`.  Convergence is finite
-when a suitable :math:`K`-frame exists (see [GIKM]_ for the general theory on
+when a suitable :math:`K`-frame exists (see [CGIK]_ for the general theory on
 unital commutative algebras).  In the differential setting, convergence
 additionally requires the Archimedean boxing condition — see :doc:`dsdp_mean`.
 
@@ -278,5 +278,3 @@ to a **certified SOS proof** that :math:`f` cannot be represented as an
 element of :math:`Q_{\mathbf{g}}` at the given relaxation order — see
 :doc:`cvxpy_solver` for solver-specific behavior.
 
-.. [JNie] J. Nie, *The A-Truncated K-Moment Problem*, Found. Comput. Math., Vol.14(6), 1243-1276 (2014).
-.. [HL] D. Henrion and J.-B. Lasserre, *Detecting global optimality and extracting solutions in GloptiPoly*, in Positive Polynomials in Control, Springer (2005), 293–310.

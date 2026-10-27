@@ -86,6 +86,7 @@ Contents:
    code
    rev
    appendix
+   references
 
 
 Indices and tables
