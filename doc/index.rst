@@ -22,6 +22,12 @@ Contents:
 
 .. toctree::
    :maxdepth: 2
+   :caption: Theory Overview
+
+   theory
+
+.. toctree::
+   :maxdepth: 2
    :caption: Core Modules
 
    algebra

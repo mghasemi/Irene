@@ -21,9 +21,14 @@ polynomial optimization:
 
 The recommended reading path is:
 
-1. ``architecture`` for conceptual map.
-2. ``algebra`` and ``program`` for representation layer.
-3. ``sdp``, ``geometric``, and ``sonc`` for method-specific formulations.
+1. :doc:`theory` for the mathematical chain of constructions (problem setup,
+   algebraic layer, hierarchy, GP/SONC certificates, differential extensions).
+2. :doc:`architecture` for conceptual map.
+3. :doc:`algebra` and :doc:`program` for representation layer.
+4. :doc:`sdp`, :doc:`geometric`, and :doc:`sonc` for method-specific formulations.
+
+Symbol conventions are collected in the :ref:`notation-index` at the end of
+:doc:`appendix`; consult it before reading the theory or method chapters.
 
 Requirements and dependencies
 ===============================
