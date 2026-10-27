@@ -162,6 +162,13 @@ For the reductions in :doc:`sparsity`, :doc:`newton_polytope`,
   exploits term sparsity*, SIAM Journal on Optimization **31** (1) (2021),
   30--58.
   DOI: `10.1137/19M1307871 <https://doi.org/10.1137/19M1307871>`__.
+- A. Kehrein and M. Kreuzer, *Computing border bases*, Journal of Pure and
+  Applied Algebra **205** (2) (2006), 279--295.
+  DOI: `10.1016/j.jpaa.2005.07.006 <https://doi.org/10.1016/j.jpaa.2005.07.006>`__.
+- A. Kehrein, M. Kreuzer, and L. Robbiano, *An algebraist's view on border
+  bases*, in Algorithms and Computation in Mathematics **14**, Springer (2005),
+  169--202.
+  DOI: `10.1007/3-540-27357-3_4 <https://doi.org/10.1007/3-540-27357-3_4>`__.
 - T. Baumbach and M. Bender, *The moment method for computing real points of
   sparse polynomial systems*, preprint
   `arXiv:2609.33313 <https://arxiv.org/abs/2609.33313>`__ (2026) -- the source of

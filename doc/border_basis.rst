@@ -190,5 +190,12 @@ References
 ==========
 
 - Möller, H. M. & Trager, B. M. (1987). "A new approach to polynomial system solution." *ISSAC '87*.
-- Galligo, A., Gibanel, A., & Mourrain, B. (2005). "Border bases and the numerical solution of polynomial systems." *Applied Numerical Mathematics*, 54(4), 413–436.
-- Beckermann, B. & Gastinel, L. (2017). "Multivariate polynomial GCDs using border basis techniques." *Journal of Symbolic Computation*, 80, 399–425.
+- Kehrein, A., Kreuzer, M., & Robbiano, L. (2005). "An algebraist's view on border bases."
+  In *Solving Polynomial Equations: Foundations, Algorithms, and Applications*,
+  Algorithms and Computation in Mathematics 14, Springer, 169–202.
+  DOI: 10.1007/3-540-27357-3_4.
+- Kehrein, A. & Kreuzer, M. (2006). "Computing border bases." *Journal of Pure and
+  Applied Algebra*, 205(2), 279–295. DOI: 10.1016/j.jpaa.2005.07.006.
+
+A consolidated bibliography, including the moment-SOS and SONC literature the other
+chapters rest on, is in :doc:`references`.
