@@ -44,7 +44,7 @@ Constructor Parameters
 
 - **prog** (OptimizationProblem): The problem to relax
 - **order** (int): Relaxation order :math:`t`
-- **solver** (str, optional): Solver backend — ``"cvxopt"`` (default), ``"clarabel"``, ``"dsdp"``. Clarabel and CVXOPT are the primary backends for SDP relaxations; Clarabel is recommended on instances where structural feasibility matters (e.g., Motzkin / Choi–Lam at relaxation order ≥ 3, where some backends misreport infeasibility).
+- **solver** (str, optional): Solver backend — ``"cvxopt"`` (default), ``"clarabel"``, ``"dsdp"``. Clarabel and CVXOPT are the primary backends for SDP relaxations; Clarabel is recommended on instances where structural feasibility matters (e.g., Motzkin / Choi–Lam at relaxation order :math:`\geq` 3, where some backends misreport infeasibility).
 - **verbosity** (int, optional): Output level 0–2 (default: 1)
 - **config** (RelaxationConfig, optional): Reduction pipeline configuration
 
